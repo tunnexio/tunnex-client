@@ -1,0 +1,24 @@
+{
+  "name": "tunnex-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tunnex desktop client — Electron shell, renderer and privilege helper",
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "pnpm --filter @tunnex/client test",
+    "pack:mac": "pnpm --filter @tunnex/client pack:mac",
+    "pack:win": "pnpm --filter @tunnex/client pack:win"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.12.0",
+  "pnpm": {
+    "onlyBuiltDependencies": ["electron", "esbuild"]
+  }
+}

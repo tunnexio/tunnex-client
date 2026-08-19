@@ -1,0 +1,125 @@
+# Tunnex desktop client CI.
+#
+# ⛔ ELECTRON IS NEVER LAUNCHED IN CI. The client's unit tests import no electron at runtime;
+# typecheck and build need only its types. ELECTRON_SKIP_BINARY_DOWNLOAD keeps a ~100MB download
+# out of every job — and it is why client tests must keep their pure view-models in
+# electron-free modules (require("electron") throws when the binary was skipped).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+
+jobs:
+  helper:
+    name: helper (vet + test + crosscompile)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: make test-helper
+      - run: make helper-crosscompile
+
+  client:
+    name: client
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      # ⛔ DERIVED FROM THE HELPER'S OWN go.mod. In the monorepo this read apps/api/go.mod — the Go
+      # version for a module this job does not build — while caching apps/helper/go.sum. Same value
+      # by luck, wrong source by construction; corrected here because apps/api no longer exists.
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/helper/go.mod
+          cache-dependency-path: apps/helper/go.sum
+
+      # WFP/wintun code is Windows-build-tagged, so only a native runner compiles it.
+      - name: Helper — native Windows build + vet + test
+        if: matrix.os == 'windows-latest'
+        working-directory: apps/helper
+        env:
+          GOFLAGS: -mod=readonly
+        run: |
+          go build ./...
+          go vet ./...
+          go test ./...
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install (electron binary skipped — CI never launches it)
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+
+      - name: Client — typecheck
+        run: pnpm --filter @tunnex/client run typecheck
+
+      - name: Client — unit tests
+        run: pnpm --filter @tunnex/client test
+
+      - name: Client — build
+        run: pnpm --filter @tunnex/client build
+
+      - name: Resolve desktop package version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(node -p 'require("./apps/client/package.json").version')"
+          fi
+          echo "DESKTOP_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Client — package macOS installer (universal)
+        if: matrix.os == 'macos-latest'
+        env:
+          GOFLAGS: -mod=readonly
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          pnpm --filter @tunnex/web build
+          bash apps/client/scripts/stage-helper.sh mac
+          pnpm --filter @tunnex/client exec electron-builder --mac --universal --config electron-builder.yml --config.extraMetadata.version="$DESKTOP_VERSION"
+          bash apps/client/scripts/sha256sums.sh
+
+      # ⛔ NATIVELY ON WINDOWS. A macOS-cross-built NSIS uninstaller fails its integrity check on Windows.
+      - name: Client — package Windows installer (native)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        env:
+          GOFLAGS: -mod=readonly
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          pnpm --filter @tunnex/web build
+          bash apps/client/scripts/stage-helper.sh win
+          pnpm --filter @tunnex/client exec electron-builder --win --x64 --config electron-builder.yml --config.extraMetadata.version="$DESKTOP_VERSION"
+          bash apps/client/scripts/sha256sums.sh
+
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'macos-latest'
+        with:
+          name: tunnex-macos-installer
+          if-no-files-found: error
+          path: |
+            apps/client/release/Tunnex-macOS-universal.pkg
+            apps/client/release/SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'windows-latest'
+        with:
+          name: tunnex-windows-installer
+          if-no-files-found: error
+          path: |
+            apps/client/release/Tunnex-Windows-x64.exe
+            apps/client/release/SHA256SUMS
