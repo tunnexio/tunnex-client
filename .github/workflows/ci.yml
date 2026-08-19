@@ -9,6 +9,9 @@ name: ci
 on:
   push:
     branches: [main]
+    # ⛔ TAGS BUILD AND PUBLISH. The client matrix already derives its version from `refs/tags/v*`;
+    # without this trigger that code was unreachable and a tag produced nothing at all.
+    tags: ["v*"]
   pull_request:
 
 env:
@@ -103,6 +106,16 @@ jobs:
         run: |
           pnpm --filter @tunnex/web build
           bash apps/client/scripts/stage-helper.sh win
+          # ⛔ A RELEASE MAY NOT SHIP A WINDOWS INSTALLER THAT CANNOT TUNNEL. stage-helper.sh only WARNS
+          # when vendor/wintun/wintun.dll is absent and carries on, so the installer builds green while the
+          # helper has no way to create the tun adapter (apps/helper/backend_windows.go → tun.CreateTUN).
+          # A silent warning is survivable on a branch build; publishing it to users is not, and a SIGNED
+          # non-functional installer would be worse still — it looks trustworthy and fails anyway.
+          # Branch builds keep the warning; tagged builds fail here.
+          if [[ "$GITHUB_REF" == refs/tags/v* && ! -f apps/client/build/helper/wintun.dll ]]; then
+            echo "::error::wintun.dll is missing — refusing to publish a Windows installer that cannot create a tun adapter. See apps/client/vendor/wintun/README.md"
+            exit 1
+          fi
           pnpm --filter @tunnex/client exec electron-builder --win --x64 --config electron-builder.yml --config.extraMetadata.version="$DESKTOP_VERSION"
           bash apps/client/scripts/sha256sums.sh
 
@@ -123,3 +136,63 @@ jobs:
           path: |
             apps/client/release/Tunnex-Windows-x64.exe
             apps/client/release/SHA256SUMS
+
+  # ⛔ RUNS ONLY ON A TAG, AND ONLY AFTER BOTH INSTALLERS EXIST. `needs` is what makes that true:
+  # a release that publishes whatever happened to build is how a half-platform release ships.
+  release:
+    name: release
+    needs: [helper, client]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      # The default token is read-only; creating a Release needs write. Scoped to this job alone.
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect the installers built by the client matrix
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Assemble assets + ONE checksum file over what actually ships
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          cp artifacts/tunnex-macos-installer/Tunnex-macOS-universal.pkg release/
+          cp artifacts/tunnex-windows-installer/Tunnex-Windows-x64.exe   release/
+
+          # ⚠ RECOMPUTED HERE, NOT COPIED. Each matrix leg produces its own SHA256SUMS covering only its
+          # own artifact. Shipping both would give a release two files of the same name, each telling half
+          # the truth. One file, computed over the assets actually attached, is the thing a user can verify.
+          cd release
+          sha256sum ./* > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+
+          # A tag carrying a hyphen (v0.2.0-rc1, -beta) is a prerelease. Semver already encodes that; this
+          # reads it rather than asking a human to remember a checkbox.
+          PRERELEASE=""
+          if [[ "$TAG" == *-* ]]; then PRERELEASE="--prerelease"; fi
+
+          # Idempotent: re-running a failed release job must not die on "release already exists".
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo ">> release $TAG exists — uploading assets with --clobber"
+            gh release upload "$TAG" release/* --clobber
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --generate-notes \
+              $PRERELEASE \
+              --notes-start-tag "$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || echo '')" \
+              release/*
+          fi
+
+          echo ">> published:"; gh release view "$TAG" --json assets --jq '.assets[].name'
