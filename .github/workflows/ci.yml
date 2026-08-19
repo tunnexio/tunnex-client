@@ -31,6 +31,8 @@ jobs:
     name: client
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
+    outputs:
+      windows-artifact-id: ${{ steps.upload-windows.outputs.artifact-id }}
     strategy:
       fail-fast: false
       matrix:
@@ -130,6 +132,10 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'windows-latest'
+        # ⚠ `id` + the job output below exist so a signing service can reference this artifact BY ID.
+        # SignPath's action takes a github-artifact-id, not a name — without this the release job has
+        # nothing to hand it. Harmless while signing is unconfigured.
+        id: upload-windows
         with:
           name: tunnex-windows-installer
           if-no-files-found: error
@@ -149,23 +155,74 @@ jobs:
       # The default token is read-only; creating a Release needs write. Scoped to this job alone.
       contents: write
     steps:
+      # ⚠ FULL HISTORY. checkout defaults to a shallow clone, and `git describe --tags` then finds
+      # nothing — which is how a release job silently generates notes from the wrong range.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ⛔ THE TAG AND THE SHIPPED VERSION MUST AGREE. electron-builder stamps the installer from
+      # --config.extraMetadata.version, which the client job derives from the tag — so a tag that
+      # disagrees with package.json publishes an artifact whose internal version contradicts the
+      # release it is attached to. Cheap to check, confusing forever if it is wrong.
+      - name: Tag must match apps/client/package.json version
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION="$(node -p 'require("./apps/client/package.json").version')"
+          echo "tag: $TAG_VERSION   package.json: $PKG_VERSION"
+          if [[ "$TAG_VERSION" != "$PKG_VERSION" ]]; then
+            echo "::error::tag v$TAG_VERSION does not match apps/client/package.json version $PKG_VERSION — bump the manifest or retag"
+            exit 1
+          fi
 
       - name: Collect the installers built by the client matrix
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
+      # ⛔ SIGNING IS GATED ON THE SECRET EXISTING, so this repository releases correctly while it is
+      # unsigned and starts signing the moment the credentials are added — no workflow edit at that
+      # point, which is the edit most likely to be made in a hurry on release day.
+      #
+      # ⚠ CONFIRM THESE INPUTS AGAINST SIGNPATH'S CURRENT DOCS BEFORE FIRST USE. The action's input
+      # names and version are stated from documentation, not from a run of this pipeline — nobody has
+      # executed this step yet. Treat the first signed release as the test of this block.
+      # See docs/code-signing.md for the application process and what each value is.
+      - name: Sign the Windows installer (SignPath — free for OSS)
+        id: signpath
+        if: env.SIGNPATH_API_TOKEN != ''
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: tunnex-client
+          signing-policy-slug: release-signing
+          github-artifact-id: ${{ needs.client.outputs.windows-artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-windows
+
       - name: Assemble assets + ONE checksum file over what actually ships
         run: |
           set -euo pipefail
           mkdir -p release
           cp artifacts/tunnex-macos-installer/Tunnex-macOS-universal.pkg release/
-          cp artifacts/tunnex-windows-installer/Tunnex-Windows-x64.exe   release/
+          # Prefer the SIGNED binary when the signing step ran; fall back to the unsigned one otherwise.
+          # An explicit branch rather than a wildcard, so an unnoticed signing failure cannot quietly
+          # publish the unsigned artifact under a release that claims to be signed.
+          if [[ -f signed-windows/Tunnex-Windows-x64.exe ]]; then
+            echo ">> using the SIGNED Windows installer"
+            cp signed-windows/Tunnex-Windows-x64.exe release/
+          else
+            echo ">> signing not configured — publishing the UNSIGNED Windows installer"
+            cp artifacts/tunnex-windows-installer/Tunnex-Windows-x64.exe release/
+          fi
 
           # ⚠ RECOMPUTED HERE, NOT COPIED. Each matrix leg produces its own SHA256SUMS covering only its
           # own artifact. Shipping both would give a release two files of the same name, each telling half
-          # the truth. One file, computed over the assets actually attached, is the thing a user can verify.
+          # the truth. One file, computed over the assets actually attached, is what a user can verify.
           cd release
           sha256sum ./* > SHA256SUMS
           cat SHA256SUMS
@@ -182,17 +239,16 @@ jobs:
           PRERELEASE=""
           if [[ "$TAG" == *-* ]]; then PRERELEASE="--prerelease"; fi
 
+          # ⛔ NO --notes-start-tag. It was passed as $(git describe … || echo "") — which is EMPTY on the
+          # very first tag, and an empty value is not a valid argument, so the first release this pipeline
+          # ever cut would have been the one that failed. `--generate-notes` derives the range itself.
+          #
           # Idempotent: re-running a failed release job must not die on "release already exists".
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo ">> release $TAG exists — uploading assets with --clobber"
             gh release upload "$TAG" release/* --clobber
           else
-            gh release create "$TAG" \
-              --title "$TAG" \
-              --generate-notes \
-              $PRERELEASE \
-              --notes-start-tag "$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || echo '')" \
-              release/*
+            gh release create "$TAG" --title "$TAG" --generate-notes $PRERELEASE release/*
           fi
 
           echo ">> published:"; gh release view "$TAG" --json assets --jq '.assets[].name'
