@@ -160,6 +160,17 @@ func writeResolverFile(path string, ip netip.Addr) error {
 		os.Remove(tmpName)
 		return &ProtocolError{Code: "resolver_write_failed", Msg: err.Error()}
 	}
+	// os.CreateTemp deliberately starts at 0600. Keep that safe mode while the
+	// file is partial, then publish it as 0644: macOS's DNS configuration
+	// consumers must be able to read /etc/resolver files. They contain only a
+	// zone and resolver IP, so this matches normal system resolver configuration
+	// without exposing a credential. Chmod the open descriptor before rename to
+	// avoid both a path race and a visible destination with unusable permissions.
+	if err := tmp.Chmod(0o644); err != nil {
+		tmp.Close()
+		os.Remove(tmpName)
+		return &ProtocolError{Code: "resolver_write_failed", Msg: err.Error()}
+	}
 	if err := tmp.Close(); err != nil {
 		os.Remove(tmpName)
 		return &ProtocolError{Code: "resolver_write_failed", Msg: err.Error()}

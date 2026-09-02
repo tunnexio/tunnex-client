@@ -26,12 +26,20 @@ func TestReconcileWritesScopedResolver(t *testing.T) {
 	if err := reconcileResolvers(dir, []ResolverForward{{Domain: "corp.local", ResolverIP: "10.20.0.53"}}); err != nil {
 		t.Fatalf("reconcile: %v", err)
 	}
-	got := readFile(t, filepath.Join(dir, "corp.local"))
+	path := filepath.Join(dir, "corp.local")
+	got := readFile(t, path)
 	if !strings.HasPrefix(got, resolverMarker) {
 		t.Errorf("file not marked owned: %q", got)
 	}
 	if !strings.Contains(got, "nameserver 10.20.0.53") {
 		t.Errorf("missing nameserver line: %q", got)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("stat scoped resolver: %v", err)
+	}
+	if gotMode := info.Mode().Perm(); gotMode != 0o644 {
+		t.Errorf("scoped resolver mode = %04o, want 0644 so macOS DNS can read it", gotMode)
 	}
 }
 
@@ -49,6 +57,28 @@ func TestReconcileIdempotent(t *testing.T) {
 	}
 	if second := readFile(t, filepath.Join(dir, "corp.local")); second != first {
 		t.Errorf("not idempotent: %q != %q", second, first)
+	}
+}
+
+// TestReconcileHealsUnreadableOwnedResolver covers upgrades from clients that
+// published os.CreateTemp's 0600 mode. Re-applying the desired set must make an
+// already-owned resolver readable; otherwise existing installations stay
+// broken until the operator manually deletes the file.
+func TestReconcileHealsUnreadableOwnedResolver(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "corp.local")
+	if err := os.WriteFile(path, []byte(resolverMarker+"\nnameserver 10.20.0.53\n"), 0o600); err != nil {
+		t.Fatalf("seed unreadable owned resolver: %v", err)
+	}
+	if err := reconcileResolvers(dir, []ResolverForward{{Domain: "corp.local", ResolverIP: "10.20.0.53"}}); err != nil {
+		t.Fatalf("reconcile existing resolver: %v", err)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("stat healed resolver: %v", err)
+	}
+	if gotMode := info.Mode().Perm(); gotMode != 0o644 {
+		t.Errorf("healed resolver mode = %04o, want 0644", gotMode)
 	}
 }
 

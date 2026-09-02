@@ -59,6 +59,19 @@ jobs:
           go vet ./...
           go test ./...
 
+      # resolver_darwin.go and its tests are build-tagged, so the Linux helper
+      # job cannot catch a broken /etc/resolver implementation. Exercise the
+      # helper natively before packaging the macOS installer.
+      - name: Helper — native macOS build + vet + test
+        if: matrix.os == 'macos-latest'
+        working-directory: apps/helper
+        env:
+          GOFLAGS: -mod=readonly
+        run: |
+          go build ./...
+          go vet ./...
+          go test ./...
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
