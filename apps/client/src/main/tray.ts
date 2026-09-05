@@ -6,7 +6,7 @@ import { trayIconAssetNamesFor, trayIconVariantFor, trayMenuModel, type TrayStat
 // Re-export the pure view-models so existing imports (`from "./tray"`) keep working;
 // the electron-free definitions live in trayview.ts so they stay testable in CI.
 export { trayMenuModel, trayStateFor } from "./trayview";
-export { trayIconAssetNamesFor, trayIconSizeFor, trayIconSvg, trayIconVariantFor } from "./trayview";
+export { trayIconAssetNamesFor, trayIconSizeFor, trayIconVariantFor } from "./trayview";
 export type { TrayIconVariant, TrayState, TrayMenuModel } from "./trayview";
 
 function trayIcon(state: TrayState): NativeImage {
@@ -21,9 +21,9 @@ function trayIcon(state: TrayState): NativeImage {
   // createFromPath reads one representation only. Add the authored 2x PNG explicitly
   // so the small macOS status item stays crisp on Retina displays.
   img.addRepresentation({ scaleFactor: 2, buffer: readFileSync(retinaPath) });
-  // This deliberately is NOT a macOS template image: template masking would turn the
-  // approved red connected mark into a generic black/white glyph.
-  img.setTemplateImage(false);
+  // The idle silhouette follows macOS light/dark menu-bar contrast automatically.
+  // Connected stays authored red so the existing live-state signal is preserved.
+  img.setTemplateImage(process.platform === "darwin" && trayIconVariantFor(state) === "idle");
   return img;
 }
 

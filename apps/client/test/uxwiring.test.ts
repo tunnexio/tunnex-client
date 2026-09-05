@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import { messageFor, postureCheckSummary } from "../src/main/notifyview";
-import { trayIconAssetNamesFor, trayIconSizeFor, trayIconSvg, trayIconVariantFor, trayMenuModel, trayStateFor } from "../src/main/trayview";
+import { trayIconAssetNamesFor, trayIconSizeFor, trayIconVariantFor, trayMenuModel, trayStateFor } from "../src/main/trayview";
 
 // The PURE view-models live in electron-free modules (notifyview / trayview) so they
 // import cleanly in CI, where ELECTRON_SKIP_BINARY_DOWNLOAD makes require("electron")
@@ -54,24 +54,16 @@ test("tray: menu model offers the right actions per state", () => {
   assert.equal(connecting.showDisconnect, true);
 });
 
-test("tray: brand badge is compact, circle-free, and state-aware", () => {
+test("tray: brand silhouette is unboxed and state-aware", () => {
   assert.equal(trayIconVariantFor("connected"), "connected");
   assert.equal(trayIconVariantFor("posture_warning"), "connected");
   assert.equal(trayIconVariantFor("disconnected"), "idle");
-  assert.equal(trayIconSizeFor("darwin"), 16);
+  assert.equal(trayIconSizeFor("darwin"), 22);
   assert.equal(trayIconSizeFor("win32"), 20);
   assert.deepEqual(trayIconAssetNamesFor("darwin", "connected"), { normal: "connected.png", retina: "connected@2x.png" });
   assert.deepEqual(trayIconAssetNamesFor("win32", "idle"), { normal: "idle-win.png", retina: "idle-win@2x.png" });
 
-  const connected = trayIconSvg("connected");
-  assert.match(connected, /width="16" height="16"/);
-  assert.match(connected, /#ee1d36/); // connected Tunnex red
-  assert.match(connected, /M14\.25 11h1\.6/); // thin left-shifted brand cut
-  assert.doesNotMatch(connected, /<circle cx="16" cy="16" r=/); // no outer circular badge
 
-  const idle = trayIconSvg("idle");
-  assert.match(idle, /#d7d7da/);
-  assert.match(idle, /fill="#171719"/); // compact black backing badge remains
 });
 
 test("tray: trayStateFor mirrors the renderer's handshake-liveness (no drift)", () => {

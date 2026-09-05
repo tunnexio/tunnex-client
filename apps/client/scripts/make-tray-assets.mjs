@@ -4,8 +4,11 @@
 // the top-left of a requested 16/32px canvas. That is exactly how RC21 shipped a tiny
 // mark inside an opaque white square. This tiny dependency-free rasteriser owns the
 // output pixels, keeps the badge centred, and is safe to run without launching Electron.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, mkdtempSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { tmpdir } from "node:os";
+import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 import { deflateSync } from "node:zlib";
 
 const here = dirname(new URL(import.meta.url).pathname);
@@ -114,10 +117,25 @@ function render(size, connected) {
 
 mkdirSync(out, { recursive: true });
 for (const [name, size, connected] of [
-  ["connected.png", 16, true], ["connected@2x.png", 32, true],
-  ["idle.png", 16, false], ["idle@2x.png", 32, false],
   ["connected-win.png", 20, true], ["connected-win@2x.png", 40, true],
   ["idle-win.png", 20, false], ["idle-win@2x.png", 40, false],
 ]) writeFileSync(join(out, name), render(size, connected));
 
-console.log(`tray assets: wrote 8 centred transparent PNGs to ${out}`);
+// Rasterise the canonical brand SVG with the installed Electron/Chromium engine.
+// The helper returns canvas pixels; our PNG encoder preserves the portable no-filter format.
+const scratch = mkdtempSync(join(tmpdir(), "tunnex-tray-brand-"));
+try {
+  const electron = createRequire(import.meta.url)("electron");
+  const result = spawnSync(electron, [join(here, "render-tray-brand.mjs"), scratch], { stdio: "inherit" });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(`brand tray render failed: ${result.status}`);
+  for (const variant of ["idle", "connected"]) {
+    for (const [size, suffix] of [[22, ""], [44, "@2x"]]) {
+      const rgba = Buffer.from(JSON.parse(readFileSync(join(scratch, `${variant}${suffix}.json`), "utf8")));
+      writeFileSync(join(out, `${variant}${suffix}.png`), png(size, size, rgba));
+    }
+  }
+} finally {
+  rmSync(scratch, { recursive: true, force: true });
+}
+console.log(`tray assets: wrote 8 transparent PNGs to ${out}`);
