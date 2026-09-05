@@ -121,7 +121,7 @@ test("tray PNGs are centred transparent assets, not opaque SVG thumbnail canvase
     const ys = opaque.map(([, y]) => y);
     const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
     assert.ok(minX >= 1 && minY >= 1 && maxX <= width - 2 && maxY <= height - 2, `${name} touches the canvas edge`);
-    assert.ok(maxX - minX + 1 >= Math.floor(width * 0.6), `${name} mark is too small for a status item`);
+    assert.ok(maxX - minX + 1 >= Math.floor(width * (name.includes("-win") ? 0.6 : 0.85)), `${name} mark is too small for a status item`);
     assert.ok(Math.abs((minX + maxX + 1) / 2 - width / 2) <= 1, `${name} mark is not horizontally centred`);
     assert.ok(Math.abs((minY + maxY + 1) / 2 - height / 2) <= 1, `${name} mark is not vertically centred`);
   }
@@ -129,10 +129,10 @@ test("tray PNGs are centred transparent assets, not opaque SVG thumbnail canvase
 
 test("macOS and Windows tray assets use their native footprints with the same centred mark", () => {
   const expected = {
-    "connected.png": [16, 16],
-    "connected@2x.png": [32, 32],
-    "idle.png": [16, 16],
-    "idle@2x.png": [32, 32],
+    "connected.png": [22, 22],
+    "connected@2x.png": [44, 44],
+    "idle.png": [22, 22],
+    "idle@2x.png": [44, 44],
     "connected-win.png": [20, 20],
     "connected-win@2x.png": [40, 40],
     "idle-win.png": [20, 20],
@@ -169,4 +169,16 @@ test("⛔ the app:// fallback serves the CLIENT entry, not the dashboard's", () 
   assert.ok(fallback.length > 0, "serveIndex not found — this test is measuring nothing");
   assert.ok(!/index\.html/.test(fallback), "the fallback still points at the dashboard entry");
   assert.match(fallback, /CLIENT_ENTRY/);
+});
+
+test("macOS tray vectors preserve the canonical website brand paths without a backing plate", () => {
+  const brand = readFileSync(join(__dirname, "../../web/src/assets/tunnex-logo.svg"), "utf8");
+  const paths = [...brand.matchAll(/<path\b[^>]*\sd="([^"]+)"/g)].map(match => match[1]);
+  assert.equal(paths.length, 11, "brand changed; review the tray extraction");
+  for (const variant of ["idle", "connected"]) {
+    const svg = readFileSync(join(TRAY_DIR, `${variant}.svg`), "utf8");
+    for (const path of paths) assert.ok(svg.includes(`d="${path}"`), `${variant} lost original brand geometry`);
+    assert.doesNotMatch(svg, /<rect[^>]*fill="#0A0A0A"/);
+    assert.match(svg, /mask="url\(#tray-cut\)"/, "brand cutouts must be transparent, not black paint");
+  }
 });
