@@ -8,7 +8,7 @@
 // window, plus the operable states — failed (kill-switch) and revoked.
 export type TrayState = "disconnected" | "connecting" | "connected" | "failed" | "revoked" | "pending" | "migrate_retry" | "posture_warning" | "posture_blocked";
 
-// macOS uses the canonical brand silhouette and network nodes without a surrounding box.
+// Both platforms use the canonical brand silhouette and network nodes without a surrounding box.
 // PNG representations avoid unreliable SVG decoding in the native status bar.
 export type TrayIconVariant = "connected" | "idle";
 

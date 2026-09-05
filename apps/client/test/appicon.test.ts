@@ -121,7 +121,7 @@ test("tray PNGs are centred transparent assets, not opaque SVG thumbnail canvase
     const ys = opaque.map(([, y]) => y);
     const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
     assert.ok(minX >= 1 && minY >= 1 && maxX <= width - 2 && maxY <= height - 2, `${name} touches the canvas edge`);
-    assert.ok(maxX - minX + 1 >= Math.floor(width * (name.includes("-win") ? 0.6 : 0.85)), `${name} mark is too small for a status item`);
+    assert.ok(maxX - minX + 1 >= Math.floor(width * 0.85), `${name} mark is too small for a status item`);
     assert.ok(Math.abs((minX + maxX + 1) / 2 - width / 2) <= 1, `${name} mark is not horizontally centred`);
     assert.ok(Math.abs((minY + maxY + 1) / 2 - height / 2) <= 1, `${name} mark is not vertically centred`);
   }

@@ -23,7 +23,7 @@ app.whenReady().then(async () => {
   await win.loadURL("data:text/html,<html><body></body></html>");
   for (const variant of ["idle", "connected"]) {
     writeFileSync(join(here, "../build/tray", `${variant}.svg`), svg(variant, 44));
-    for (const [size, suffix] of [[22, ""], [44, "@2x"]]) {
+    for (const [size, suffix] of [[22, ""], [44, "@2x"], [20, "-win"], [40, "-win@2x"]]) {
       const uri = "data:image/svg+xml;base64," + Buffer.from(svg(variant, size)).toString("base64");
       const pixels = await win.webContents.executeJavaScript(`(async () => {
         const image = new Image(); image.src = ${JSON.stringify(uri)}; await image.decode();
