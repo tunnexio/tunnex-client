@@ -41,7 +41,7 @@ func (w *proofLog) Write(p []byte) (int, error) {
 	if strings.Contains(string(p), "x509: certificate signed by unknown authority") {
 		w.unknownAuthority.Store(true)
 	}
-	for _, category := range []string{"connection refused", "failed to allocate", "Failed to dial", "Failed to resolve", "unknown authority", "certificate is valid for", "Failed to connect", "failed to create", "location tracking"} {
+	for _, category := range []string{"connection refused", "failed to allocate", "Failed to dial", "Failed to resolve", "unknown authority", "certificate is valid for", "Failed to connect", "failed to create", "location tracking", "Discard request with wrong username", "Discard request with broken integrity", "Discard success response with broken integrity", "Ignoring remote candidate", "Role conflict", "Maximum requests reached"} {
 		if strings.Contains(string(p), category) {
 			w.t.Log("Pion diagnostic category:", category)
 		}
@@ -134,7 +134,7 @@ func TestNativePionProof(t *testing.T) {
 	}
 	u.Username, u.Password = credential.Username, credential.Password
 	lf := logging.NewDefaultLoggerFactory()
-	lf.DefaultLogLevel = logging.LogLevelDebug
+	lf.DefaultLogLevel = logging.LogLevelTrace
 	logs := &proofLog{t: t}
 	lf.Writer = logs
 	a, e := ice.NewAgent(&ice.AgentConfig{Urls: []*stun.URI{u}, CandidateTypes: []ice.CandidateType{ice.CandidateTypeRelay}, NetworkTypes: []ice.NetworkType{ice.NetworkTypeUDP4}, LoggerFactory: lf})
@@ -202,6 +202,14 @@ func TestNativePionProof(t *testing.T) {
 		}
 	}
 	var session *ice.Conn
+	if os.Getenv("NAT_PROOF_START_BARRIER") == "yes" {
+		proofWrite(t, dir, role+"-prepared.json", true)
+		var start bool
+		proofRead(t, ctx, dir, "start.json", &start)
+		if !start {
+			t.Fatal("invalid start barrier")
+		}
+	}
 	if role == "client" {
 		session, e = a.Dial(ctx, remote.User, remote.Password)
 	} else {
@@ -213,6 +221,10 @@ func TestNativePionProof(t *testing.T) {
 	pair, e := a.GetSelectedCandidatePair()
 	if e != nil || pair == nil || pair.Local.Type() != ice.CandidateTypeRelay || pair.Remote.Type() != ice.CandidateTypeRelay {
 		t.Fatal("non-relay path")
+	}
+	if os.Getenv("NAT_PROOF_ICE_ONLY") == "yes" {
+		t.Log("PASS ICE-only diagnostic; NOT native traffic evidence")
+		return
 	}
 	private := base64.StdEncoding.EncodeToString(key[:])
 	if role == "server" {

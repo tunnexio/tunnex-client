@@ -2,9 +2,13 @@
 # Private prebuilt NAT-0 fixture only; no repository access required as root.
 set -eu
 stage=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+target=${2:-localhost}
+if [ "$target" != localhost ]; then
+  case "$target" in ''|*[!0-9.]*) echo 'Invalid proof host' >&2; exit 2;; esac
+fi
 case "${1:-}" in
-  tcp) turn_url='turn:localhost:13478?transport=tcp';;
-  tls) turn_url='turns:localhost:15349?transport=tcp';;
+  tcp) turn_url="turn:$target:13478?transport=tcp";;
+  tls) turn_url="turns:$target:15349?transport=tcp";;
   *) exit 2;;
 esac
 /usr/local/tunnex/tunnelctl status | /usr/bin/grep -q '"state": "down"'
@@ -23,5 +27,7 @@ for ip in 10.250.0.1 10.250.0.2 10.250.0.3; do
 done
 /bin/launchctl bootout system /Library/LaunchDaemons/io.tunnex.helper.plist
 trap '/bin/launchctl bootstrap system /Library/LaunchDaemons/io.tunnex.helper.plist' EXIT
-NAT_PROOF_HELPER_STOPPED=yes NAT_PROOF_ROLE=client NAT_PROOF_DIR="$stage" TURN_URL="$turn_url" \
+barrier=no
+if [ "$target" != localhost ]; then barrier=yes; fi
+NAT_PROOF_START_BARRIER="$barrier" NAT_PROOF_HELPER_STOPPED=yes NAT_PROOF_ROLE=client NAT_PROOF_DIR="$stage" TURN_URL="$turn_url" \
   "$stage/mac.test" -test.run '^TestNativePionProof$' -test.v -test.timeout=110s
