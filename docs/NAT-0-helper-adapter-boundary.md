@@ -88,3 +88,19 @@ Next: attach negotiated Pion sessions to the package-local backend proof,
 exercise actual encrypted traffic with a Linux peer, then perform the original
 live cross-network/CP policy acceptance. Existing approval covers continuing
 that bounded proof; no claim that the product NAT feature is finished.
+
+## Pion/native-backend proof execution
+
+Use a `natproof`-tagged test binary, never a production startup switch. Run
+Pion ICE v4.4.2 in two processes: macOS uses the real darwinBackend/utun and
+internal bind; an isolated Linux Docker fixture uses kernel WireGuard and a
+connected local UDP bridge. Exchange synthetic signaling only through a private
+scratch directory. Expose TURN TCP/TLS on localhost only, no UDP published.
+This proves a real macOS-to-Linux-VM packet path, not an AWS/cross-network or
+CP-policy walk. The cloud acceptance legs stay open.
+
+The installed helper must be idle and stopped during the package-local backend
+test; restart it afterward even on failure. Only /32 fixture routes may be used.
+Use process-local fixture CA trust for TLS, never disable certificate checks or
+install a CA into the Mac trust store. Retain stopped fixtures and redacted
+evidence; private signaling and keys remain outside Git.
