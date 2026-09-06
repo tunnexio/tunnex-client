@@ -90,6 +90,11 @@ jobs:
       - name: Client — build
         run: pnpm --filter @tunnex/client build
 
+      - name: Managed enrollment renderer — typecheck and regression tests
+        run: |
+          pnpm --filter @tunnex/web typecheck
+          pnpm --filter @tunnex/web exec vitest run test/clientapp.test.tsx
+
       - name: Resolve desktop package version
         shell: bash
         run: |
