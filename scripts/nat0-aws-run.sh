@@ -37,13 +37,11 @@ fs.writeFileSync(p+'/turn.conf',`no-cli
 verbose
 no-dtls
 listening-ip=0.0.0.0
-relay-ip=127.0.0.1
 min-port=49160
 max-port=49200
 realm=nat0.invalid
 lt-cred-mech
 user=nat0:${password}
-allow-loopback-peers
 no-multicast-peers
 cert=/proof/cert.pem
 pkey=/proof/key.pem

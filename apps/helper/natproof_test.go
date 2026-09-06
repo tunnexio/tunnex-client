@@ -239,6 +239,13 @@ func TestNativePionProof(t *testing.T) {
 		session, e = a.Accept(ctx, remote.User, remote.Password)
 	}
 	if e != nil {
+		types := map[string]ice.CandidateType{}
+		for _, c := range append(a.GetLocalCandidatesStats(), a.GetRemoteCandidatesStats()...) {
+			types[c.ID] = c.CandidateType
+		}
+		for _, stat := range a.GetCandidatePairsStats() {
+			t.Logf("ICE pair diagnostic: %s/%s state=%s requests=%d/%d responses=%d/%d nominated=%t", types[stat.LocalCandidateID], types[stat.RemoteCandidateID], stat.State, stat.RequestsSent, stat.RequestsReceived, stat.ResponsesSent, stat.ResponsesReceived, stat.Nominated)
+		}
 		t.Fatal("ICE connect")
 	}
 	pair, e := a.GetSelectedCandidatePair()
