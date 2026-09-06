@@ -1,6 +1,7 @@
 # NAT-0: real-helper adapter boundary
 
-Status: approved internal adapter slice implemented, 2026-09-06. No traffic proof claimed.
+Status: approved internal adapter implemented; native TCP/TLS proof now passed.
+See `NAT-0-native-pion-20260906.md` for results and remaining acceptance limits.
 Client content tested: `0727e82` (subsequent commits are evidence only).
 Companion laboratory bridge: tunnex `9982336`.
 

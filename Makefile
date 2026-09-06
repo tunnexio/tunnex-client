@@ -32,6 +32,7 @@ gates: ## Everything CI checks, locally
 	pnpm --filter @tunnex/client typecheck
 	pnpm --filter @tunnex/client test
 	node --test scripts/macos-dev-plist.test.cjs
+	go test -C apps/helper -mod=readonly -tags natproof ./...
 	pnpm --filter @tunnex/client build
 	pnpm --filter @tunnex/web build
 	$(MAKE) test-helper

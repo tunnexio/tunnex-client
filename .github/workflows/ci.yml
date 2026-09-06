@@ -76,6 +76,11 @@ jobs:
         with:
           node-version: 20
 
+      - name: NAT proof — compile and unprivileged tests (not a live walk)
+        if: matrix.os == 'macos-latest'
+        working-directory: apps/helper
+        run: go test -mod=readonly -tags natproof ./...
+
       - name: Install (electron binary skipped — CI never launches it)
         run: |
           corepack enable

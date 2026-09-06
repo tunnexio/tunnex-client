@@ -1,0 +1,298 @@
+//go:build natproof && (darwin || linux)
+
+package helper
+
+import (
+	"context"
+	"crypto/rand"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"sync/atomic"
+	"syscall"
+	"testing"
+	"time"
+
+	"github.com/pion/ice/v4"
+	"github.com/pion/logging"
+	"github.com/pion/stun/v4"
+	"golang.org/x/crypto/curve25519"
+)
+
+type proofSignal struct {
+	User, Password, PublicKey string
+	Candidates                []string
+}
+
+type proofLog struct {
+	t                *testing.T
+	unknownAuthority atomic.Bool
+}
+
+func (w *proofLog) Write(p []byte) (int, error) {
+	if strings.Contains(string(p), "x509: certificate signed by unknown authority") {
+		w.unknownAuthority.Store(true)
+	}
+	for _, category := range []string{"connection refused", "failed to allocate", "Failed to dial", "Failed to resolve", "unknown authority", "certificate is valid for", "Failed to connect", "failed to create", "location tracking"} {
+		if strings.Contains(string(p), category) {
+			w.t.Log("Pion diagnostic category:", category)
+		}
+	}
+	return len(p), nil
+}
+
+func proofWrite(t *testing.T, dir, name string, v any) {
+	t.Helper()
+	data, e := json.Marshal(v)
+	if e != nil {
+		t.Fatal("signal encoding")
+	}
+	p := filepath.Join(dir, name)
+	if e = os.WriteFile(p+".tmp", data, 0600); e != nil {
+		t.Fatal("signal write")
+	}
+	// Docker Desktop file sharing runs as the desktop user. Keep signals private
+	// but owned by the private directory's owner, even when utun tests run as root.
+	if os.Geteuid() == 0 {
+		info, e := os.Stat(dir)
+		if e != nil {
+			t.Fatal("signal directory stat")
+		}
+		st, ok := info.Sys().(*syscall.Stat_t)
+		if !ok {
+			t.Fatal("signal owner unavailable")
+		}
+		if e = os.Chown(p+".tmp", int(st.Uid), int(st.Gid)); e != nil {
+			t.Fatal("signal ownership")
+		}
+	}
+	if e = os.Rename(p+".tmp", p); e != nil {
+		t.Fatal("signal publish")
+	}
+}
+func proofRead(t *testing.T, ctx context.Context, dir, name string, v any) {
+	t.Helper()
+	for {
+		data, e := os.ReadFile(filepath.Join(dir, name))
+		if e == nil {
+			if json.Unmarshal(data, v) != nil {
+				t.Fatal("invalid signal")
+			}
+			return
+		}
+		select {
+		case <-ctx.Done():
+			t.Fatal("signal timeout")
+		case <-time.After(50 * time.Millisecond):
+		}
+	}
+}
+
+func TestNativePionProof(t *testing.T) {
+	dir, role := os.Getenv("NAT_PROOF_DIR"), os.Getenv("NAT_PROOF_ROLE")
+	if dir == "" {
+		t.Skip("explicit private native proof fixture required")
+	}
+	if role != "client" && role != "server" {
+		t.Fatal("invalid role")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	defer cancel()
+	var credential struct{ Username, Password string }
+	proofRead(t, ctx, dir, "turn.json", &credential)
+	u, e := stun.ParseURI(os.Getenv("TURN_URL"))
+	if e != nil || u == nil {
+		t.Fatal("invalid TURN URL")
+	}
+	if u.Proto != stun.ProtoTypeTCP {
+		t.Fatal("TCP/TLS required")
+	}
+	rejectCA := os.Getenv("NAT_PROOF_REJECT_CA") == "yes"
+	if rejectCA && u.Scheme != stun.SchemeTypeTURNS {
+		t.Fatal("trust negative requires TLS")
+	}
+	if u.Scheme == stun.SchemeTypeTURNS {
+		pem, e := os.ReadFile(filepath.Join(dir, "cert.pem"))
+		if e != nil {
+			t.Fatal("fixture CA missing")
+		}
+		pool := x509.NewCertPool()
+		if !rejectCA && !pool.AppendCertsFromPEM(pem) {
+			t.Fatal("fixture CA invalid")
+		}
+		// Test-process only: no Keychain mutation and no InsecureSkipVerify.
+		t.Setenv("GODEBUG", os.Getenv("GODEBUG")+",x509usefallbackroots=1")
+		x509.SetFallbackRoots(pool)
+	}
+	u.Username, u.Password = credential.Username, credential.Password
+	lf := logging.NewDefaultLoggerFactory()
+	lf.DefaultLogLevel = logging.LogLevelDebug
+	logs := &proofLog{t: t}
+	lf.Writer = logs
+	a, e := ice.NewAgent(&ice.AgentConfig{Urls: []*stun.URI{u}, CandidateTypes: []ice.CandidateType{ice.CandidateTypeRelay}, NetworkTypes: []ice.NetworkType{ice.NetworkTypeUDP4}, LoggerFactory: lf})
+	if e != nil {
+		t.Fatal("ICE create")
+	}
+	defer a.Close()
+	done := make(chan struct{})
+	if a.OnCandidate(func(c ice.Candidate) {
+		if c == nil {
+			close(done)
+		}
+	}) != nil {
+		t.Fatal("candidate callback")
+	}
+	if a.GatherCandidates() != nil {
+		t.Fatal("gather")
+	}
+	select {
+	case <-done:
+	case <-ctx.Done():
+		t.Fatal("gather timeout")
+	}
+	var key [32]byte
+	if _, e = rand.Read(key[:]); e != nil {
+		t.Fatal(e)
+	}
+	pub, e := curve25519.X25519(key[:], curve25519.Basepoint)
+	if e != nil {
+		t.Fatal(e)
+	}
+	s := proofSignal{PublicKey: base64.StdEncoding.EncodeToString(pub)}
+	s.User, s.Password, e = a.GetLocalUserCredentials()
+	if e != nil {
+		t.Fatal("ICE credentials")
+	}
+	cs, e := a.GetLocalCandidates()
+	if rejectCA {
+		if e != nil || len(cs) != 0 || !logs.unknownAuthority.Load() {
+			t.Fatal("expected exact unknown-authority rejection and no candidates")
+		}
+		t.Log("PASS native process rejects untrusted TURN TLS certificate; no candidates")
+		return
+	}
+	if e != nil || len(cs) == 0 {
+		t.Fatal("no candidates")
+	}
+	for _, c := range cs {
+		s.Candidates = append(s.Candidates, c.Marshal())
+	}
+	proofWrite(t, dir, role+".json", s)
+	other := "client"
+	if role == "client" {
+		other = "server"
+	}
+	var remote proofSignal
+	proofRead(t, ctx, dir, other+".json", &remote)
+	for _, raw := range remote.Candidates {
+		c, e := ice.UnmarshalCandidate(raw)
+		if e != nil || c.Type() != ice.CandidateTypeRelay {
+			t.Fatal("invalid relay candidate")
+		}
+		if a.AddRemoteCandidate(c) != nil {
+			t.Fatal("candidate exchange")
+		}
+	}
+	var session *ice.Conn
+	if role == "client" {
+		session, e = a.Dial(ctx, remote.User, remote.Password)
+	} else {
+		session, e = a.Accept(ctx, remote.User, remote.Password)
+	}
+	if e != nil {
+		t.Fatal("ICE connect")
+	}
+	pair, e := a.GetSelectedCandidatePair()
+	if e != nil || pair == nil || pair.Local.Type() != ice.CandidateTypeRelay || pair.Remote.Type() != ice.CandidateTypeRelay {
+		t.Fatal("non-relay path")
+	}
+	private := base64.StdEncoding.EncodeToString(key[:])
+	if role == "server" {
+		proofKernel(t, session, private, remote.PublicKey, dir, ctx)
+		return
+	}
+	proofDesktop(t, session, private, remote.PublicKey, dir, ctx)
+}
+
+func proofHTTP(t *testing.T, dir string, ctx context.Context) {
+	var count atomic.Int64
+	srv := &http.Server{ReadHeaderTimeout: time.Second, Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/count" {
+			fmt.Fprint(w, count.Load())
+			return
+		}
+		count.Add(1)
+		fmt.Fprint(w, "native-pion-proof")
+	})}
+	l, e := net.Listen("tcp4", "0.0.0.0:8080")
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer srv.Close()
+	go srv.Serve(l)
+	proofWrite(t, dir, "ready.json", true)
+	var done bool
+	proofRead(t, ctx, dir, "done.json", &done)
+	if !done {
+		t.Fatal("client incomplete")
+	}
+	t.Log("PASS Linux kernel fixture completed; application arrivals", count.Load())
+}
+
+func proofRequests(t *testing.T, restrict func(), closeRelay func()) {
+	t.Helper()
+	hc := &http.Client{Timeout: 5 * time.Second, Transport: &http.Transport{Proxy: nil, DisableKeepAlives: true}}
+	defer hc.CloseIdleConnections()
+	get := func(url string) string {
+		t.Helper()
+		r, e := hc.Get(url)
+		if e != nil {
+			t.Fatal("private HTTP failed:", e)
+		}
+		defer r.Body.Close()
+		b, e := io.ReadAll(r.Body)
+		if e != nil || r.StatusCode != 200 {
+			t.Fatal("HTTP response")
+		}
+		return string(b)
+	}
+	for _, ip := range []string{"10.250.0.2", "10.250.0.3"} {
+		if get("http://"+ip+":8080/") != "native-pion-proof" {
+			t.Fatal("body mismatch")
+		}
+	}
+	before, e := strconv.Atoi(get("http://10.250.0.2:8080/count"))
+	if e != nil {
+		t.Fatal(e)
+	}
+	restrict()
+	hc.Timeout = time.Second
+	r, e := hc.Get("http://10.250.0.3:8080/")
+	if e == nil {
+		r.Body.Close()
+		t.Fatal("denied destination reached")
+	}
+	hc.Timeout = 5 * time.Second
+	if get("http://10.250.0.2:8080/count") != strconv.Itoa(before) {
+		t.Fatal("denied request reached handler")
+	}
+	if get("http://10.250.0.2:8080/") != "native-pion-proof" {
+		t.Fatal("allowed liveness")
+	}
+	closeRelay()
+	hc.Timeout = time.Second
+	r, e = hc.Get("http://10.250.0.2:8080/")
+	if e == nil {
+		r.Body.Close()
+		t.Fatal("closed relay carried traffic")
+	}
+	t.Log("PASS real macOS backend: encrypted HTTP, reachable deny control, cryptokey denial, allowed liveness, relay-close failure; NOT CP policy or cross-network acceptance")
+}

@@ -118,6 +118,16 @@ func physGatewayFor(host, v4, v6 string) string {
 // NewBackend returns the macOS tunnel backend.
 func NewBackend() Backend { return &darwinBackend{} }
 
+func (b *darwinBackend) deviceConfig(cfg *TunnelConfig) (string, error) {
+	uapi, err := uapiConfig(cfg)
+	if err == nil && b.proofBind != nil {
+		// No UDP listener exists. TUN-up can precede IpcSet on macOS; a
+		// listen_port update would unnecessarily close the negotiated session.
+		uapi = strings.Replace(uapi, "listen_port=0\n", "", 1)
+	}
+	return uapi, err
+}
+
 func (b *darwinBackend) Up(cfg *TunnelConfig) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -192,7 +202,7 @@ func (b *darwinBackend) Up(cfg *TunnelConfig) error {
 	}
 	name, _ := tdev.Name()
 	dev := device.NewDevice(tdev, bind, device.NewLogger(device.LogLevelError, "tunnex-helper: "))
-	uapi, err := uapiConfig(cfg)
+	uapi, err := b.deviceConfig(cfg)
 	if err != nil {
 		dev.Close()
 		return err
