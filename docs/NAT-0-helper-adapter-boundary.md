@@ -1,6 +1,6 @@
 # NAT-0: real-helper adapter boundary
 
-Status: design fork HELD for disposition, 2026-09-06. No traffic proof claimed.
+Status: approved internal adapter slice implemented, 2026-09-06. No traffic proof claimed.
 Client content tested: `0727e82` (subsequent commits are evidence only).
 Companion laboratory bridge: tunnex `9982336`.
 
@@ -68,3 +68,23 @@ The proof seam refuses full tunnels until relay-route exclusions are qualified.
 Existing endpoint validation is unchanged. Session signaling and live Pion
 wiring follow after adapter ownership tests and review; this slice alone is not
 a live VPN result or a released transport.
+
+## Implementation checkpoint
+
+Implemented `apps/helper/internal/relaybind`: one fixed peer, owner-checked
+endpoints, datagram session factory, generation-bound receive functions, bounded
+close behavior under the Session contract, and no direct fallback. No new
+dependencies or public IPC fields were added. macOS backend has the unexported
+proof factory; standard construction remains unchanged. Early device failures
+now close the device, including its bind, rather than only the TUN descriptor.
+
+Passed native helper race tests and vet, repeated adapter race tests, and
+Windows amd64/macOS amd64 CGO-disabled cross-builds. Two independent read-only
+reviewers reported no actionable findings in this slice. The tests use synthetic
+datagram sessions: real Pion framing, concurrency and closure are NOT qualified
+by them. No updated binary was installed or host networking changed in this slice.
+
+Next: attach negotiated Pion sessions to the package-local backend proof,
+exercise actual encrypted traffic with a Linux peer, then perform the original
+live cross-network/CP policy acceptance. Existing approval covers continuing
+that bounded proof; no claim that the product NAT feature is finished.

@@ -39,11 +39,14 @@ const dnsBackupPath = "/var/run/tunnex/dns.json"
 // Up arms the pf backstop BEFORE moving routes; Down restores routing then flushes
 // pf LAST.
 type darwinBackend struct {
-	mu      sync.Mutex
-	dev     *device.Device
-	tunDev  tun.Device
-	ifname  string
-	pfToken string // reference-counted `pfctl -E` token, released (not -d) on Down
+	// Package-local NAT-0 proof seam. No IPC/config/env can select this path.
+	// Factory ownership belongs to the backend; full-tunnel relay routes are not qualified.
+	proofBind func(*TunnelConfig) (conn.Bind, error)
+	mu        sync.Mutex
+	dev       *device.Device
+	tunDev    tun.Device
+	ifname    string
+	pfToken   string // reference-counted `pfctl -E` token, released (not -d) on Down
 	// endpointHost is the WG endpoint IP for which a full tunnel pins a host route
 	// via the PHYSICAL gateway (so WG's own encrypted packets don't loop back into
 	// the tunnel). endpointFam is "-inet"/"-inet6" so Down deletes it correctly.
@@ -118,6 +121,9 @@ func NewBackend() Backend { return &darwinBackend{} }
 func (b *darwinBackend) Up(cfg *TunnelConfig) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	if b.proofBind != nil && cfg.FullTunnel {
+		return fmt.Errorf("NAT-0 proof bind supports split tunnels only")
+	}
 
 	// Resolve a hostname endpoint to ONE IP up front so the pf pass rule, the endpoint
 	// host-route, and wireguard-go all pin the same address (review #10).
@@ -169,23 +175,34 @@ func (b *darwinBackend) Up(cfg *TunnelConfig) error {
 	}
 
 	// 2) Create the utun + wireguard-go device, configure it.
+	bind := conn.NewDefaultBind()
+	if b.proofBind != nil {
+		bind, err = b.proofBind(cfg)
+		if err != nil {
+			return fmt.Errorf("proof bind unavailable")
+		}
+		if bind == nil {
+			return fmt.Errorf("nil proof bind")
+		}
+	}
 	tdev, err := tun.CreateTUN("utun", deviceMTU(cfg))
 	if err != nil {
+		_ = bind.Close()
 		return fmt.Errorf("create utun: %w", err)
 	}
 	name, _ := tdev.Name()
-	dev := device.NewDevice(tdev, conn.NewDefaultBind(), device.NewLogger(device.LogLevelError, "tunnex-helper: "))
+	dev := device.NewDevice(tdev, bind, device.NewLogger(device.LogLevelError, "tunnex-helper: "))
 	uapi, err := uapiConfig(cfg)
 	if err != nil {
-		_ = tdev.Close()
+		dev.Close()
 		return err
 	}
 	if err := dev.IpcSet(uapi); err != nil {
-		_ = tdev.Close()
+		dev.Close()
 		return fmt.Errorf("configure device: %w", err)
 	}
 	if err := dev.Up(); err != nil {
-		_ = tdev.Close()
+		dev.Close()
 		return fmt.Errorf("device up: %w", err)
 	}
 
