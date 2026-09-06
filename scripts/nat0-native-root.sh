@@ -3,6 +3,8 @@
 set -eu
 stage=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 target=${2:-localhost}
+expect=${3:-}
+case "$expect" in ''|direct|relay) ;; *) exit 2;; esac
 if [ "$target" != localhost ]; then
   case "$target" in ''|*[!0-9.]*) echo 'Invalid proof host' >&2; exit 2;; esac
 fi
@@ -29,5 +31,5 @@ done
 trap '/bin/launchctl bootstrap system /Library/LaunchDaemons/io.tunnex.helper.plist' EXIT
 barrier=no
 if [ "$target" != localhost ]; then barrier=yes; fi
-NAT_PROOF_START_BARRIER="$barrier" NAT_PROOF_HELPER_STOPPED=yes NAT_PROOF_ROLE=client NAT_PROOF_DIR="$stage" TURN_URL="$turn_url" \
+NAT_PROOF_EXPECT_PATH="$expect" NAT_PROOF_START_BARRIER="$barrier" NAT_PROOF_HELPER_STOPPED=yes NAT_PROOF_ROLE=client NAT_PROOF_DIR="$stage" TURN_URL="$turn_url" \
   "$stage/mac.test" -test.run '^TestNativePionProof$' -test.v -test.timeout=110s

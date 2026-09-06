@@ -137,7 +137,30 @@ func TestNativePionProof(t *testing.T) {
 	lf.DefaultLogLevel = logging.LogLevelTrace
 	logs := &proofLog{t: t}
 	lf.Writer = logs
-	a, e := ice.NewAgent(&ice.AgentConfig{Urls: []*stun.URI{u}, CandidateTypes: []ice.CandidateType{ice.CandidateTypeRelay}, NetworkTypes: []ice.NetworkType{ice.NetworkTypeUDP4}, LoggerFactory: lf})
+	expect := os.Getenv("NAT_PROOF_EXPECT_PATH")
+	if expect != "" && expect != "direct" && expect != "relay" {
+		t.Fatal("invalid expected path")
+	}
+	config := &ice.AgentConfig{Urls: []*stun.URI{u}, CandidateTypes: []ice.CandidateType{ice.CandidateTypeRelay}, NetworkTypes: []ice.NetworkType{ice.NetworkTypeUDP4}, LoggerFactory: lf}
+	var options []ice.AgentOption
+	if expect != "" {
+		config.CandidateTypes = []ice.CandidateType{ice.CandidateTypeHost, ice.CandidateTypeRelay}
+		if role == "server" {
+			ip := net.ParseIP(os.Getenv("NAT_PROOF_PUBLIC_IP"))
+			if ip == nil || ip.To4() == nil {
+				t.Fatal("IPv4 fixture address required")
+			}
+			config.PortMin, config.PortMax = 15000, 15000
+			options = append(options, ice.WithAddressRewriteRules(ice.AddressRewriteRule{External: []string{ip.String()}, AsCandidateType: ice.CandidateTypeHost}))
+		}
+	}
+	var a *ice.Agent
+	if expect == "" {
+		a, e = ice.NewAgent(config)
+	} else {
+		options = append(options, ice.WithUrls(config.Urls), ice.WithCandidateTypes(config.CandidateTypes), ice.WithNetworkTypes(config.NetworkTypes), ice.WithLoggerFactory(lf), ice.WithPortRange(config.PortMin, config.PortMax))
+		a, e = ice.NewAgentWithOptions(options...)
+	}
 	if e != nil {
 		t.Fatal("ICE create")
 	}
@@ -194,7 +217,7 @@ func TestNativePionProof(t *testing.T) {
 	proofRead(t, ctx, dir, other+".json", &remote)
 	for _, raw := range remote.Candidates {
 		c, e := ice.UnmarshalCandidate(raw)
-		if e != nil || c.Type() != ice.CandidateTypeRelay {
+		if e != nil || (c.Type() != ice.CandidateTypeRelay && !(expect != "" && c.Type() == ice.CandidateTypeHost)) {
 			t.Fatal("invalid relay candidate")
 		}
 		if a.AddRemoteCandidate(c) != nil {
@@ -219,9 +242,21 @@ func TestNativePionProof(t *testing.T) {
 		t.Fatal("ICE connect")
 	}
 	pair, e := a.GetSelectedCandidatePair()
-	if e != nil || pair == nil || pair.Local.Type() != ice.CandidateTypeRelay || pair.Remote.Type() != ice.CandidateTypeRelay {
-		t.Fatal("non-relay path")
+	if e != nil || pair == nil {
+		t.Fatal("missing selected path")
 	}
+	relay := pair.Local.Type() == ice.CandidateTypeRelay || pair.Remote.Type() == ice.CandidateTypeRelay
+	if expect == "" && (pair.Local.Type() != ice.CandidateTypeRelay || pair.Remote.Type() != ice.CandidateTypeRelay) {
+		t.Fatal("relay-only fixture selected a non-relay endpoint")
+	}
+	if expect == "direct" {
+		if relay {
+			t.Fatal("direct positive control selected relay")
+		}
+	} else if !relay {
+		t.Fatal("expected relay path")
+	}
+	t.Logf("selected path: local=%s remote=%s", pair.Local.Type(), pair.Remote.Type())
 	if os.Getenv("NAT_PROOF_ICE_ONLY") == "yes" {
 		t.Log("PASS ICE-only diagnostic; NOT native traffic evidence")
 		return

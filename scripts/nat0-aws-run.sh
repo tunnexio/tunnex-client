@@ -3,6 +3,8 @@
 set -euo pipefail
 repo=$(cd "$(dirname "$0")/.." && pwd)
 mode=${1:-tcp}
+expect=${NAT_PROOF_EXPECT_PATH:-}
+case "$expect" in ''|direct|relay) ;; *) exit 2;; esac
 case "$mode" in tcp) remote_url='turn:localhost:3478?transport=tcp';; tls) remote_url='turns:localhost:5349?transport=tcp';; *) exit 2;; esac
 : "${NAT_SSH_KEY:?private SSH key path required}" "${NAT_KNOWN_HOSTS:?verified known-hosts path required}"
 [[ $(aws sts get-caller-identity --query Account --output text) == 735391218823 ]]
@@ -14,7 +16,7 @@ case "$mode" in
   tcp) client_url="turn:$host:13478?transport=tcp";;
   tls) client_url="turns:$host:15349?transport=tcp";;
 esac
-ssh_opts=(-i "$NAT_SSH_KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$NAT_KNOWN_HOSTS")
+ssh_opts=(-i "$NAT_SSH_KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o HostKeyAlias=43.205.125.234 -o "UserKnownHostsFile=$NAT_KNOWN_HOSTS")
 image=$(ssh "${ssh_opts[@]}" "ubuntu@$host" "sudo docker image inspect tunnex-nat0-kernel:20260906a --format '{{.Id}}'")
 [[ "$image" =~ ^sha256:[a-f0-9]{64}$ ]]
 umask 077
@@ -49,13 +51,13 @@ pkey=/proof/key.pem
 NODE
 ssh "${ssh_opts[@]}" "ubuntu@$host" "mkdir -m 700 '$remote'"
 scp "${ssh_opts[@]}" "$stage/linux.test" "$stage/turn.json" "$stage/turn.conf" "$stage/cert.pem" "$stage/key.pem" "ubuntu@$host:$remote/"
-ssh "${ssh_opts[@]}" "ubuntu@$host" "sudo docker run -d --name '$name' --cap-add NET_ADMIN --user 0:0 -p 13478:3478/tcp -p 15349:5349/tcp --mount 'type=bind,src=$remote,dst=/proof' --entrypoint turnserver '$image' -c /proof/turn.conf >/dev/null"
+ssh "${ssh_opts[@]}" "ubuntu@$host" "sudo docker run -d --name '$name' --cap-add NET_ADMIN --user 0:0 -p 15000:15000/udp -p 13478:3478/tcp -p 15349:5349/tcp --mount 'type=bind,src=$remote,dst=/proof' --entrypoint turnserver '$image' -c /proof/turn.conf >/dev/null"
 trap 'ssh "${ssh_opts[@]}" "ubuntu@$host" "sudo docker stop '\''$name'\'' >/dev/null"' EXIT
 for attempt in {1..40}; do if nc -z -w 2 "$host" 15349; then break; fi; sleep 0.25; done
 nc -z -w 2 "$host" 13478
 ice_only=${NAT_PROOF_ICE_ONLY:-no}
 [[ "$ice_only" == yes || "$ice_only" == no ]]
-ssh "${ssh_opts[@]}" "ubuntu@$host" "sudo docker exec -e NAT_PROOF_START_BARRIER=yes -e NAT_PROOF_ICE_ONLY='$ice_only' -e NAT_PROOF_CONTAINER=yes -e NAT_PROOF_DIR=/proof -e NAT_PROOF_ROLE=server -e 'TURN_URL=$remote_url' '$name' /proof/linux.test -test.run '^TestNativePionProof$' -test.v -test.timeout=110s" &
+ssh "${ssh_opts[@]}" "ubuntu@$host" "sudo docker exec -e NAT_PROOF_EXPECT_PATH='$expect' -e NAT_PROOF_PUBLIC_IP='$host' -e NAT_PROOF_START_BARRIER=yes -e NAT_PROOF_ICE_ONLY='$ice_only' -e NAT_PROOF_CONTAINER=yes -e NAT_PROOF_DIR=/proof -e NAT_PROOF_ROLE=server -e 'TURN_URL=$remote_url' '$name' /proof/linux.test -test.run '^TestNativePionProof$' -test.v -test.timeout=110s" &
 server_pid=$!
 for attempt in {1..100}; do
   if ssh "${ssh_opts[@]}" "ubuntu@$host" "test -f '$remote/server.json'"; then break; fi
@@ -94,15 +96,15 @@ mv "$stage/server.incoming" "$stage/server.json"
 ) &
 signal_pid=$!
 if [[ "$ice_only" == yes ]]; then
-  NAT_PROOF_START_BARRIER=yes NAT_PROOF_ICE_ONLY=yes NAT_PROOF_ROLE=client NAT_PROOF_DIR="$stage" TURN_URL="$client_url" \
+  NAT_PROOF_EXPECT_PATH="$expect" NAT_PROOF_START_BARRIER=yes NAT_PROOF_ICE_ONLY=yes NAT_PROOF_ROLE=client NAT_PROOF_DIR="$stage" TURN_URL="$client_url" \
     "$stage/mac.test" -test.run '^TestNativePionProof$' -test.v -test.timeout=110s
   wait "$signal_pid"; wait "$server_pid"
   echo 'ICE-only diagnostic completed; no helper or traffic qualification'
   exit 0
 fi
-osascript - "$stage/root.sh" "$mode" "$host" <<'APPLESCRIPT'
+osascript - "$stage/root.sh" "$mode" "$host" "$expect" <<'APPLESCRIPT'
 on run argv
-  do shell script "/bin/sh " & quoted form of (item 1 of argv) & " " & quoted form of (item 2 of argv) & " " & quoted form of (item 3 of argv) with administrator privileges
+  do shell script "/bin/sh " & quoted form of (item 1 of argv) & " " & quoted form of (item 2 of argv) & " " & quoted form of (item 3 of argv) & " " & quoted form of (item 4 of argv) with administrator privileges
 end run
 APPLESCRIPT
 wait "$signal_pid"
@@ -114,7 +116,7 @@ for attempt in {1..40}; do
 done
 [[ "$restored" == true ]]
 if [[ "$mode" == tls ]]; then
-  NAT_PROOF_REJECT_CA=yes NAT_PROOF_ROLE=client NAT_PROOF_DIR="$stage" TURN_URL="turns:$host:15349?transport=tcp" \
+  NAT_PROOF_EXPECT_PATH= NAT_PROOF_REJECT_CA=yes NAT_PROOF_ROLE=client NAT_PROOF_DIR="$stage" TURN_URL="turns:$host:15349?transport=tcp" \
     "$stage/mac.test" -test.run '^TestNativePionProof$' -test.v -test.timeout=30s
 fi
 echo "PASS AWS $mode packet fixture $name; NOT CP policy/GUI acceptance"
