@@ -51,3 +51,20 @@ AWS read-only identity verification returned account `735391218823`. Running
 ap-south-1 instances are the existing BYODB CP and private database. No dedicated
 relay/gateway host was verified and no cloud resource was changed. Do not use the
 database VM as a relay or modify CP networking merely to force this proof.
+
+## Approved adapter slice
+
+User approved the helper-owned implementation. First slice adds an internal
+WireGuard Bind for one fixed peer and a datagram-preserving session factory.
+The factory transfers an already negotiated session, never a raw TCP stream;
+Pion ICE remains responsible for TURN framing. Open creates a fresh session;
+Close unblocks receive and cannot redirect an old receiver into a new session.
+No direct-network fallback exists in this adapter. Wrong-peer endpoints fail.
+
+macOS gains an unexported bind-construction seam used by package-local proof
+tests. Normal NewBackend continues using the default WireGuard bind; no IPC,
+environment, config file or imported profile can select the experimental bind.
+The proof seam refuses full tunnels until relay-route exclusions are qualified.
+Existing endpoint validation is unchanged. Session signaling and live Pion
+wiring follow after adapter ownership tests and review; this slice alone is not
+a live VPN result or a released transport.
