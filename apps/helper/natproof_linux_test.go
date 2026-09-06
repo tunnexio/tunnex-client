@@ -18,6 +18,50 @@ func proofKernel(t *testing.T, s *ice.Conn, private, public, dir string, ctx con
 	if os.Getenv("NAT_PROOF_CONTAINER") != "yes" {
 		t.Fatal("isolated fixture required")
 	}
+	if os.Getenv("NAT_PROOF_CP") == "yes" {
+		address := net.ParseIP(os.Getenv("NAT_PROOF_GATEWAY_IP"))
+		if address == nil || address.To4() == nil || !address.IsPrivate() {
+			t.Fatal("private fixture gateway required")
+		}
+		u, err := net.DialUDP("udp4", nil, &net.UDPAddr{IP: address, Port: 51820})
+		if err != nil {
+			t.Fatal("gateway bridge connect")
+		}
+		defer u.Close()
+		go func() {
+			b := make([]byte, 65535)
+			for {
+				n, e := u.Read(b)
+				if e != nil {
+					return
+				}
+				if _, e = s.Write(b[:n]); e != nil {
+					return
+				}
+			}
+		}()
+		go func() {
+			b := make([]byte, 65535)
+			for {
+				n, e := s.Read(b)
+				if e != nil {
+					return
+				}
+				if _, e = u.Write(b[:n]); e != nil {
+					return
+				}
+			}
+		}()
+		// Kernel peer learns this endpoint from its authenticated WireGuard
+		// handshake. Do not mutate the enrolled interface, keys or AllowedIPs.
+		proofWrite(t, dir, "ready.json", true)
+		var done bool
+		proofRead(t, ctx, dir, "done.json", &done)
+		if !done {
+			t.Fatal("CP traffic incomplete")
+		}
+		return
+	}
 	run := func(args ...string) {
 		t.Helper()
 		if exec.Command("ip", args...).Run() != nil {

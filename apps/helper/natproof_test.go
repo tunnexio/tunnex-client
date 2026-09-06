@@ -32,6 +32,12 @@ type proofSignal struct {
 	Candidates                []string
 }
 
+type proofCPPeer struct {
+	GatewayPublicKey string
+	ClientPublicKey  string
+	ClientAddress    string
+}
+
 type proofLog struct {
 	t                *testing.T
 	unknownAuthority atomic.Bool
@@ -104,7 +110,12 @@ func TestNativePionProof(t *testing.T) {
 	if role != "client" && role != "server" {
 		t.Fatal("invalid role")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	timeout := 90 * time.Second
+	cpMode := os.Getenv("NAT_PROOF_CP") == "yes"
+	if cpMode {
+		timeout = 300 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	var credential struct{ Username, Password string }
 	proofRead(t, ctx, dir, "turn.json", &credential)
@@ -185,11 +196,33 @@ func TestNativePionProof(t *testing.T) {
 	if _, e = rand.Read(key[:]); e != nil {
 		t.Fatal(e)
 	}
+	var cpPeer proofCPPeer
+	if cpMode {
+		proofRead(t, ctx, dir, "cp-peer.json", &cpPeer)
+		if role == "client" {
+			var issued struct {
+				PrivateKey string `json:"private_key"`
+			}
+			proofRead(t, ctx, dir, "device.json", &issued)
+			decoded, err := base64.StdEncoding.DecodeString(issued.PrivateKey)
+			if err != nil || len(decoded) != 32 {
+				t.Fatal("invalid retained CP key")
+			}
+			copy(key[:], decoded)
+		}
+	}
 	pub, e := curve25519.X25519(key[:], curve25519.Basepoint)
 	if e != nil {
 		t.Fatal(e)
 	}
 	s := proofSignal{PublicKey: base64.StdEncoding.EncodeToString(pub)}
+	if cpMode {
+		if role == "server" {
+			s.PublicKey = cpPeer.GatewayPublicKey
+		} else if s.PublicKey != cpPeer.ClientPublicKey {
+			t.Fatal("CP device key mismatch")
+		}
+	}
 	s.User, s.Password, e = a.GetLocalUserCredentials()
 	if e != nil {
 		t.Fatal("ICE credentials")
@@ -215,6 +248,15 @@ func TestNativePionProof(t *testing.T) {
 	}
 	var remote proofSignal
 	proofRead(t, ctx, dir, other+".json", &remote)
+	if cpMode {
+		want := cpPeer.ClientPublicKey
+		if role == "client" {
+			want = cpPeer.GatewayPublicKey
+		}
+		if remote.PublicKey != want {
+			t.Fatal("CP peer binding mismatch")
+		}
+	}
 	for _, raw := range remote.Candidates {
 		c, e := ice.UnmarshalCandidate(raw)
 		if e != nil || (c.Type() != ice.CandidateTypeRelay && !(expect != "" && c.Type() == ice.CandidateTypeHost)) {
@@ -348,5 +390,9 @@ func proofRequests(t *testing.T, restrict func(), closeRelay func()) {
 		r.Body.Close()
 		t.Fatal("closed relay carried traffic")
 	}
-	t.Log("PASS real macOS backend: encrypted HTTP, reachable deny control, cryptokey denial, allowed liveness, relay-close failure; NOT CP policy or cross-network acceptance")
+	if os.Getenv("NAT_PROOF_CP") == "yes" {
+		t.Log("PASS real macOS backend: encrypted HTTP, reachable deny control, CP-controlled denial, allowed liveness, relay-close failure")
+	} else {
+		t.Log("PASS real macOS backend: encrypted HTTP, reachable deny control, cryptokey denial, allowed liveness, relay-close failure; NOT CP policy or cross-network acceptance")
+	}
 }
