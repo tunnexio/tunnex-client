@@ -87,6 +87,9 @@ jobs:
       - name: Client — unit tests
         run: pnpm --filter @tunnex/client test
 
+      - name: Development installer — unprivileged trust tests
+        run: node --test scripts/macos-dev-plist.test.cjs
+
       - name: Client — build
         run: pnpm --filter @tunnex/client build
 

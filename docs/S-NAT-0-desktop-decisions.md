@@ -30,7 +30,7 @@ No credentials, private keys or client profiles are committed.
 - Non-interactive sudo is unavailable; macOS authentication is required for
   any controlled helper replacement. No privileged mutation was attempted.
 
-## Held finding before invoking the legacy development installer
+## Approved installer finding and fold
 
 P1: `scripts/macos-dev-install.sh` reads a rejected executable directory from
 `/tmp/tunnex-helper.log` and adds it to privileged-helper caller trust. Rejected
@@ -41,7 +41,26 @@ Recommended narrow disposition: remove rejected-log trust inference; derive
 only explicit required caller directories, use the protected runtime log path,
 and test generated trust configuration without root. Preserve packaged-app
 trust during the temporary development walk. Hold for user disposition before
-folding this security-sensitive installer change.
+folding this security-sensitive installer change. The user subsequently approved
+this narrow fix in-session on 2026-09-06.
+
+Implemented: log-derived trust was removed. The generated plist trusts exactly
+the driver directory, packaged app directory and canonical development Electron
+directory. XML escaping and path-delimiter validation prevent trust-list/plist
+injection. Missing Electron fails before installation. `--print-plist` renders
+the actual install configuration without privileged changes.
+
+The daemon log now resides at `/var/run/tunnex/helper.log`, with root-owned
+runtime directory and mode-0600 file. Explicit destination symlinks are refused.
+Build artifacts use a private unique temporary directory rather than fixed
+`/tmp` names; that directory is retained, not automatically cleaned.
+
+All four focused tests, shell/Node syntax and macOS `plutil` validation of the
+real preview passed. Tests are wired into local gates and the CI client matrix;
+remote exact-SHA CI has not run. Both independent reviewers closed the P1 with
+no new actionable findings and independently passed focused tests/shell syntax.
+Neither reviewers nor primary agent ran the privileged installer. No helper,
+firewall, routing, DNS or installed application was changed by this fold.
 
 ## Remaining live evidence
 
