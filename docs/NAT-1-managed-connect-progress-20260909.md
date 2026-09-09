@@ -1,5 +1,35 @@
 # Managed NAT Connect integration — development checkpoint
 
+## Current pickup: Windows split relay wired, native qualification pending
+
+2026-09-09, decision commit `f9eecd3`. This section supersedes older platform
+and implementation-pending claims below; older test counts remain historical.
+
+- Windows managed Connect now permits the same split-tunnel relay negotiation
+  as macOS. The Windows backend consumes the authenticated prepared bind before
+  host changes, releases it on early errors and reports its actual ICE path.
+- Both backends use the same relay UAPI serializer: no UDP listen-port reset
+  may close the single-use carrier. Direct configuration remains byte-identical.
+- Full-tunnel relay remains refused; this does not close route-exclusion/WFP
+  qualification. No installed helper or AWS process changed during this slice.
+- Full desktop main suite **311/311 PASS**, zero skips; typecheck/build PASS.
+  Helper full race suite, vet and NAT-tagged race suite PASS. Windows amd64
+  helper build and test-binary cross-compilation PASS. The Windows-specific
+  pre-host-change refusal test was compiled, not executed on Windows.
+- These are uncommitted product changes atop the existing NAT integration.
+  Cross-compilation and Mac tests do not establish Windows native forwarding.
+
+Server node ICE path classification also now matches the desktop: an ambiguous
+peer-reflexive candidate is unknown, not direct. Its 25-pair classification
+matrix/race test and package vet pass; this source is not deployed to AWS.
+
+Remaining: native Windows walk, full-tunnel/route/MTU qualification, remaining
+network/helper/gateway lifecycle acceptance, customer relay deployment and
+gateway readiness/diagnostics, final review and exact-head gates/CI. Known
+renderer census references to absent server-only files remain unresolved; no
+full renderer gate or epic-completion claim. Preserve the previously committed
+Mac/AWS evidence and rerun only behavior affected by subsequent changes.
+
 ## Latest: safety proof, no runtime change
 
 Added sustained CP500 framed-helper test: existing lease is not renewed and
