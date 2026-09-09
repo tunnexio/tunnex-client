@@ -76,6 +76,15 @@ jobs:
         with:
           node-version: 20
 
+      - name: NAT proof — compile and unprivileged tests (not a live walk)
+        if: matrix.os == 'macos-latest'
+        working-directory: apps/helper
+        run: go test -mod=readonly -tags natproof ./...
+
+      - name: NAT AWS runner — offline transport selection regression
+        if: matrix.os == 'macos-latest'
+        run: node --test scripts/nat0-aws-run.test.cjs
+
       - name: Install (electron binary skipped — CI never launches it)
         run: |
           corepack enable
@@ -86,6 +95,9 @@ jobs:
 
       - name: Client — unit tests
         run: pnpm --filter @tunnex/client test
+
+      - name: Development installer — unprivileged trust tests
+        run: node --test scripts/macos-dev-plist.test.cjs
 
       - name: Client — build
         run: pnpm --filter @tunnex/client build

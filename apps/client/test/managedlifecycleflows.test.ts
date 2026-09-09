@@ -42,6 +42,54 @@ interface ConnectSpec {
   readonly fullTunnel: boolean;
 }
 
+for (const replacement of ["disconnect", "logout", "server"] as const) {
+  test(`queued relay renewal has zero effects after ${replacement}`, async () => {
+    let stored: CredentialSnapshot | null = credential("a", "https://a.example");
+    const coordinator = new ManagedLifecycleCoordinator(() => stored);
+    const lease = await coordinator.capture(async () => "user-a");
+    const hold = deferred();
+    const earlier = coordinator.serial(async owner => {
+      await hold.promise;
+      if (replacement === "disconnect") owner.invalidate();
+      else stored = replacement === "logout" ? null : credential("b", "https://b.example");
+    });
+    let effects = 0;
+    const renewal = coordinator.serialForLease(lease, () => { effects++; });
+    const refused = assert.rejects(renewal, StaleManagedLeaseError);
+    hold.resolve();
+    await earlier;
+    await refused;
+    assert.equal(effects, 0);
+  });
+}
+
+test("repeated relay generations renew once each and reject old queued owners", async () => {
+  const coordinator = new ManagedLifecycleCoordinator(() => credential("a", "https://a.example"));
+  let lease = await coordinator.capture(async () => "user-a");
+  let effects = 0;
+  for (let generation = 0; generation < 3; generation++) {
+    const previous = lease;
+    lease = await coordinator.serialForLease(previous, owner => {
+      effects++;
+      return owner.advance(previous);
+    });
+    await assert.rejects(coordinator.serialForLease(previous, () => { effects++; }), StaleManagedLeaseError);
+  }
+  assert.equal(effects, 3);
+});
+
+test("failed renewal is not retried and does not wedge the lifecycle FIFO", async () => {
+  const coordinator = new ManagedLifecycleCoordinator(() => credential("a", "https://a.example"));
+  const lease = await coordinator.capture(async () => "user-a");
+  let attempts = 0;
+  await assert.rejects(coordinator.serialForLease(lease, () => {
+    attempts++;
+    throw Error("authorization refused");
+  }), /authorization refused/);
+  await coordinator.serial(owner => { owner.invalidate(); });
+  assert.equal(attempts, 1);
+});
+
 interface ConnectApi {
   readonly ownerId: string;
 }

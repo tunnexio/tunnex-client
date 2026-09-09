@@ -20,6 +20,8 @@ const ProtocolVersion = 1
 type AuthMode string
 
 const (
+	VerbRelayPrepare   Verb = "relay_prepare"
+	VerbRelayAuthorize Verb = "relay_authorize"
 	// AuthModePathCheck is the INTERIM mode for unsigned builds: verify the
 	// caller's executable lives inside the app's install dir. Weaker than pinning
 	// (see auth.go for the threat model). Retire trigger = S6.5b.
@@ -136,16 +138,22 @@ const (
 )
 
 func validVerb(v Verb) bool {
+	if v == VerbRelayPrepare || v == VerbRelayAuthorize {
+		return true
+	}
 	return v == VerbTunnelUp || v == VerbTunnelDown || v == VerbStatus || v == VerbPostureStatus || v == VerbSetResolvers || v == VerbSetAllowedIPs || v == VerbSetGatewayPeer
 }
 
 // Request is one app→helper message. Config is REQUIRED for tunnel_up and must be
 // nil otherwise (a config on a down/status request is rejected — no smuggling).
 type Request struct {
-	Version  int           `json:"version"`
-	AuthMode AuthMode      `json:"auth_mode"`
-	Verb     Verb          `json:"verb"`
-	Config   *TunnelConfig `json:"config,omitempty"`
+	RelayPrepare *RelayPreparation `json:"relay_prepare,omitempty"`
+	RelayRemote  string            `json:"relay_remote,omitempty"`
+	RelayID      string            `json:"relay_id,omitempty"`
+	Version      int               `json:"version"`
+	AuthMode     AuthMode          `json:"auth_mode"`
+	Verb         Verb              `json:"verb"`
+	Config       *TunnelConfig     `json:"config,omitempty"`
 	// Resolvers is the full-sweep desired set for VerbSetResolvers only (nil elsewhere).
 	Resolvers []ResolverForward `json:"resolvers,omitempty"`
 	// AllowedIPs is the COMPLETE desired peer AllowedIPs set for VerbSetAllowedIPs only (nil elsewhere) —
@@ -173,16 +181,18 @@ type ResolverForward struct {
 // Response is one helper→app reply. Status is set only for a successful status/up;
 // Posture only for a successful posture_status.
 type Response struct {
-	Version int            `json:"version"`
-	OK      bool           `json:"ok"`
-	Code    string         `json:"code,omitempty"`  // stable machine code on failure
-	Error   string         `json:"error,omitempty"` // human message on failure
-	Status  *TunnelStatus  `json:"status,omitempty"`
-	Posture *PostureStatus `json:"posture,omitempty"`
+	RelayOffer string         `json:"relay_offer,omitempty"`
+	Version    int            `json:"version"`
+	OK         bool           `json:"ok"`
+	Code       string         `json:"code,omitempty"`  // stable machine code on failure
+	Error      string         `json:"error,omitempty"` // human message on failure
+	Status     *TunnelStatus  `json:"status,omitempty"`
+	Posture    *PostureStatus `json:"posture,omitempty"`
 }
 
 // TunnelStatus is read-only live state (no secrets — never echoes keys).
 type TunnelStatus struct {
+	ConnectionPath   string `json:"connection_path,omitempty"`
 	State            string `json:"state"` // "down" | "up" | "failed"
 	Interface        string `json:"interface,omitempty"`
 	LastHandshakeSec int64  `json:"last_handshake_sec,omitempty"` // unix seconds, 0 = never
@@ -222,6 +232,9 @@ func ValidateRequest(r *Request) error {
 	}
 	if !validVerb(r.Verb) {
 		return &ProtocolError{Code: "unknown_verb", Msg: "unknown verb"}
+	}
+	if (r.RelayPrepare != nil) != (r.Verb == VerbRelayPrepare) || (r.RelayRemote != "" && r.Verb != VerbTunnelUp) || (r.RelayID != "" && r.Verb != VerbRelayAuthorize) || (r.Verb == VerbRelayAuthorize && r.RelayID == "") {
+		return &ProtocolError{Code: "bad_relay_envelope", Msg: "relay fields do not match verb"}
 	}
 	if r.Verb == VerbTunnelUp && r.Config == nil {
 		return &ProtocolError{Code: "config_required", Msg: "tunnel_up requires a config"}

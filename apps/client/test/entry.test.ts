@@ -76,8 +76,10 @@ test("IPC wires the foreign-anchor guard before managed connect and remove effec
     ts.isVariableDeclaration(node) && node.name.getText(source) === "connect");
   assert.ok(connect?.initializer && ts.isArrowFunction(connect.initializer));
   const serial = connect.initializer.body;
-  assert.ok(ts.isCallExpression(serial) && ts.isArrowFunction(serial.arguments[0]));
-  const connectBody = serial.arguments[0].body;
+  assert.ok(ts.isCallExpression(serial) && ts.isArrowFunction(serial.arguments[1]));
+  assert.equal(serial.expression.getText(source), "lifecycle.serialForLease");
+  assert.equal(serial.arguments[0].getText(source), "recoveryLease");
+  const connectBody = serial.arguments[1].body;
   assert.ok(ts.isBlock(connectBody));
 
   const guardIndex = (body: ts.Block): number => body.statements.findIndex((statement) =>

@@ -5,6 +5,8 @@ import { ipcMain, BrowserWindow, dialog } from "electron";
 import { Config, MANAGED_PROFILE_SELECTION } from "./config";
 import { CredentialStore } from "./credential";
 import type { EnrollmentAnchorStore } from "./enrollmentanchor";
+import { deriveWireGuardPublicKey } from "./enrollmentanchor";
+import { prepareRelayConnectivity } from "./connectivityapi";
 import { runLogin, runLogout } from "./login";
 import { TunnelController, helperSocketPath } from "./tunnel";
 import { TunnelConfigStore, importedProfileOrigin } from "./tunnelstore";
@@ -414,6 +416,7 @@ export function registerIpc(
   // provider. activeManagedLease only labels heartbeat/onLost effects; it never
   // supplies credentials or enrollment inputs.
   let activeManagedLease: ManagedLease | null = null;
+  let relayRecoveryUsed = false;
   const applyTunnelStatus = (status: TunnelStatus): void => {
     const wasFailed = lastTransport?.state === "failed";
     recordTransportStatus(status);
@@ -438,6 +441,17 @@ export function registerIpc(
       // connection lease was invalidated by logout/profile/server replacement.
       const lease = activeManagedLease;
       if (lease) {
+        if (status.recovery_reason === "relay_session_renewal"
+          || ((status.recovery_reason === "relay_negotiation_changed" || status.recovery_reason === "relay_transport_lost") && !relayRecoveryUsed)) {
+          if (status.recovery_reason !== "relay_session_renewal") relayRecoveryUsed = true;
+          const fullTunnel = tunnelStore.get(lease.credential.server)?.config.full_tunnel ?? false;
+          // Queue the ordinary owner-proven Connect, not a second lifecycle.
+          // Its captured lease check runs INSIDE the FIFO: logout/disconnect or
+          // profile replacement wins over a delayed recovery. One attempt only;
+          // planned expiry renewal does not exhaust broken-offer recovery.
+          void connect(fullTunnel, lease).catch(() => {});
+          return;
+        }
         const apply = () => {
           applyTunnelStatus(status);
         };
@@ -485,7 +499,12 @@ export function registerIpc(
       return status;
     }));
 
-  const connect = (fullTunnel: boolean): Promise<ClientTunnelStatus> => lifecycle.serial(async (owner) => {
+  const connect = (fullTunnel: boolean, recoveryLease?: ManagedLease): Promise<ClientTunnelStatus> => lifecycle.serialForLease(recoveryLease, async (owner) => {
+    if (recoveryLease) {
+      applyTunnelStatus({ state: "failed" });
+    } else {
+      relayRecoveryUsed = false;
+    }
     const importedAtStart = activeImportedProfile();
 
     // Imported WireGuard files have no managed credential. They still enter the
@@ -655,7 +674,26 @@ export function registerIpc(
       // GUI admin prompt (no-op if already installed / off macOS). This is deliberately
       // after fixed identity, owner, and organization proof.
       installHelper: () => ensureHelperInstalled(),
-      up: (configProvider) => tunnel.up(configProvider),
+      up: (configProvider) => tunnel.up(configProvider, async (config) => {
+        const fixedLease = activeManagedLease;
+        if (!fixedLease) throw new Error("managed_lease_required");
+        lifecycle.assertCurrent(fixedLease);
+        const fixedOrigin = fixedLease.credential.server;
+        const stored = tunnelStore.get(fixedOrigin);
+        if (!stored || stored.imported || stored.ownerUserId !== fixedLease.userId) throw new Error("managed_owner_mismatch");
+        // Legacy insecure development origins retain the old direct path.
+        if (!fixedOrigin.startsWith("https://")) return null;
+        const api = await prepareRelayConnectivity(fixedOrigin, fixedLease.credential.token, {
+            orgId: stored.orgId, deviceId: stored.deviceId, gatewayId: "",
+            devicePublicKey: deriveWireGuardPublicKey(config.private_key), gatewayPublicKey: config.peer_public_key,
+          }, config, () => new HttpDeviceApi(fixedOrigin, fixedLease.credential.token).routedConfig(stored.orgId, stored.deviceId),
+          () => lifecycle.assertCurrent(fixedLease));
+        if (!api) return null;
+        return {
+          api,
+          assertCurrent: () => lifecycle.assertCurrent(fixedLease),
+        };
+      }),
       onUpError: (e, connection) => {
         const connectionLease = connection.lease;
         const { origin: connectionOrigin, api: connectionApi } = connection.context;
@@ -752,7 +790,7 @@ export function registerIpc(
             }, // WF-A: re-home on active-hub move
             true, // dialEnabled: BOTH modes now (D-WFA-4 carve-out landed); the helper refuses a full-tunnel
             //        re-home only where its carve-out is absent (Windows) → the dial tier fail-statics there.
-            { endpoint: sc.config.endpoint, pubkey: sc.config.peer_public_key }, // seed = the minted peer
+            tunnel.activeGatewayDial(), // seed = the actual connected peer, including a fresh HA dial
           );
           routedRangesMonitor.start();
           // S7.5.3: self-report posture while connected. First report early (~15s),

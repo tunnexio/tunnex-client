@@ -1,4 +1,13 @@
 import { HelperConnection, PROTOCOL_VERSION, type HelperResponse, type PostureStatus, type ResolverForward, type TunnelConfig, type TunnelStatus } from "./helperclient";
+import { ConnectivityApi, assertNegotiatedOffersUnchanged, type ConnectivitySession } from "./connectivityapi";
+
+export function supportsRelayMode(platform: NodeJS.Platform, fullTunnel?: boolean): boolean {
+  return !fullTunnel && (platform === "darwin" || platform === "win32");
+}
+
+// Helper ICE operations have a 30s deadline. IPC allows bounded delivery
+// overhead without changing ordinary requests or the authorization lease.
+export const RELAY_NEGOTIATION_TIMEOUT_MS = 35_000;
 
 // helperSocketPath is the local endpoint the privileged helper listens on. It is
 // platform-specific (a unix socket on macOS, a named pipe on Windows). The helper
@@ -52,6 +61,7 @@ const HEARTBEAT_MS = 10_000;
 // requests, and heartbeats while up. onStatus lets main forward live status /
 // a fail-closed event to the renderer.
 export class TunnelController {
+  private relay: { api: ConnectivityApi; session: ConnectivitySession; assertCurrent: () => void; leaseDeadline: number } | null = null;
   private readonly conn: HelperConnection;
   private heartbeat: ReturnType<typeof setInterval> | null = null;
   private upInFlight = false;
@@ -77,7 +87,9 @@ export class TunnelController {
     socketPath: string,
     private readonly onStatus?: (s: TunnelStatus) => void,
   ) {
-    this.conn = new HelperConnection(socketPath, () => this.onLost(this.connectionGeneration));
+    this.conn = new HelperConnection(socketPath, () => this.onLost(
+      this.connectionGeneration, this.relay ? "relay_transport_lost" : undefined,
+    ));
   }
 
   // baseAllowed caches the session's BAKED-STABLE AllowedIPs (the pool for split, 0.0.0.0/0 + ::/0 for
@@ -85,6 +97,14 @@ export class TunnelController {
   // never re-fetched — D2). Refreshed each up(); a mode change re-mints, so a fresh session's monitor
   // reads the fresh base.
   private baseAllowed: string[] = [];
+  private activeDial: { endpoint: string; pubkey: string } | null = null;
+
+  // Volatile negotiated peer, never the persisted enrollment dial. Return a copy
+  // only while this controller owns the successfully connected generation.
+  activeGatewayDial(): { endpoint: string; pubkey: string } | null {
+    return this.owns("up", this.sessionGeneration) && this.activeDial
+      ? { ...this.activeDial } : null;
+  }
 
   // baseAllowedIPs returns the session's baked-stable AllowedIPs — the routes the monitor must always
   // re-include (the stable core the routed-ranges push never drops).
@@ -92,7 +112,7 @@ export class TunnelController {
     return [...this.baseAllowed];
   }
 
-  async up(resolveConfig: ConfigProvider): Promise<TunnelStatus> {
+  async up(resolveConfig: ConfigProvider, connectivity?: (config: TunnelConfig) => Promise<{ api: ConnectivityApi; assertCurrent: () => void } | null>): Promise<TunnelStatus> {
     if (this.upInFlight) throw new Error("tunnel_up_in_progress");
     if (this.ownership.kind !== "inactive") throw new Error("tunnel_cleanup_required");
     this.upInFlight = true;
@@ -101,6 +121,42 @@ export class TunnelController {
     this.failedPublishedGeneration = null;
     try {
       const config = await resolveConfig();
+      let remote: string | undefined;
+      if (connectivity) {
+        const candidate = await connectivity(config);
+        if (candidate && await candidate.api.enabled()) {
+          candidate.assertCurrent();
+          if (!supportsRelayMode(process.platform, config.full_tunnel)) throw new Error("relay_platform_or_mode_unsupported");
+          let s = await candidate.api.create();
+          candidate.assertCurrent();
+          this.relay = { ...candidate, session: s, leaseDeadline: 0 };
+          if (!s.relay) throw new Error("relay_profile_unavailable");
+          const prepared = await this.conn.request({ version: PROTOCOL_VERSION, auth_mode: "path_check", verb: "relay_prepare", relay_prepare: {
+            id: s.session_id, device_public_key: s.device_public_key, gateway_public_key: s.gateway_public_key,
+            url: s.relay.url, username: s.relay.username, password: s.relay.password, expires_at: s.expires_at,
+          } }, RELAY_NEGOTIATION_TIMEOUT_MS);
+          if (!prepared.ok || !prepared.relay_offer) throw new Error("relay_helper_prepare_failed");
+          candidate.assertCurrent();
+          s = await candidate.api.publish(s, prepared.relay_offer);
+          const deadline = Date.now() + 25_000;
+          while (s.gateway_payload === "{}" || s.gateway_payload === "") {
+            if (Date.now() >= deadline) throw new Error("relay_gateway_timeout");
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            candidate.assertCurrent();
+            s = await candidate.api.read(s);
+          }
+          candidate.assertCurrent();
+          this.relay.session = s;
+          remote = s.gateway_payload;
+          // Gathering and CP signaling consumed part of the preparation lease.
+          // This freshly authorized snapshot must renew it BEFORE negotiation,
+          // not wait for the first post-connect heartbeat.
+          const authorizationStarted = Date.now();
+          const authorized = await this.conn.request({ version: PROTOCOL_VERSION, auth_mode: "path_check", verb: "relay_authorize", relay_id: s.session_id });
+          if (!authorized.ok) throw new Error("relay_authorization_failed");
+          this.relay.leaseDeadline = authorizationStarted + 30_000;
+        }
+      }
       this.address = config.address;
       this.baseAllowed = [...(config.allowed_ips ?? [])];
       // Once tunnel_up is on the wire, absence of a reply cannot prove that the
@@ -109,7 +165,7 @@ export class TunnelController {
       this.ownership = { kind: "cleanup-required", generation };
       let r: HelperResponse;
       try {
-        r = await this.conn.request({ version: PROTOCOL_VERSION, auth_mode: "path_check", verb: "tunnel_up", config });
+        r = await this.conn.request({ version: PROTOCOL_VERSION, auth_mode: "path_check", verb: "tunnel_up", config, ...(remote ? { relay_remote: remote } : {}) }, remote ? RELAY_NEGOTIATION_TIMEOUT_MS : undefined);
       } catch (error) {
         this.clearPublishedTunnelState();
         this.publishFailedOnce(generation);
@@ -132,8 +188,16 @@ export class TunnelController {
       if (!this.owns("up", generation) || this.sessionGeneration !== generation) {
         throw new Error("tunnel_owner_lost_during_up");
       }
+      this.activeDial = { endpoint: config.endpoint, pubkey: config.peer_public_key };
       this.startHeartbeat(generation);
       return this.withAddress(r.status ?? { state: "up" });
+    } catch (error) {
+      if (this.relay) {
+        this.releaseRelay();
+        this.conn.close(); // closes this connection's pending allocation too
+        if (this.ownership.kind !== "inactive") this.onLost(generation);
+      }
+      throw error;
     } finally {
       this.upInFlight = false;
     }
@@ -201,6 +265,20 @@ export class TunnelController {
   // it, keeps its last-applied dial (fail-static), and retries with backoff. A refusal (old helper
   // unknown_verb, or the full-tunnel carve-out rehome_full_tunnel_unsupported) and a wire error both throw.
   async setGatewayPeer(peerPublicKey: string, endpoint: string): Promise<void> {
+	if (this.failedPublishedGeneration === this.sessionGeneration) throw new Error("tunnel_cleanup_required");
+	if (this.relay) {
+	  this.relay.assertCurrent();
+	  const active = this.activeGatewayDial();
+	  if (active?.pubkey === peerPublicKey && active.endpoint === endpoint) return;
+	  const generation = this.sessionGeneration;
+	  // The ICE carrier is bound to one gateway and session. Closing its owner
+	  // precedes the same bounded, owner-fenced managed recovery used for
+	  // replaced offers; never swap WireGuard keys on an old carrier.
+	  this.conn.close();
+	  this.onLost(generation, "relay_negotiation_changed");
+	  this.releaseRelay();
+	  return;
+	}
     const r = await this.conn.request({
       version: PROTOCOL_VERSION,
       auth_mode: "path_check",
@@ -208,9 +286,11 @@ export class TunnelController {
       gateway_peer: { peer_public_key: peerPublicKey, endpoint },
     });
     if (!r.ok) throw new Error(r.code ? `${r.code}: ${r.error ?? ""}` : (r.error ?? "set_gateway_peer failed"));
+    if (this.owns("up", this.sessionGeneration)) this.activeDial = { endpoint, pubkey: peerPublicKey };
   }
 
   async down(): Promise<void> {
+    this.releaseRelay();
     this.stopHeartbeat();
     // First-login replacement and repeated disconnects have no tunnel to tear
     // down. Do not create a helper socket merely to ask an already-down helper.
@@ -283,6 +363,11 @@ export class TunnelController {
     // Preserve the historical display fallback, but never use an absent payload
     // as authoritative Down truth that could erase a real cleanup obligation.
     if (r.status) this.reconcileSuccessfulStatus(r.status);
+    // A surviving interface is not proof that this owner's negotiated carrier
+    // survived. Keep failure visible until explicit teardown/new Connect.
+    if (status.state === "up" && this.failedPublishedGeneration === this.sessionGeneration) {
+      return { state: "failed" };
+    }
     return this.withAddress(status);
   }
 
@@ -298,21 +383,61 @@ export class TunnelController {
 
   private startHeartbeat(generation: number): void {
     this.stopHeartbeat();
+    let busy = false;
     this.heartbeat = setInterval(async () => {
+      if (busy) return;
+      busy = true;
       try {
+        const relay = this.relay;
+        if (relay) {
+          relay.assertCurrent();
+          const current = await relay.api.read(relay.session);
+          relay.assertCurrent();
+          if (this.relay !== relay || !this.owns("up", generation)) return;
+          assertNegotiatedOffersUnchanged(relay.session, current);
+          // Only a freshly authorized response may trigger scheduled renewal.
+          // Never extend this generation: close it and let managed Connect
+          // obtain a new session under the existing owner/lifecycle fencing.
+          if (Date.parse(current.expires_at) - Date.now() <= 60_000) {
+            throw new Error("relay_session_renewal");
+          }
+          relay.session = current;
+          const authorizationStarted = Date.now();
+          const renewed = await this.conn.request({ version: PROTOCOL_VERSION, auth_mode: "path_check", verb: "relay_authorize", relay_id: current.session_id });
+          if (!renewed.ok) throw new Error("relay_authorization_failed");
+          relay.leaseDeadline = authorizationStarted + 30_000;
+        }
         const r = await this.conn.request({ version: PROTOCOL_VERSION, auth_mode: "path_check", verb: "status" });
         if (generation !== this.sessionGeneration || !this.owns("up", generation)) return;
         if (r.ok && r.status) {
           this.reconcileSuccessfulStatus(r.status);
           if (r.status.state === "failed") {
-            this.publishFailedOnce(generation);
+            this.publishFailedOnce(generation, this.relay ? "relay_transport_lost" : undefined);
           } else {
             this.onStatus?.(this.withAddress(r.status));
           }
         }
-      } catch {
+      } catch (error) {
+        if (this.relay && generation === this.sessionGeneration) {
+          // Retry only transient CP transport/service failure within the
+          // EXISTING helper lease. No failure renews that lease; the helper's
+          // independent timer still closes forwarding at its hard deadline.
+          if (error instanceof Error
+            && /^(connectivity_control_unavailable|connectivity_refused_50[0234])$/.test(error.message)
+            && Date.now() < this.relay.leaseDeadline) return;
+          this.releaseRelay();
+          this.conn.close();
+          const reason = error instanceof Error
+            && error.message === "connectivity_refused_409"
+              ? "relay_negotiation_changed"
+              : error instanceof Error && (error.message === "relay_negotiation_changed" || error.message === "relay_session_renewal")
+            ? error.message : error instanceof Error
+              && /^(relay_authorization_failed|connectivity_control_unavailable|connectivity_refused_50[0234])$/.test(error.message)
+              ? "relay_transport_lost" : undefined;
+          this.onLost(generation, reason);
+        }
         /* a dropped connection surfaces via onLost */
-      }
+      } finally { busy = false; }
     }, HEARTBEAT_MS);
     this.heartbeat.unref?.();
   }
@@ -322,6 +447,12 @@ export class TunnelController {
       clearInterval(this.heartbeat);
       this.heartbeat = null;
     }
+  }
+
+  private releaseRelay(): void {
+    const relay = this.relay;
+    this.relay = null;
+    if (relay) void relay.api.close(relay.session).catch(() => {});
   }
 
   // A controller is app-lifetime, while the privileged helper can outlive and
@@ -365,7 +496,7 @@ export class TunnelController {
 
   // onLost fires when the persistent connection drops unexpectedly (helper died):
   // stop heartbeating and surface a fail-closed status to the UI.
-  private onLost(generation: number): void {
+  private onLost(generation: number, reason?: TunnelStatus["recovery_reason"]): void {
     // A read-only status/posture socket is not tunnel ownership. Its timeout or
     // loss may reject that read, but must not manufacture a fail-closed tunnel
     // transition when this controller has no active generation.
@@ -376,7 +507,7 @@ export class TunnelController {
     this.stopHeartbeat();
     this.clearPublishedTunnelState();
     this.resolversActive = true;
-    this.publishFailedOnce(generation);
+    this.publishFailedOnce(generation, reason);
   }
 
   private owns(kind: Exclude<TunnelOwnership["kind"], "inactive">, generation: number): boolean {
@@ -386,12 +517,13 @@ export class TunnelController {
   private clearPublishedTunnelState(): void {
     this.address = undefined;
     this.baseAllowed = [];
+    this.activeDial = null;
   }
 
-  private publishFailedOnce(generation: number): void {
+  private publishFailedOnce(generation: number, reason?: TunnelStatus["recovery_reason"]): void {
     if (this.failedPublishedGeneration === generation) return;
     this.failedPublishedGeneration = generation;
-    this.onStatus?.({ state: "failed" });
+    this.onStatus?.({ state: "failed", ...(reason ? { recovery_reason: reason } : {}) });
   }
 
   private nextSessionGeneration(): number {

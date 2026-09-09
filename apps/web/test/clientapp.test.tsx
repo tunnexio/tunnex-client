@@ -64,7 +64,7 @@ function fakeBridge(over: {
       setServerUrl: vi.fn(),
     },
     tunnel: {
-      up: over.up ?? vi.fn().mockResolvedValue({ state: "up" }),
+      up: over.up ?? vi.fn().mockResolvedValue({ state: "up", last_handshake_sec: Math.floor(Date.now() / 1000) }),
       down: vi.fn().mockResolvedValue(undefined),
       status: vi.fn().mockResolvedValue({ state: "down" }),
       onStatusChanged: vi.fn().mockReturnValue(() => {}),
@@ -94,7 +94,7 @@ function mutableTunnelStatus(
 ): { push(state: "up" | "down"): void } {
   let state = initial;
   let listener: Parameters<Bridge["tunnel"]["onStatusChanged"]>[0] = () => {};
-  bridge.tunnel.status = vi.fn(async () => ({ state }));
+  bridge.tunnel.status = vi.fn(async () => ({ state, last_handshake_sec: state === "up" ? Math.floor(Date.now() / 1000) : undefined }));
   bridge.tunnel.onStatusChanged = vi.fn((next) => {
     listener = next;
     return () => {};
@@ -102,7 +102,7 @@ function mutableTunnelStatus(
   return {
     push(next) {
       state = next;
-      listener({ state: next });
+      listener({ state: next, last_handshake_sec: next === "up" ? Math.floor(Date.now() / 1000) : undefined });
     },
   };
 }
@@ -483,7 +483,7 @@ describe("managed device lifecycle", () => {
   it("keeps the live state and never claims success when main reports no device", async () => {
     const b = fakeBridge({ loggedIn: true });
     b.auth.removeDevice = vi.fn().mockResolvedValue(false);
-    b.tunnel.status = vi.fn().mockResolvedValue({ state: "up" });
+    b.tunnel.status = vi.fn().mockResolvedValue({ state: "up", last_handshake_sec: Math.floor(Date.now() / 1000) });
     window.tunnex = b;
     vi.spyOn(window, "confirm").mockReturnValue(true);
     render(<ClientApp />);
@@ -512,7 +512,7 @@ describe("managed device lifecycle", () => {
   it("keeps the live state and reports an error when device removal is refused", async () => {
     const b = fakeBridge({ loggedIn: true });
     b.auth.removeDevice = vi.fn().mockRejectedValue(new Error("helper_teardown_refused"));
-    b.tunnel.status = vi.fn().mockResolvedValue({ state: "up" });
+    b.tunnel.status = vi.fn().mockResolvedValue({ state: "up", last_handshake_sec: Math.floor(Date.now() / 1000) });
     window.tunnex = b;
     vi.spyOn(window, "confirm").mockReturnValue(true);
     vi.spyOn(console, "error").mockImplementation(() => {});
@@ -774,7 +774,7 @@ describe("the numbers are measured and the verb is one word", () => {
 
   it("⛔ the centre control has a concise accessible verb — no verbose disconnect suffix", async () => {
     const b = fakeBridge({ loggedIn: true });
-    b.tunnel.status = vi.fn().mockResolvedValue({ state: "up" });
+    b.tunnel.status = vi.fn().mockResolvedValue({ state: "up", last_handshake_sec: Math.floor(Date.now() / 1000) });
     window.tunnex = b;
     render(<ClientApp />);
     const btn = await screen.findByRole("button", { name: "Disconnect" });
@@ -1094,7 +1094,7 @@ describe("version, updates and the tagline", () => {
     // drawn, shown three lines above a status word that already says "Connected". The dot stays and
     // carries the state in its label instead.
     const b = fakeBridge({ loggedIn: true });
-    b.tunnel.status = vi.fn().mockResolvedValue({ state: "up" });
+    b.tunnel.status = vi.fn().mockResolvedValue({ state: "up", last_handshake_sec: Math.floor(Date.now() / 1000) });
     window.tunnex = b;
     const { container } = render(<ClientApp />);
     await waitFor(() =>

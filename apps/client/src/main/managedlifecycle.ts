@@ -96,6 +96,16 @@ export class ManagedLifecycleCoordinator {
     })();
   }
 
+  // Reconnect uses the same FIFO as explicit Connect. Validate only after the
+  // ticket is acquired: an earlier disconnect/logout can invalidate a queued
+  // recovery without allowing any of its effects to run.
+  serialForLease<T>(lease: ManagedLease | undefined, operation: (owner: ManagedLifecycleOperation) => MaybePromise<T>): Promise<T> {
+    return this.serial(owner => {
+      if (lease) this.assertCurrent(lease);
+      return operation(owner);
+    });
+  }
+
   // The resolver must use only the supplied fixed snapshot. A second exact
   // store read closes the A-to-B replacement window while identity is in flight.
   async capture(

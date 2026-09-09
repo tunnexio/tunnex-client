@@ -68,6 +68,7 @@ export function ClientApp() {
     tx: number | null;
     since: number | null;
     handshakeSec: number | null;
+    connectionPath: string | null;
     address: string | null;
     history: number[];
   }>({
@@ -77,6 +78,7 @@ export function ClientApp() {
     tx: null,
     since: null,
     handshakeSec: null,
+    connectionPath: null,
     address: null,
     history: [],
   });
@@ -194,7 +196,7 @@ export function ClientApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preview]);
 
-  function applyTunnelStatus(s: { state?: string; failed_checks?: Array<{ kind: string; mode: string }> }): void {
+  function applyTunnelStatus(s: { state?: string; last_handshake_sec?: number; failed_checks?: Array<{ kind: string; mode: string }> }): void {
     setLive(mapStatus(s));
     setPostureFailures(s.failed_checks ?? []);
   }
@@ -254,6 +256,7 @@ export function ClientApp() {
             tx: null,
             since: null,
             handshakeSec: null,
+            connectionPath: null,
             address: null,
             history: [],
           }));
@@ -270,6 +273,7 @@ export function ClientApp() {
           tx: st.tx_bytes ?? null,
           since: p.since ?? Date.now(),
           handshakeSec: st.last_handshake_sec ?? null,
+          connectionPath: connectionPathLabel(st.connection_path),
           address: st.address ?? null,
           history: pushRate(p.history, rate),
         }));
@@ -295,6 +299,7 @@ export function ClientApp() {
         tx: 48_263_168,
         since: Date.now() - 3_726_000,
         handshakeSec: Math.floor(Date.now() / 1000) - 7,
+        connectionPath: "Direct",
         address: previewIPv6 ? "fd42:99::2/128" : "10.99.0.2/32",
         history: [1200, 1840, 2650, 3210, 4170, 5832, 4760, 6400, 5220, 5832],
       }
@@ -347,7 +352,7 @@ export function ClientApp() {
           await d.auth.login();
           await refreshAuth();
           await loadManagedOrganizations();
-        } else if (state === "connected" || state === "posture_warning" || state === "kill_switch") {
+        } else if (state === "connected" || state === "connecting" || state === "posture_warning" || state === "kill_switch") {
           await d.tunnel.down();
         } else {
           await d.tunnel.up(fullTunnel);
@@ -990,6 +995,11 @@ export function ClientApp() {
               {state !== "connected" && (
                 <p className="mt-1 text-sm text-ink-secondary" data-status-detail>{view.detail}</p>
               )}
+              {state === "connected" && displayStats.connectionPath && (
+                <p className="mt-1 text-sm text-ink-secondary" data-connection-path>
+                  Connection: {displayStats.connectionPath}
+                </p>
+              )}
               {postureReason && (state === "posture_warning" || state === "posture_blocked") && (
                 <p className="mt-2 text-sm text-warn" data-posture-reason>{postureReason}</p>
               )}
@@ -1567,10 +1577,20 @@ export function ClientApp() {
 }
 
 /** Map the bridge's status to our state union. Kept tiny and total. */
-function mapStatus(s: { state?: string } | null | undefined): ClientState {
+export function connectionPathLabel(path: unknown): string {
+  if (path === "relay") return "Relay";
+  if (path === "direct") return "Direct";
+  if (path === "negotiating") return "Negotiating";
+  return "Path unavailable";
+}
+
+export function mapStatus(s: { state?: string; last_handshake_sec?: number } | null | undefined): ClientState {
   switch (s?.state) {
     case "up":
-      return "connected";
+      return s.last_handshake_sec && Number.isFinite(s.last_handshake_sec)
+        && s.last_handshake_sec > 0
+        && Math.max(0, Date.now() / 1000 - s.last_handshake_sec) <= 180
+        ? "connected" : "connecting";
     case "connecting":
       return "connecting";
     case "revoked":
