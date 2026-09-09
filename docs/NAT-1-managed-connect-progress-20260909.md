@@ -1,5 +1,38 @@
 # Managed NAT Connect integration — development checkpoint
 
+## Latest: measured path status and bounded transport recovery
+
+**Live follow-up completed:** user installed helper (signed SHA256
+`9c7c39ea8340438e2c7880d051b15a78694de55c9dbe1e2e090409b61f6f2345`), bundle synced.
+Real TURN restart recovered native Relay/HTTP with generation15→16 on corrected
+controller `ef27fd92002a5d8473004e0a31747f217822503aa4c8f69780d8232191a36b5b`.
+An earlier failed run exposed CP HTTP500 being omitted from transient handling;
+500 now follows the same existing-lease-only retry as502/503/504. 403 still refuses.
+Focused500/403 regression and full309/309 client tests PASS. Final outage run
+exited0, helper down, temporary bearer revoked. This supersedes installation-
+pending text below, not the still-outstanding GUI/full-platform/review requirements.
+Detailed failed attempts and final evidence are in server NAT-product-aws ledger.
+
+Local-only source adds helper `connection_path` and a line in the existing client
+connection panel. Relay classification uses the selected ICE pair; a peer-reflexive
+pair without a known relay is `unknown`, not falsely advertised as direct. Older
+helpers report "Path unavailable". Closed relay state does not retain a direct label.
+
+Helper owner loss/failed authorization lease can request the same one-attempt
+managed recovery as changed offers. The attempt consumes the shared recovery
+budget and reuses owner-fenced normal Connect. CP 403 is not a recovery trigger.
+Neither path bypasses current CP authorization or extends a failed helper lease.
+
+Local results: client 308/308; focused renderer 66/66; helper race suite and path
+classification tests; client and renderer builds PASS. A privileged helper update
+is required for live path-label qualification; the running helper has not been
+replaced. The prepared candidate is SHA256
+`98fc9305bf8b0162ddab89ef3eee41430f175f88d0fc336a7b04efaf795ca547` (pre-signing).
+macOS sudo requires user authentication. Stop the GUI tunnel before installing;
+the private installer refuses while Up, retains a root-owned rollback snapshot,
+verifies candidate/previous hashes and restores the old helper on install failure.
+Live interruption/recovery, GUI visual inspection and final review remain owed.
+
 ## Latest local renewal slice
 
 **Completed live result:** native real-clock rollover PASS. CP generation 9
