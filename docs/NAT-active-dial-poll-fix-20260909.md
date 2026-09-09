@@ -28,3 +28,7 @@ reconnect, two unchanged B polls, preserved enrollment config, no extra recovery
 owner refusal and down cleanup over a mocked helper socket. Full client suite
 321/321 PASS; typecheck/build PASS. Bounded independent re-review is clean.
 This is not a new live two-gateway HA walk or native Windows qualification.
+
+Post-commit verification of product `24b66e1`: renderer typecheck, the CI-scoped
+`test/clientapp.test.tsx` suite (64/64), and renderer production build all PASS.
+This is the renderer CI scope, not a claim that every renderer test was run.

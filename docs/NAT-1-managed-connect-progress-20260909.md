@@ -1,5 +1,20 @@
 # Managed NAT Connect integration — development checkpoint
 
+## Current re-entry override: approved poll recovery correction
+
+2026-09-09: product `24b66e1` supersedes the older uncommitted-source and test
+counts below. Actual connected dial now seeds gateway polling; an identical
+relay peer update cannot consume another recovery. See
+`NAT-active-dial-poll-fix-20260909.md` for the approved decision and regression.
+Full main-process suite321/321, renderer CI-scoped clientapp suite64/64 and both
+typecheck/build paths PASS. Bounded independent correction review is clean.
+Server companion branch is `tunnexio/tunnex:codex/nat1-session-contract`.
+Latest AWS TURN-restart recovery proof used client `55f4267`, not this latest
+poll correction; that distinction is retained. No new helper installation or
+cloud mutation for this correction. Exact PR-head CI, native Windows and the
+named deployment/platform qualifications below remain outstanding. No merge or
+release readiness claim; do not repeat unchanged historical Mac scenarios.
+
 ## Current pickup: Windows split relay wired, native qualification pending
 
 2026-09-09, decision commit `f9eecd3`. This section supersedes older platform
