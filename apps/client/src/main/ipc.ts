@@ -790,7 +790,7 @@ export function registerIpc(
             }, // WF-A: re-home on active-hub move
             true, // dialEnabled: BOTH modes now (D-WFA-4 carve-out landed); the helper refuses a full-tunnel
             //        re-home only where its carve-out is absent (Windows) → the dial tier fail-statics there.
-            { endpoint: sc.config.endpoint, pubkey: sc.config.peer_public_key }, // seed = the minted peer
+            tunnel.activeGatewayDial(), // seed = the actual connected peer, including a fresh HA dial
           );
           routedRangesMonitor.start();
           // S7.5.3: self-report posture while connected. First report early (~15s),

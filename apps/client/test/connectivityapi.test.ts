@@ -6,8 +6,80 @@ import os from "node:os";
 import path from "node:path";
 import { TunnelController, supportsRelayMode } from "../src/main/tunnel";
 import { FrameDecoder, encodeFrame, type TunnelConfig } from "../src/main/helperclient";
+import { RoutedRangesMonitor } from "../src/main/routedrangesmonitor";
 import { ConnectivityApi, prepareRelayConnectivity, assertNegotiatedOffersUnchanged, validateConnectivitySession, type ConnectivitySession } from "../src/main/connectivityapi";
 const realFetch = globalThis.fetch;
+test("managed relay monitor is seeded from the actual connected dial", () => {
+  const ipc = fs.readFileSync(path.join(__dirname, "../src/main/ipc.ts"), "utf8");
+  assert.match(ipc, /tunnel\.activeGatewayDial\(\)/);
+  assert.doesNotMatch(ipc, /endpoint: sc\.config\.endpoint, pubkey: sc\.config\.peer_public_key/);
+});
+
+test("A to B recovery survives repeated unchanged B monitor polls", { skip: process.platform !== "darwin" }, async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "tnx-ha-monitor-"));
+  const socket = path.join(dir, "helper.sock");
+  const a = { endpoint: "192.0.2.1:51820", pubkey: binding.gatewayPublicKey };
+  const b = { endpoint: "192.0.2.2:51820", pubkey: Buffer.alloc(32, 3).toString("base64") };
+  let active = a, generation = 1, ownerCurrent = true;
+  let wireSession = session();
+  const persisted = { address: "10.99.0.2/32", allowed_ips: ["10.0.0.0/24"], endpoint: a.endpoint, peer_public_key: a.pubkey } as TunnelConfig;
+  const reasons: string[] = [], verbs: string[] = [];
+  const server = net.createServer(sock => {
+    const decoder = new FrameDecoder();
+    sock.on("data", data => {
+      for (const raw of decoder.push(data)) {
+        const req = raw as Record<string, unknown>;
+        verbs.push(String(req.verb));
+        sock.write(encodeFrame({ version: 1, ok: true, relay_offer: '{"device":"offer"}', status: { state: req.verb === "tunnel_down" ? "down" : "up" } }));
+      }
+    });
+  });
+  await new Promise<void>(resolve => server.listen(socket, resolve));
+  globalThis.fetch = (async (url, init) => {
+    if (String(url).endsWith("connectivity-profile")) return Response.json({ enabled: true });
+    if (init?.method === "DELETE") return new Response(null, { status: 204 });
+    return Response.json({ ...wireSession, generation, gateway_public_key: active.pubkey,
+      device_sequence: init?.method === "PUT" ? 1 : 0, gateway_payload: '{"gateway":"offer"}',
+      relay: { url: "turns:relay.example:5349?transport=tcp", username: "scoped", password: "test-only", expires_at: new Date(Date.now() + 60000).toISOString() } });
+  }) as typeof fetch;
+  const controller = new TunnelController(socket, s => { if (s.recovery_reason) reasons.push(s.recovery_reason); });
+  const assertOwner = () => { if (!ownerCurrent) throw Error("stale-owner"); };
+  const connect = () => controller.up(async () => ({ ...persisted }), async config => ({
+    api: (await prepareRelayConnectivity("https://cp.example", "test-only", binding, config, async () => ({ dial: active }), assertOwner))!,
+    assertCurrent: assertOwner,
+  }));
+  const monitor = () => new RoutedRangesMonitor("org", persisted.allowed_ips,
+    { routedConfig: async () => ({ ranges: [], forwards: [], dial: active }) },
+    async () => {}, async () => {}, undefined, undefined, undefined, undefined, true, "device",
+    (endpoint, key) => controller.setGatewayPeer(key, endpoint), true, controller.activeGatewayDial());
+  try {
+    await connect();
+    const first = monitor(); active = b;
+    assert.equal(await first.checkOnce(), "applied"); first.stop();
+    assert.deepEqual(reasons, ["relay_negotiation_changed"]);
+    assert.equal(controller.activeGatewayDial(), null);
+    await controller.down(); generation++; wireSession = session();
+    await connect();
+    assert.deepEqual(controller.activeGatewayDial(), b);
+    assert.equal(persisted.endpoint, a.endpoint, "volatile dial must not overwrite enrollment identity");
+    const recovered = monitor();
+    assert.equal(await recovered.checkOnce(), "unchanged");
+    assert.equal(await recovered.checkOnce(), "unchanged"); recovered.stop();
+    await controller.setGatewayPeer(b.pubkey, b.endpoint);
+    assert.deepEqual(reasons, ["relay_negotiation_changed"], "unchanged polls must not consume another recovery");
+    assert.equal((await controller.status()).state, "up");
+    const copy = controller.activeGatewayDial()!; copy.endpoint = a.endpoint;
+    assert.deepEqual(controller.activeGatewayDial(), b, "callers cannot mutate active state");
+    ownerCurrent = false;
+    await assert.rejects(controller.setGatewayPeer(b.pubkey, b.endpoint), /stale-owner/);
+    assert.ok(!verbs.includes("set_gateway_peer"), "relay must not swap its pinned carrier in place");
+  } finally {
+    await controller.down();
+    assert.equal(controller.activeGatewayDial(), null);
+    await new Promise<void>(resolve => server.close(() => resolve()));
+    fs.rmdirSync(dir);
+  }
+});
 test("relay reconnect refreshes stored gateway A to current dial/session B without replacing device identity", async () => {
   const nextKey=Buffer.alloc(32,3).toString("base64");
   const config={ private_key:"private-device-identity", peer_public_key:binding.gatewayPublicKey, endpoint:"192.0.2.1:51820", address:"10.99.0.2/32" } as TunnelConfig;
@@ -107,7 +179,7 @@ test("connectivity publishes next sequence and rejects arrays before fetch", asy
   assert.equal(calls, 1);
 });
 
-for (const mode of ["normal", "changed-endpoint", "changed-key", "slow-prepare", "slow-up"] as const) {
+for (const mode of ["normal", "unchanged-peer", "changed-endpoint", "changed-key", "slow-prepare", "slow-up"] as const) {
 test(`${mode} Connect brokers offers over CP and scoped material over helper IPC`, { skip: process.platform !== "darwin" }, async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "tnx-relay-ipc-"));
   const socket = path.join(dir, "helper.sock");
@@ -147,9 +219,13 @@ test(`${mode} Connect brokers offers over CP and scoped material over helper IPC
   const failures: string[] = [];
   const controller = new TunnelController(socket, status => { if (status.recovery_reason) failures.push(status.recovery_reason); });
   try {
-    const result = await controller.up(async () => ({ address: "10.99.0.2/32", allowed_ips: ["10.0.0.0/24"] }) as TunnelConfig,
+    const result = await controller.up(async () => ({ address: "10.99.0.2/32", allowed_ips: ["10.0.0.0/24"], endpoint: "192.0.2.1:51820", peer_public_key: binding.gatewayPublicKey }) as TunnelConfig,
       async () => ({ api: new ConnectivityApi("https://cp.example", "CP-BEARER-ONLY", binding), assertCurrent: () => {} }));
     assert.equal(result.state, "up");
+    if (mode === "unchanged-peer") {
+      await controller.setGatewayPeer(binding.gatewayPublicKey, "192.0.2.1:51820");
+      assert.deepEqual(failures, [], "an identical active relay peer must not request recovery");
+    }
     if (mode === "changed-endpoint" || mode === "changed-key") {
       await controller.setGatewayPeer(mode === "changed-key" ? binding.devicePublicKey : binding.gatewayPublicKey,
         mode === "changed-endpoint" ? "192.0.2.2:51820" : "192.0.2.1:51820");

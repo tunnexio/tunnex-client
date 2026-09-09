@@ -17,3 +17,14 @@ Regression: A→B recovery followed by repeated unchanged B monitor polls must k
 the B connection and not emit another recovery. Also verify a genuinely different
 key/endpoint still recovers, and down clears the remembered active dial. No helper,
 server, schema, cloud or installer changes are part of this correction.
+
+Implemented: actual dial is published only after successful owned-Up; callers get
+a copy, and down/failure clears it. Both monitor seeding and relay same-peer no-op
+use that state. Existing ownership assertion runs before the no-op.
+
+The same-peer regression failed before the fix with `relay_negotiation_changed`
+and passed afterward. Controller+CP-adapter+monitor regression now proves A→B
+reconnect, two unchanged B polls, preserved enrollment config, no extra recovery,
+owner refusal and down cleanup over a mocked helper socket. Full client suite
+321/321 PASS; typecheck/build PASS. Bounded independent re-review is clean.
+This is not a new live two-gateway HA walk or native Windows qualification.

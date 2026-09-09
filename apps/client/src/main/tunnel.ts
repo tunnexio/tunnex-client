@@ -97,6 +97,14 @@ export class TunnelController {
   // never re-fetched — D2). Refreshed each up(); a mode change re-mints, so a fresh session's monitor
   // reads the fresh base.
   private baseAllowed: string[] = [];
+  private activeDial: { endpoint: string; pubkey: string } | null = null;
+
+  // Volatile negotiated peer, never the persisted enrollment dial. Return a copy
+  // only while this controller owns the successfully connected generation.
+  activeGatewayDial(): { endpoint: string; pubkey: string } | null {
+    return this.owns("up", this.sessionGeneration) && this.activeDial
+      ? { ...this.activeDial } : null;
+  }
 
   // baseAllowedIPs returns the session's baked-stable AllowedIPs — the routes the monitor must always
   // re-include (the stable core the routed-ranges push never drops).
@@ -180,6 +188,7 @@ export class TunnelController {
       if (!this.owns("up", generation) || this.sessionGeneration !== generation) {
         throw new Error("tunnel_owner_lost_during_up");
       }
+      this.activeDial = { endpoint: config.endpoint, pubkey: config.peer_public_key };
       this.startHeartbeat(generation);
       return this.withAddress(r.status ?? { state: "up" });
     } catch (error) {
@@ -259,6 +268,8 @@ export class TunnelController {
 	if (this.failedPublishedGeneration === this.sessionGeneration) throw new Error("tunnel_cleanup_required");
 	if (this.relay) {
 	  this.relay.assertCurrent();
+	  const active = this.activeGatewayDial();
+	  if (active?.pubkey === peerPublicKey && active.endpoint === endpoint) return;
 	  const generation = this.sessionGeneration;
 	  // The ICE carrier is bound to one gateway and session. Closing its owner
 	  // precedes the same bounded, owner-fenced managed recovery used for
@@ -275,6 +286,7 @@ export class TunnelController {
       gateway_peer: { peer_public_key: peerPublicKey, endpoint },
     });
     if (!r.ok) throw new Error(r.code ? `${r.code}: ${r.error ?? ""}` : (r.error ?? "set_gateway_peer failed"));
+    if (this.owns("up", this.sessionGeneration)) this.activeDial = { endpoint, pubkey: peerPublicKey };
   }
 
   async down(): Promise<void> {
@@ -505,6 +517,7 @@ export class TunnelController {
   private clearPublishedTunnelState(): void {
     this.address = undefined;
     this.baseAllowed = [];
+    this.activeDial = null;
   }
 
   private publishFailedOnce(generation: number, reason?: TunnelStatus["recovery_reason"]): void {
