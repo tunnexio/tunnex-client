@@ -1,5 +1,16 @@
 # Managed NAT Connect integration — development checkpoint
 
+## Latest: safety proof, no runtime change
+
+Added sustained CP500 framed-helper test: existing lease is not renewed and
+terminal failure surfaces; full310/310 client tests PASS. Actual native fixture
+bearer revocation produced401 and no recovery request, with sustained HTTP denial.
+Client-side CP read/close fault injection on the real installed helper also
+stopped forwarding. Both final drivers exited0 and cleaned up. The second case
+is explicitly NOT a global/gateway CP outage; the driver suppressed reconnect
+while measuring terminal forwarding. No customer device/credential was revoked.
+Full evidence and setup-timeout non-pass are in server NAT-product-aws ledger.
+
 ## Latest: measured path status and bounded transport recovery
 
 **Live follow-up completed:** user installed helper (signed SHA256
