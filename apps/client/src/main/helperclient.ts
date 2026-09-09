@@ -7,7 +7,7 @@ export const PROTOCOL_VERSION = 1;
 export const MAX_MESSAGE_BYTES = 64 * 1024;
 
 export type AuthMode = "path_check" | "code_signing";
-export type Verb = "tunnel_up" | "tunnel_down" | "status" | "posture_status" | "set_resolvers" | "set_allowed_ips" | "set_gateway_peer";
+export type Verb = "tunnel_up" | "tunnel_down" | "status" | "posture_status" | "set_resolvers" | "set_allowed_ips" | "set_gateway_peer" | "relay_prepare" | "relay_authorize";
 
 // ResolverForward mirrors apps/helper ResolverForward (S8.4): a domain whose names
 // resolve via a remote site's internal DNS (ResolverIP) over the tunnel.
@@ -41,6 +41,9 @@ export interface TunnelConfig {
 }
 
 export interface HelperRequest {
+  relay_prepare?: { id: string; device_public_key: string; gateway_public_key: string; url: string; username: string; password: string; expires_at: string };
+  relay_remote?: string;
+  relay_id?: string;
   version: number;
   auth_mode: AuthMode;
   verb: Verb;
@@ -63,6 +66,9 @@ export interface GatewayPeer {
 }
 
 export interface TunnelStatus {
+  connection_path?: "direct" | "relay" | "negotiating" | "unknown";
+  // Main-only reason used by the serialized managed recovery owner.
+  recovery_reason?: "relay_negotiation_changed" | "relay_session_renewal" | "relay_transport_lost";
   state: "down" | "up" | "failed";
   interface?: string;
   last_handshake_sec?: number;
@@ -81,6 +87,7 @@ export interface PostureStatus {
 }
 
 export interface HelperResponse {
+  relay_offer?: string;
   version: number;
   ok: boolean;
   code?: string;

@@ -96,6 +96,7 @@ export interface TunnexBridge {
 // TunnelStatus mirrors the helper plus client-synthesized status (no secrets — never
 // key material). Revocation, migration and posture verdicts originate in main.
 export interface TunnelStatus {
+  connection_path?: "direct" | "relay" | "negotiating" | "unknown";
   state: "down" | "up" | "failed" | "revoked" | "pending_approval" | "migrate_failed" | "posture_warning" | "posture_blocked";
   interface?: string;
   last_handshake_sec?: number;

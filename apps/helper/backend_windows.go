@@ -62,6 +62,7 @@ type windowsBackend struct {
 	tunDev tun.Device
 	luid   uint64
 	armed  bool // WFP kill-switch installed (kernel-resident)
+	relay  *relayNegotiation
 	// Endpoint host-route pinned on the PHYSICAL interface (so WG's own encrypted
 	// packets don't loop into the tunnel); removed on Down.
 	epDest   netip.Prefix
@@ -89,6 +90,9 @@ func NewBackend() Backend { return &windowsBackend{} }
 func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	if cfg.relay != nil && cfg.FullTunnel {
+		return relayError()
+	}
 
 	// Full tunnel is supported on Windows (S6.7): the WFP kill-switch is a PERSISTENT block
 	// that survives process death — proven live (taskkill /F mid-tunnel → zero cleartext
@@ -122,6 +126,17 @@ func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 	}
 	cfg.Endpoint = ep
 
+	// Establish the encrypted carrier before touching host networking. From
+	// NewDevice onward the device owns its bind; earlier failures close it here.
+	bind := conn.NewDefaultBind()
+	if cfg.relay != nil {
+		bind, err = cfg.relay.bind(cfg)
+		if err != nil {
+			cfg.relay.close()
+			return err
+		}
+	}
+
 	// CLEAN any stale Tunnex WFP kill-switch (S6.7: PERSISTENT — survives a prior crash) before
 	// (re)arming: a re-arm with our fixed GUID would else fail ALREADY_EXISTS, and a stale
 	// full-tunnel block must not persist under a new SPLIT tunnel. Idempotent enumerate-and-delete.
@@ -130,11 +145,13 @@ func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 
 	tdev, err := tun.CreateTUN(wintunAdapter, deviceMTU(cfg))
 	if err != nil {
+		_ = bind.Close()
 		return fmt.Errorf("create wintun adapter: %w", err)
 	}
 	nt, ok := tdev.(*tun.NativeTun)
 	if !ok {
 		_ = tdev.Close()
+		_ = bind.Close()
 		return fmt.Errorf("wintun: unexpected tun device type %T", tdev)
 	}
 	luid := nt.LUID()
@@ -153,6 +170,7 @@ func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 	if cfg.FullTunnel {
 		if err := wfp.EnableFirewall(luid, false, dnsRestrict); err != nil {
 			_ = tdev.Close()
+			_ = bind.Close()
 			// The kill-switch DID NOT arm → NOTHING is blocking (EnableFirewall's transaction
 			// aborts on failure, so there's no partial block). This must NOT be reported as
 			// fail-closed: FailClosed() here would be a no-op (b.dev is unset) and the Supervisor
@@ -164,8 +182,8 @@ func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 		b.armed = true
 	}
 
-	dev := device.NewDevice(tdev, conn.NewDefaultBind(), device.NewLogger(device.LogLevelError, "tunnex-helper: "))
-	uapi, err := uapiConfig(cfg)
+	dev := device.NewDevice(tdev, bind, device.NewLogger(device.LogLevelError, "tunnex-helper: "))
+	uapi, err := relayUAPIConfig(cfg)
 	if err != nil {
 		dev.Close() // keeps the WFP block armed (fail-closed); the Supervisor → FailClosed
 		return err
@@ -248,6 +266,7 @@ func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 	}
 
 	b.dev, b.tunDev, b.luid = dev, tdev, luid
+	b.relay = cfg.relay
 	b.fullTunnel = cfg.FullTunnel
 	// Seed the current-peer cache for a WF-A re-home (SetGatewayPeer): the key to swap out, and the
 	// allowed_ips/keepalive to carry onto the new peer.
@@ -299,6 +318,9 @@ func (b *windowsBackend) SetGatewayPeer(newPubKey, newEndpoint string) error {
 	defer b.mu.Unlock()
 	if b.dev == nil {
 		return &ProtocolError{Code: "not_up", Msg: "no active tunnel device"}
+	}
+	if b.relay != nil {
+		return &ProtocolError{Code: "relay_rehome_requires_reconnect", Msg: "relay gateway changes require a fresh connectivity session"}
 	}
 	if b.fullTunnel {
 		return &ProtocolError{Code: "rehome_full_tunnel_unsupported", Msg: "full-tunnel re-home is not supported on Windows yet (WFP CP carve-out deferred)"}
@@ -407,6 +429,7 @@ func (b *windowsBackend) Down() error {
 		b.dev.Close()
 	}
 	b.dev, b.tunDev, b.luid = nil, nil, 0
+	b.relay = nil
 	b.peerPubKey, b.peerAllowedIPs, b.peerKeepalive = "", nil, 0 // drop the current-peer cache with the device
 	b.fullTunnel = false
 	b.applied = nil // device closed drops its routes; belief cleared (drift-heal c)
@@ -442,6 +465,7 @@ func (b *windowsBackend) FailClosed() error {
 	// LATE (pinEndpointRoute/SetDNS after the route reconcile seeded `applied`, before b.dev was assigned) —
 	// FailClosed's `if b.dev != nil` guard would otherwise leave a populated map for a destroyed adapter.
 	b.luid, b.applied = 0, nil
+	b.relay = nil
 	return nil
 }
 
@@ -469,5 +493,10 @@ func (b *windowsBackend) Stats() (TunnelStatus, error) {
 	if err != nil {
 		return TunnelStatus{Interface: wintunAdapter}, err
 	}
-	return parseStats(get, wintunAdapter), nil
+	status := parseStats(get, wintunAdapter)
+	status.ConnectionPath = "direct"
+	if b.relay != nil {
+		status.ConnectionPath = b.relay.path()
+	}
+	return status, nil
 }

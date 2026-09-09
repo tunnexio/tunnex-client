@@ -13,6 +13,8 @@ import (
 // checked by Validate BEFORE the helper touches the network, and malformed input
 // is rejected with a stable code rather than best-effort'd.
 type TunnelConfig struct {
+	// Set only by authenticated, connection-local relay negotiation; never JSON.
+	relay *relayNegotiation
 	// PrivateKey is the interface's own WireGuard key: base64 of exactly 32 bytes.
 	PrivateKey string `json:"private_key"`
 	// PeerPublicKey is the server peer's public key: base64 of exactly 32 bytes.

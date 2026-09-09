@@ -152,6 +152,8 @@ func (s *Server) Serve(ln net.Listener) error {
 // connection unable to crash the root helper. On loop exit it fails the tunnel
 // closed IFF this connection OWNED a live tunnel.
 func (s *Server) handle(conn net.Conn) {
+	var pendingRelay *relayNegotiation
+	defer func() { pendingRelay.close() }()
 	defer conn.Close()
 	// definitive records HOW this connection ended, for the owner-loss path: a CLOSED
 	// socket (EOF/reset — the app process is gone) is definitive → short orphan window;
@@ -198,7 +200,7 @@ func (s *Server) handle(conn net.Conn) {
 			}
 			return // deferred onClose fails closed if this conn owned the tunnel
 		}
-		resp := s.dispatch(&req)
+		resp := s.dispatchRelay(&req, &pendingRelay)
 		switch req.Verb {
 		case VerbTunnelUp:
 			// Own the connection if the up left the kill-switch ARMED — StateUp on

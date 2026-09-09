@@ -44,6 +44,7 @@ type darwinBackend struct {
 	proofBind func(*TunnelConfig) (conn.Bind, error)
 	mu        sync.Mutex
 	dev       *device.Device
+	relay     *relayNegotiation
 	tunDev    tun.Device
 	ifname    string
 	pfToken   string // reference-counted `pfctl -E` token, released (not -d) on Down
@@ -119,7 +120,7 @@ func physGatewayFor(host, v4, v6 string) string {
 func NewBackend() Backend { return &darwinBackend{} }
 
 func (b *darwinBackend) deviceConfig(cfg *TunnelConfig) (string, error) {
-	uapi, err := uapiConfig(cfg)
+	uapi, err := relayUAPIConfig(cfg)
 	if err == nil && b.proofBind != nil {
 		// No UDP listener exists. TUN-up can precede IpcSet on macOS; a
 		// listen_port update would unnecessarily close the negotiated session.
@@ -131,7 +132,7 @@ func (b *darwinBackend) deviceConfig(cfg *TunnelConfig) (string, error) {
 func (b *darwinBackend) Up(cfg *TunnelConfig) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	if b.proofBind != nil && cfg.FullTunnel {
+	if (b.proofBind != nil || cfg.relay != nil) && cfg.FullTunnel {
 		return fmt.Errorf("NAT-0 proof bind supports split tunnels only")
 	}
 
@@ -186,7 +187,13 @@ func (b *darwinBackend) Up(cfg *TunnelConfig) error {
 
 	// 2) Create the utun + wireguard-go device, configure it.
 	bind := conn.NewDefaultBind()
-	if b.proofBind != nil {
+	if cfg.relay != nil {
+		bind, err = cfg.relay.bind(cfg)
+		if err != nil {
+			cfg.relay.close()
+			return err
+		}
+	} else if b.proofBind != nil {
 		bind, err = b.proofBind(cfg)
 		if err != nil {
 			return fmt.Errorf("proof bind unavailable")
@@ -290,6 +297,7 @@ func (b *darwinBackend) Up(cfg *TunnelConfig) error {
 	}
 
 	b.dev, b.tunDev, b.ifname = dev, tdev, name
+	b.relay = cfg.relay
 	// Seed the current-peer cache for a WF-A re-home (SetGatewayPeer): the key to swap out, and the
 	// allowed_ips/keepalive to carry onto the new peer.
 	b.peerPubKey, b.peerAllowedIPs, b.peerKeepalive = cfg.PeerPublicKey, append([]string(nil), cfg.AllowedIPs...), cfg.PersistentKeepalive
@@ -375,6 +383,9 @@ func (b *darwinBackend) SetGatewayPeer(newPubKey, newEndpoint string) error {
 	defer b.mu.Unlock()
 	if b.dev == nil {
 		return &ProtocolError{Code: "not_up", Msg: "no active tunnel device"}
+	}
+	if b.relay != nil {
+		return &ProtocolError{Code: "relay_rehome_requires_reconnect", Msg: "relay gateway changes require a fresh connectivity session"}
 	}
 	if b.fullTunnel && b.cpEndpoint == "" {
 		// A full tunnel with no CP carve-out cannot safely re-home (its handshake to the new gateway would
@@ -491,6 +502,7 @@ func (b *darwinBackend) Down() error {
 		b.dev.Close()
 	}
 	b.dev, b.tunDev, b.ifname = nil, nil, ""
+	b.relay = nil
 	b.peerPubKey, b.peerAllowedIPs, b.peerKeepalive = "", nil, 0 // drop the current-peer cache with the device
 	b.applied = nil                                              // device closed drops its utun routes; belief cleared (drift-heal c). A home-LAN range
 	// whose connected route we deleted-before-add re-derives on the next network event (verify: walk's
@@ -538,6 +550,7 @@ func (b *darwinBackend) FailClosed() error {
 	if b.dev != nil {
 		b.dev.Close()
 		b.dev, b.tunDev, b.ifname = nil, nil, ""
+		b.relay = nil
 	}
 	// UNCONDITIONAL (S8.5 #3): the belief map is cleared on EVERY terminal transition, even when Up failed
 	// LATE (after the route reconcile seeded `applied` but before b.dev was assigned) — a conditional clear
@@ -556,7 +569,14 @@ func (b *darwinBackend) Stats() (TunnelStatus, error) {
 	if err != nil {
 		return TunnelStatus{Interface: b.ifname}, err
 	}
-	return parseStats(get, b.ifname), nil
+	status := parseStats(get, b.ifname)
+	status.ConnectionPath = "direct"
+	if b.relay != nil {
+		status.ConnectionPath = b.relay.path()
+	} else if b.proofBind != nil {
+		status.ConnectionPath = "unknown"
+	}
+	return status, nil
 }
 
 // --- helpers (shared uapi/MTU/stats/routeTargets live in wgcommon.go) ---
