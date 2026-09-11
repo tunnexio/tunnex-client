@@ -1,6 +1,6 @@
 {
   "name": "@tunnex/client",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "description": "Tunnex desktop client (Electron)",
   "main": "dist/main/index.js",
