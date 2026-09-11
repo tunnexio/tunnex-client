@@ -15,3 +15,9 @@ Surface only allowlisted helper rejection codes; never append raw errors,
 TURN secrets or payloads. Direct-first connection orchestration is separate work
 and is not silently added as an authentication fallback in this correction.
 This correction is not a confirmed diagnosis of the reported Mac incident.
+
+Validation: clock-ahead IPC regression failed before correction and passes after.
+All25 connectivity tests pass, including delayed prepare/up, replacement, renewal,
+revocation, helper loss, gateway move and CP outage. Client typecheck passes.
+Native helper preparation/envelope/authorization regressions pass.
+No affected customer Mac live proof; no direct-first redesign or new release yet.

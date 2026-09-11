@@ -4,7 +4,7 @@ import net from "node:net";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { TunnelController, supportsRelayMode } from "../src/main/tunnel";
+import { TunnelController, supportsRelayMode, relayPreparationFailure } from "../src/main/tunnel";
 import { FrameDecoder, encodeFrame, type TunnelConfig } from "../src/main/helperclient";
 import { RoutedRangesMonitor } from "../src/main/routedrangesmonitor";
 import { ConnectivityApi, prepareRelayConnectivity, assertNegotiatedOffersUnchanged, validateConnectivitySession, type ConnectivitySession } from "../src/main/connectivityapi";
@@ -179,12 +179,14 @@ test("connectivity publishes next sequence and rejects arrays before fetch", asy
   assert.equal(calls, 1);
 });
 
-for (const mode of ["normal", "unchanged-peer", "changed-endpoint", "changed-key", "slow-prepare", "slow-up"] as const) {
+for (const mode of ["normal", "clock-ahead", "unchanged-peer", "changed-endpoint", "changed-key", "slow-prepare", "slow-up"] as const) {
 test(`${mode} Connect brokers offers over CP and scoped material over helper IPC`, { skip: process.platform !== "darwin" }, async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "tnx-relay-ipc-"));
   const socket = path.join(dir, "helper.sock");
   const verbs: string[] = [];
   const s = session();
+  let preparationExpiry = 0;
+  if (mode === "clock-ahead") s.expires_at = new Date(Date.now() + 609000).toISOString();
   s.gateway_payload = '{"gateway":"offer"}';
   s.relay = { url: "turns:relay.example:5349?transport=tcp", username: "scoped", password: "turn-only", expires_at: new Date(Date.now() + 60000).toISOString() };
   const server = net.createServer((sock) => {
@@ -195,6 +197,7 @@ test(`${mode} Connect brokers offers over CP and scoped material over helper IPC
         verbs.push(String(req.verb));
         assert.ok(!JSON.stringify(req).includes("CP-BEARER-ONLY"), "CP bearer must not cross helper IPC");
         if (req.verb === "relay_prepare") {
+          preparationExpiry = Date.parse((req.relay_prepare as { expires_at: string }).expires_at);
           const reply = () => sock.write(encodeFrame({ version: 1, ok: true, relay_offer: '{"device":"offer"}' }));
           if (mode === "slow-prepare") setTimeout(reply, 16000); else reply();
         }
@@ -222,6 +225,8 @@ test(`${mode} Connect brokers offers over CP and scoped material over helper IPC
     const result = await controller.up(async () => ({ address: "10.99.0.2/32", allowed_ips: ["10.0.0.0/24"], endpoint: "192.0.2.1:51820", peer_public_key: binding.gatewayPublicKey }) as TunnelConfig,
       async () => ({ api: new ConnectivityApi("https://cp.example", "CP-BEARER-ONLY", binding), assertCurrent: () => {} }));
     assert.equal(result.state, "up");
+    assert.ok(preparationExpiry <= Date.now() + 600000, "helper deadline must fit local ten-minute bound");
+    assert.ok(preparationExpiry <= Date.parse(s.expires_at), "must never extend CP authorization");
     if (mode === "unchanged-peer") {
       await controller.setGatewayPeer(binding.gatewayPublicKey, "192.0.2.1:51820");
       assert.deepEqual(failures, [], "an identical active relay peer must not request recovery");
@@ -308,3 +313,15 @@ test(`${scenario} closes relay owner and cannot be masked by helper Up`, { skip:
   }
 });
 }
+
+test("relay preparation reports safe helper reasons without raw error data", () => {
+  const secret = "private-turn-password";
+  for (const code of ["relay_clock_skew", "relay_session_expired", "relay_busy", "relay_gather_failed", "unknown_verb"]) {
+    const error = relayPreparationFailure({version: 1, ok: false, code, error: secret});
+    assert.ok(error.message.startsWith(code + ":"));
+    assert.ok(!error.message.includes(secret));
+  }
+  for (const code of [secret, "constructor", "toString"]) {
+    assert.ok(relayPreparationFailure({version: 1, ok: false, code, error: secret}).message.startsWith("relay_helper_prepare_failed:"));
+  }
+});

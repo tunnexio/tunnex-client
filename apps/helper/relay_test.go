@@ -2,6 +2,8 @@ package helper
 
 import (
 	"context"
+	"encoding/base64"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -80,5 +82,21 @@ func TestRelayAuthorizationCannotReviveClosedSession(t *testing.T) {
 func TestRelayPreparationRejectsInvalidMaterialBeforeGather(t *testing.T) {
 	if _, _, err := prepareRelay(&RelayPreparation{ID: "test"}); err == nil {
 		t.Fatal("accepted missing keys and credentials")
+	}
+}
+
+func TestRelayPreparationReportsTimingRefusals(t *testing.T) {
+	if !relayPlatformSupported(runtime.GOOS) {
+		t.Skip("native relay platform required")
+	}
+	key := base64.StdEncoding.EncodeToString(make([]byte, 32))
+	for _, tc := range []struct {
+		delta time.Duration
+		code  string
+	}{{-time.Second, "relay_session_expired"}, {609 * time.Second, "relay_clock_skew"}} {
+		_, _, err := prepareRelay(&RelayPreparation{ID: "test", DevicePublicKey: key, GatewayPublicKey: key, Username: "test", Password: "test", ExpiresAt: time.Now().Add(tc.delta)})
+		if err == nil || codeOf(err) != tc.code {
+			t.Fatalf("expected %s, got %v", tc.code, err)
+		}
 	}
 }
