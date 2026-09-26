@@ -11,10 +11,10 @@
     "pack:win": "pnpm --filter @tunnex/client pack:win"
   },
   "devDependencies": {
-    "turbo": "^2.3.3"
+    "turbo": "^2.11.4"
   },
   "engines": {
-    "node": ">=20",
+    "node": ">=24",
     "pnpm": ">=9"
   },
   "packageManager": "pnpm@9.12.0",
