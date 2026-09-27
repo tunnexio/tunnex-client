@@ -176,11 +176,28 @@ jobs:
             apps/client/release/Tunnex-Windows-x64.exe
             apps/client/release/SHA256SUMS
 
+  installer-integrity:
+    name: installer artifact round-trip
+    needs: client
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: artifacts
+      - name: Verify both downloaded installers against their checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          for platform in macos windows; do
+            (cd "artifacts/tunnex-$platform-installer" && sha256sum -c SHA256SUMS)
+          done
+
   # ⛔ RUNS ONLY ON A TAG, AND ONLY AFTER BOTH INSTALLERS EXIST. `needs` is what makes that true:
   # a release that publishes whatever happened to build is how a half-platform release ships.
   release:
     name: release
-    needs: [helper, client]
+    needs: [helper, client, installer-integrity]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 15
