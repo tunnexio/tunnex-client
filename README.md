@@ -85,21 +85,3 @@ serves the SaaS dashboard. Both trees can drift. Two specific couplings to watch
 Apache-2.0 — see `LICENSE`. `NOTICE` carries the third-party attributions, including the WireGuard
 and Wintun MIT terms the packaged artifacts inherit, and the Lucide ISC icons the renderer uses.
 No proprietary Tunnex Enterprise code is present in this repository.
-
-## Release process
-
-The committed `apps/client/package.json` version is the installer version. Keep the root
-`package.json` version in sync. A Git tag selects that version; it does not bump it.
-
-1. Prepare a version-bump PR updating both manifests (for example, `0.1.7`). Run
-   `pnpm release:check` and let the PR checks pass before merging.
-2. Check out the merged commit on main and confirm its CI passed. Verify the publishing
-   account with `gh api user --jq .login` (use `iotunnex` for Tunnex releases).
-3. Create and push the matching, unused tag (`v0.1.7` for version `0.1.7`). Do not move
-   an existing tag or publish a GitHub Release manually before the workflow completes.
-4. CI checks the version before building, tests both platforms, builds installers, verifies
-   downloaded artifact checksums, and publishes the release assets.
-
-A mismatch stops before expensive builds. Rerunning a mismatched tag cannot repair it:
-prepare a fresh version and matching tag instead. The local `release:check` command
-checks manifest consistency; tag CI additionally checks the tag against that version.
