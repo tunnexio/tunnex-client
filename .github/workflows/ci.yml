@@ -9,8 +9,7 @@ name: ci
 on:
   push:
     branches: [main]
-    # ⛔ TAGS BUILD AND PUBLISH. The client matrix already derives its version from `refs/tags/v*`;
-    # without this trigger that code was unreachable and a tag produced nothing at all.
+    # Tags build and publish only when they match the committed application version.
     tags: ["v*"]
   pull_request:
 
@@ -21,8 +20,25 @@ env:
   ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
 
 jobs:
+  release-preflight:
+    name: release version preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: '.nvmrc'
+      - run: node --test scripts/release-version.test.cjs
+      - name: Validate committed version before building
+        id: version
+        run: node scripts/release-version.cjs
+
   helper:
     name: helper (vet + test + crosscompile)
+    needs: release-preflight
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -32,6 +48,9 @@ jobs:
 
   client:
     name: client
+    needs: release-preflight
+    env:
+      DESKTOP_VERSION: ${{ needs.release-preflight.outputs.version }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     outputs:
@@ -109,16 +128,6 @@ jobs:
         run: |
           pnpm --filter @tunnex/web typecheck
           pnpm --filter @tunnex/web exec vitest run test/clientapp.test.tsx
-
-      - name: Resolve desktop package version
-        shell: bash
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION="$(node -p 'require("./apps/client/package.json").version')"
-          fi
-          echo "DESKTOP_VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: Client — package macOS installer (universal)
         if: matrix.os == 'macos-latest'
@@ -211,20 +220,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      # ⛔ THE TAG AND THE SHIPPED VERSION MUST AGREE. electron-builder stamps the installer from
-      # --config.extraMetadata.version, which the client job derives from the tag — so a tag that
-      # disagrees with package.json publishes an artifact whose internal version contradicts the
-      # release it is attached to. Cheap to check, confusing forever if it is wrong.
-      - name: Tag must match apps/client/package.json version
-        run: |
-          set -euo pipefail
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          PKG_VERSION="$(node -p 'require("./apps/client/package.json").version')"
-          echo "tag: $TAG_VERSION   package.json: $PKG_VERSION"
-          if [[ "$TAG_VERSION" != "$PKG_VERSION" ]]; then
-            echo "::error::tag v$TAG_VERSION does not match apps/client/package.json version $PKG_VERSION — bump the manifest or retag"
-            exit 1
-          fi
+      # Recheck at publication as defense in depth; preflight already gated the builds.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: '.nvmrc'
+      - name: Verify release version
+        run: node scripts/release-version.cjs
 
       - name: Collect the installers built by the client matrix
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1

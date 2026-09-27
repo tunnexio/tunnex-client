@@ -1,9 +1,10 @@
 {
   "name": "tunnex-desktop",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "private": true,
   "description": "Tunnex desktop client — Electron shell, renderer and privilege helper",
   "scripts": {
+    "release:check": "node scripts/release-version.cjs",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "test": "pnpm --filter @tunnex/client test",
