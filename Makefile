@@ -4,7 +4,7 @@
 # apps/helper/go.mod's `go` directive, and .github/workflows/ci.yml's `go-version-file`.
 # In the monorepo a script enforced that agreement across a dozen sites; here there are
 # three, and CI derives its version from apps/helper/go.mod so only this one can drift.
-GO_IMAGE := golang:1.26.8-alpine
+GO_IMAGE := golang:1.27.1-alpine
 
 .DEFAULT_GOAL := help
 
