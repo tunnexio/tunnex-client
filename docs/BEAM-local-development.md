@@ -28,6 +28,8 @@ Open the printed loopback dashboard URL. Its Open action launches a synthetic re
 
 All listeners bind loopback. Fixture certificates and synthetic tokens are written to a private temporary directory, not a renderer, tracked source or deployed control plane. The dashboard and synthetic sign-in are development fixtures, not a production access model.
 
+The reviewer endpoint uses TLS 1.3 and a Secure, HttpOnly, SameSite=Strict cookie. Integration programs trust only the fixture's ephemeral `ca.pem`; TLS verification remains enabled. A browser needs to trust that fixture certificate before opening the local reviewer link. The development control dashboard stays on loopback HTTP.
+
 ## Verify the connector
 
 ```sh

@@ -1,3 +1,4 @@
+import { fixtureViewer } from "./beamviewer";
 // Real Vite 6 HMR through the production native channel pool. The Go transport
 // fixture injects authority and adapts loopback HTTP Origin; it is not CP login.
 import { test } from "node:test";
@@ -22,10 +23,10 @@ async function until(check: () => Promise<boolean>, message: string, millisecond
   assert.fail(message);
 }
 
-async function openHMR(base: string, cookie: string, token: string): Promise<{ socket: net.Socket; messages: HMRMessage[] }> {
+async function openHMR(base: string, cookie: string, token: string, ca: string): Promise<{ socket: net.Socket; messages: HMRMessage[] }> {
   return new Promise((done, fail) => {
     const messages: HMRMessage[] = [];
-    const request = http.request(base + "/?token=" + encodeURIComponent(token), { headers: { Cookie: cookie, Origin: base, Connection: "Upgrade", Upgrade: "websocket", "Sec-WebSocket-Protocol": "vite-hmr", "Sec-WebSocket-Key": randomBytes(16).toString("base64"), "Sec-WebSocket-Version": "13" } });
+    const request = fixtureViewer(ca).request(base + "/?token=" + encodeURIComponent(token), { headers: { Cookie: cookie, Origin: base, Connection: "Upgrade", Upgrade: "websocket", "Sec-WebSocket-Protocol": "vite-hmr", "Sec-WebSocket-Key": randomBytes(16).toString("base64"), "Sec-WebSocket-Version": "13" } });
     request.once("error", fail);
     request.once("response", response => { response.resume(); fail(new Error(`Vite HMR refused status ${response.statusCode}`)); });
     request.once("upgrade", (response, socket, head) => {
@@ -72,6 +73,8 @@ test("actual Vite HMR update and assets coexist with SSE over the bounded Beam p
   t.after(async () => { controller.abort(); hmr?.socket.destroy(); sse?.destroy(); if (pool) await pool; if (vite) await vite.close(); core.kill("SIGTERM"); await exited; });
   await until(async () => { assert.equal(core.exitCode, null, fixtureError || "Go fixture exited"); try { await access(join(directory, "metadata.json")); return true; } catch { return false; } }, "Go transport fixture readiness timed out");
   const metadata: Metadata = JSON.parse(await readFile(join(directory, "metadata.json"), "utf8"));
+  const viewer = fixtureViewer(await readFile(join(directory, "ca.pem"), "utf8"));
+  const fetch = viewer.fetch;
   const requestedRoot = join(directory, "vite-app"); await mkdir(join(requestedRoot, "src"), { recursive: true });
   const appRoot = await realpath(requestedRoot);
   const modulePath = join(appRoot, "src/main.js");
@@ -113,12 +116,12 @@ test("actual Vite HMR update and assets coexist with SSE over the bounded Beam p
   const tokenMatch = client.match(/const wsToken = "([^"]+)"/);
   assert.ok(tokenMatch, "real Vite client must provide its own current HMR token");
   await ready();
-  hmr = await openHMR(metadata.viewerUrl, cookie, tokenMatch[1]);
+  hmr = await openHMR(metadata.viewerUrl, cookie, tokenMatch[1], options.identity.ca);
   const activeHMR = hmr;
   await until(async () => activeHMR.messages.some(message => message.type === "connected"), "Vite HMR connected message was not proxied");
   let sseChunks = 0; let closedSSE!: () => void;
   const sseClosed = new Promise<void>(done => { closedSSE = done; });
-  sse = http.get(metadata.viewerUrl + "/events", { headers: { Cookie: cookie } });
+  sse = viewer.get(metadata.viewerUrl + "/events", { headers: { Cookie: cookie } });
   await new Promise<void>((done, fail) => { sse!.once("error", fail); sse!.once("response", response => { assert.equal(response.statusCode, 200); response.once("close", closedSSE); response.on("error", () => {}); response.on("data", chunk => { assert.match(String(chunk), /data: vite-sse-/); sseChunks++; if (sseChunks === 1) done(); }); }); });
   const initialSSE = sseChunks;
   // A real file-system edit drives Vite's watcher/module graph. No synthetic

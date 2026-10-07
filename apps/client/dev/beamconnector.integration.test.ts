@@ -1,3 +1,4 @@
+import { fixtureViewer } from "./beamviewer";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as http from "node:http";
@@ -25,9 +26,9 @@ async function until(check: () => Promise<boolean>, message: string, timeout = 5
   assert.fail(message);
 }
 
-async function websocket(url: string, cookie: string): Promise<net.Socket> {
+async function websocket(url: string, cookie: string, ca: string): Promise<net.Socket> {
   return new Promise((resolve, reject) => {
-    const request = http.request(url + "/echo", { headers: { Cookie: cookie, Connection: "Upgrade", Upgrade: "websocket", Origin: url, "Sec-WebSocket-Key": randomBytes(16).toString("base64"), "Sec-WebSocket-Version": "13" } });
+    const request = fixtureViewer(ca).request(url + "/echo", { headers: { Cookie: cookie, Connection: "Upgrade", Upgrade: "websocket", Origin: url, "Sec-WebSocket-Key": randomBytes(16).toString("base64"), "Sec-WebSocket-Version": "13" } });
     request.once("upgrade", (_response, socket) => resolve(socket));
     request.once("error", reject);
     request.once("response", response => { response.resume(); reject(new Error(`upgrade status ${response.statusCode}`)); });
@@ -70,6 +71,14 @@ for (const withdrawal of ["revoke", "authority-down"]) {
       try { await access(join(directory, "metadata.json")); return true; } catch { return false; }
     }, "core fixture did not start");
     const metadata: Fixture = JSON.parse(await readFile(join(directory, "metadata.json"), "utf8"));
+    const viewer = fixtureViewer(await readFile(join(directory, "ca.pem"), "utf8"));
+    const fetch = viewer.fetch;
+    assert.equal(new URL(metadata.viewerUrl).protocol, "https:");
+    await assert.rejects(fixtureViewer("").fetch(metadata.viewerUrl), /certificate|verify/i);
+    const signin = await fetch(metadata.viewerUrl + "/_beam/fixture-signin");
+    assert.equal(signin.status, 303);
+    assert.match(signin.headers.get("set-cookie") ?? "", /; Secure/);
+    assert.match(signin.headers.get("set-cookie") ?? "", /; HttpOnly/);
     const app = await startBeamFixtureApp();
     t.after(() => { app.server.closeAllConnections(); app.server.close(); });
     const api = http.createServer((req,res)=>{res.setHeader("Content-Type","application/json");res.end(JSON.stringify({path:req.url,authority:req.headers["x-app-digest"]??null}));});
@@ -137,7 +146,7 @@ for (const withdrawal of ["revoke", "authority-down"]) {
 
     let closeSSE!: () => void;
     const sseClosed = new Promise<void>(resolve => { closeSSE = resolve; });
-    const sse = http.get(metadata.viewerUrl + "/events", { headers: { Cookie: cookie } });
+    const sse = viewer.get(metadata.viewerUrl + "/events", { headers: { Cookie: cookie } });
     await new Promise<void>((resolve, reject) => {
       sse.once("error", reject);
       sse.once("response", response => {
@@ -147,7 +156,7 @@ for (const withdrawal of ["revoke", "authority-down"]) {
       });
     });
     t.after(() => sse.destroy());
-    const ws = await websocket(metadata.viewerUrl, cookie);
+    const ws = await websocket(metadata.viewerUrl, cookie, options.identity.ca);
     ws.on("error", () => {}); t.after(() => ws.destroy());
     assert.equal(await echo(ws, "live-review"), "live-review");
     // SSE and HMR/WebSocket remain open while another HTTP request is served.

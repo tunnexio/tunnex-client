@@ -1,6 +1,6 @@
+import { fixtureViewer } from "./beamviewer";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import * as http from "node:http";
 import * as https from "node:https";
 import type { Duplex } from "node:stream";
 import { createHash, randomBytes } from "node:crypto";
@@ -66,6 +66,8 @@ test(
       reviewToken: string;
       binding: BeamBinding;
     };
+    const viewer = fixtureViewer(await readFile(join(directory, "ca.pem"), "utf8"));
+    const fetch = viewer.fetch;
     const identity = {
       ca: await readFile(join(directory, "ca.pem"), "utf8"),
       cert: await readFile(join(directory, "connector.pem"), "utf8"),
@@ -166,7 +168,7 @@ test(
         assert.equal(requests, before);
       }
       await until(() => idle >= 2, "HTTPS pool refill");
-      const request = http.request(meta.viewerUrl + "/hmr", {
+      const request = viewer.request(meta.viewerUrl + "/hmr", {
         headers: {
           Cookie: cookie,
           Connection: "Upgrade",
@@ -189,17 +191,23 @@ test(
           resolve(false);
         });
         request.once("upgrade", (res, socket, head) => {
-          clearTimeout(timer);
           ownedSockets.add(socket);
           socket.once("close", () => ownedSockets.delete(socket));
           assert.equal(res.headers["sec-websocket-protocol"], "vite-hmr");
+          let received = Buffer.alloc(0);
           const finish = (data: Buffer) => {
-            assert.equal(data.subarray(2).toString(), "secure");
+            received = Buffer.concat([received, data]);
+            if (received.length < 2) return;
+            const size = received[1] & 0x7f;
+            if (received.length < 2 + size) return;
+            clearTimeout(timer);
+            socket.off("data", finish);
+            assert.equal(received.subarray(2, 2 + size).toString(), "secure");
             socket.destroy();
             resolve(true);
           };
+          socket.on("data", finish);
           if (head.length) finish(head);
-          else socket.once("data", finish);
         });
         request.end();
       });
