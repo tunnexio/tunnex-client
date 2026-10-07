@@ -1,3 +1,4 @@
+import { fixtureViewer } from "./beamviewer";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as http from "node:http";
@@ -72,6 +73,8 @@ test(
       controlToken: string;
       binding: BeamBinding;
     };
+    const viewer = fixtureViewer(await readFile(join(directory, "ca.pem"), "utf8"));
+    const fetch = viewer.fetch;
     let writes = 0,
       blocked = 0,
       originClosed = false;
@@ -138,7 +141,7 @@ test(
     await until(() => status.idle >= 2, "Idle pool");
     const cookie = `beam_fixture_review=${metadata.reviewToken}`;
     const before = process.memoryUsage();
-    const reader = http.get(metadata.viewerUrl + "/slow", {
+    const reader = viewer.get(metadata.viewerUrl + "/slow", {
       headers: { Cookie: cookie },
     });
     slowReader = reader;

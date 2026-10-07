@@ -1,3 +1,4 @@
+import { fixtureViewer } from "./beamviewer";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import * as http from "node:http";
@@ -196,6 +197,8 @@ test(
       reviewToken: string;
       binding: BeamBinding;
     };
+    const viewer = fixtureViewer(await readFile(join(directory, "ca.pem"), "utf8"));
+    const fetch = viewer.fetch;
     await new Promise<void>((resolve) =>
       origin.listen(0, "127.0.0.1", resolve),
     );
@@ -234,7 +237,7 @@ test(
         "Replacement native channel not ready",
       );
       return new Promise((resolve, reject) => {
-        const request = http.request(metadata.viewerUrl + route, {
+        const request = viewer.request(metadata.viewerUrl + route, {
           headers: {
             Cookie: `beam_fixture_review=${metadata.reviewToken}`,
             Origin: metadata.viewerUrl,
