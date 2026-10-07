@@ -1,0 +1,27 @@
+{
+  "provenance": {
+    "repository": "tunnexio/tunnex",
+    "revision": "7ed12a91a2c4d4f9f0e7f30a3e6ae19eb5e219aa",
+    "path": "docs/design/TUNNEX-wireframe-v2.html.txt",
+    "sha256": "2cd24d099b8a25c0f0b53ec45ed5e44cc37a2d7aa494849abf0f21e93212c1fc"
+  },
+  "banners": [
+    "OVERVIEW",
+    "GATEWAYS",
+    "SITES",
+    "ACCESS",
+    "DEVICES",
+    "USERS",
+    "GROUPS",
+    "FLOW LOGS",
+    "AUDIT",
+    "KUBERNETES",
+    "OPERATIONS",
+    "ORG SETTINGS",
+    "LICENSE",
+    "CLI / ROUTED RANGES",
+    "AUTH SCREENS",
+    "ONBOARDING",
+    "DESKTOP CLIENT"
+  ]
+}

@@ -1,3 +1,5 @@
+import { BeamPanel } from "./BeamPanel";
+import { BeamReviewNotifications } from "./BeamReviewNotifications";
 import {
   useEffect,
   useMemo,
@@ -41,8 +43,7 @@ const FOREIGN_ENROLLMENT_MESSAGE =
 /**
  * ClientApp — the desktop client's whole UI.
  *
- * ⛔ FOUR REGIONS, AND THE LIST IS CLOSED: status head · connection stats · the primary verb ·
- * split-tunnel. The wireframe's block specifies exactly this and no dashboard content of any kind.
+ * Home owns the connection controls and the one-time Beam review inbox.
  *
  * It mounts NO router and imports NO page. The only shared code is tokens (index.css), the
  * formatting helpers, and the desktop bridge type.
@@ -169,6 +170,7 @@ export function ClientApp() {
       .checkRelease()
       .then(setReleaseCheck)
       .catch(() => {});
+    const releasePoll = window.setInterval(()=>{void d.diag.checkRelease().then(setReleaseCheck).catch(()=>{});}, 6 * 60 * 60 * 1000);
     void d.tunnel
       .importedProfiles()
       .then(setImportedProfiles)
@@ -192,6 +194,7 @@ export function ClientApp() {
     return () => {
       stopStatus();
       stopOrganizationSelection();
+      window.clearInterval(releasePoll);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preview]);
@@ -438,8 +441,9 @@ export function ClientApp() {
    * > not smaller sections; it is a second place to put them.
    */
   const [pane, setPane] = useState<
-    "home" | "profiles" | "settings" | "logs" | "help"
+    "home" | "beam" | "profiles" | "settings" | "logs" | "help"
   >("home");
+  useEffect(()=>desktop()?.beam?.onShow?.(()=>setPane("beam")),[]);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   async function loadLog() {
@@ -814,9 +818,11 @@ export function ClientApp() {
             The dot stays: it is the one thing in the window that mirrors what the menu-bar icon
             looks like right now. It carries the state in its LABEL, for a screen reader and on
             hover, rather than in a word beside it. */}
+        <div className="ml-auto flex items-center gap-2">
+        {!preview && <BeamReviewNotifications includeReviews={authed === true} />}
         <span
           data-tray={tray}
-          className="ml-auto flex items-center gap-1.5"
+          className="flex items-center gap-1.5"
           title={view.label}
           aria-label={`Status: ${view.label}`}
         >
@@ -835,6 +841,7 @@ export function ClientApp() {
             }
           />
         </span>
+        </div>
       </div>
 
       {/* OpenVPN-style drawer: Home stays one focused control surface; secondary
@@ -866,6 +873,7 @@ export function ClientApp() {
               {(
                 [
                   ["home", "Home", "house"],
+                  ["beam", "Beam", "app-window-share"],
                   ["profiles", "Profiles", "file-text"],
                   ["settings", "Settings", "settings"],
                   ["logs", "Logs", "scroll-text"],
@@ -923,6 +931,7 @@ export function ClientApp() {
           </p>
         )}
 
+        {pane === "beam" && <BeamPanel />}
         {pane === "home" && (
           <>
             <div className="relative min-h-[150px] flex-1" data-animation-control>

@@ -121,6 +121,19 @@ afterEach(() => {
 });
 
 describe("the client asks the SESSION, not only the tunnel", () => {
+  it("shows the Beam review notification on authenticated Home only", async () => {
+    const bridge = fakeBridge({loggedIn:true});
+    bridge.beam = {notifications:vi.fn().mockResolvedValue({shares:[{id:"app-id",name:"Review on Home",publisher_name:"Teammate",state:"active",connectivity:"online",can_open:true,expires_at:"2099-01-01T00:00:00Z"}],server_time:new Date().toISOString(),page:{offset:0,limit:20,has_next:false}}),openSharedLink:vi.fn(),onChanged:vi.fn().mockReturnValue(()=>{})} as unknown as Bridge["beam"];
+    window.tunnex = bridge;
+    const home = render(<ClientApp />);
+    fireEvent.click(await screen.findByRole("button",{name:"Notifications, 1 unread"}));
+    await screen.findByRole("button",{name:"Open Review on Home for review"});
+    home.unmount();
+    bridge.auth.status = vi.fn().mockResolvedValue({loggedIn:false});
+    render(<ClientApp />);
+    await screen.findByRole("heading",{name:"Not signed in"});
+    expect(screen.queryByRole("region",{name:"Notifications"})).toBeNull();
+  });
   it("⛔ no credential renders Not signed in — never a Connect button that can only throw", async () => {
     window.tunnex = fakeBridge({ loggedIn: false });
     render(<ClientApp />);

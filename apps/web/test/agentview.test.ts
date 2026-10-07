@@ -350,7 +350,7 @@ esac`);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
-  });
+  }, 20_000); // This fixture executes many real shell/jq subprocesses on macOS.
 
   it("refuses a missing resolver before key generation, redemption, or file writes", () => {
     const dir = mkdtempSync(join(tmpdir(), "tunnex-bootstrap-prereq-"));

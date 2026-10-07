@@ -33,6 +33,7 @@ function trayIcon(state: TrayState): NativeImage {
 export class TunnelTray {
   private tray: Tray | null = null;
   private state: TrayState = "disconnected";
+  private beamCount = 0;
 
   constructor(
     private readonly actions: {
@@ -40,6 +41,7 @@ export class TunnelTray {
       onDisconnect: () => void;
       onShow: () => void;
       onQuit: () => void;
+      onShowBeam?: () => void;
     },
   ) {}
 
@@ -59,6 +61,8 @@ export class TunnelTray {
     if (this.tray) this.render();
   }
 
+  updateBeam(count:number):void { this.beamCount=count;if(this.tray)this.render(); }
+
   destroy(): void {
     this.tray?.destroy();
     this.tray = null;
@@ -74,7 +78,8 @@ export class TunnelTray {
     ];
     if (m.showConnect) template.push({ label: m.showDisconnect ? "Reconnect" : "Connect", click: () => this.actions.onConnect() });
     if (m.showDisconnect) template.push({ label: "Disconnect", click: () => this.actions.onDisconnect() });
-    template.push({ type: "separator" }, { label: "Show Tunnex", click: () => this.actions.onShow() }, { label: "Quit", click: () => this.actions.onQuit() });
+    template.push({label:`Beam — ${this.beamCount} active share${this.beamCount===1?"":"s"}`,enabled:false},{label:"Show Beam",click:()=>this.actions.onShowBeam?.()});
+    template.push({ type: "separator" }, { label: "Show Tunnex", click: () => this.actions.onShow() }, { label: this.beamCount ? "Quit (ends Beam sharing)" : "Quit", click: () => this.actions.onQuit() });
     this.tray.setContextMenu(Menu.buildFromTemplate(template));
     this.tray.setToolTip(`Tunnex — ${m.statusLabel}`);
   }

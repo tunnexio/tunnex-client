@@ -1,3 +1,4 @@
+import type { BeamSharedView, BeamAction, BeamCreate, BeamTarget, BeamView, BeamShare, BeamGrantsPreview, BeamGrantsImpact, BeamInventory } from "./beamtypes";
 // Desktop bridge access (S6.2). The Electron preload exposes a verb-specific
 // allowlist as window.tunnex (auth.*/config.*/reserved tunnel.*). Its PRESENCE
 // is the desktop signal — one SPA bundle, runtime branch. In the browser
@@ -51,6 +52,17 @@ export interface ManagedOrganizationEnvelope {
 }
 
 export interface TunnexBridge {
+  notices?: {
+    list():Promise<ClientNotice[]>;
+    markRead(id:string):Promise<void>;
+    onChanged(cb:()=>void):()=>void;
+  };
+  beam?: {
+    shared?(input?:BeamInventory):Promise<BeamSharedView>; openSharedLink?(id:string):Promise<void>;
+    notifications?():Promise<BeamSharedView>;
+    previewGrants(input:BeamGrantsPreview):Promise<BeamGrantsImpact>;
+    view(input?:BeamInventory):Promise<BeamView>; checkLocal(target:BeamTarget):Promise<{ready:boolean}>; create(input:BeamCreate):Promise<BeamShare>; action(input:BeamAction):Promise<BeamShare>; retry(id:string):Promise<void>; idempotencyKey():Promise<string>; copyLink(id:string):Promise<void>; openLink(id:string):Promise<void>; onChanged(cb:()=>void):()=>void; onShow?(cb:()=>void):()=>void;
+  };
   auth: {
     login(): Promise<{ fingerprint: string; expiresAt: string }>;
     logout(): Promise<void>;
@@ -92,6 +104,8 @@ export interface TunnexBridge {
     forgetImported(id?: string): Promise<ImportedProfile[]>;
   };
 }
+
+export interface ClientNotice {id:string;kind:"access_revoked"|"device_revoked"|"update_available";title:string;body:string;created_at:string;}
 
 // TunnelStatus mirrors the helper plus client-synthesized status (no secrets — never
 // key material). Revocation, migration and posture verdicts originate in main.

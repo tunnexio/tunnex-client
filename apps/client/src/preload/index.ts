@@ -1,3 +1,4 @@
+import type { BeamSharedView, BeamAction, BeamCreate, BeamTarget, BeamView, BeamShare, BeamGrantsPreview, BeamGrantsImpact, BeamInventory } from "../main/beamtypes";
 import { contextBridge, ipcRenderer } from "electron";
 
 // The ONLY privileged surface exposed to the renderer (contextIsolation on,
@@ -7,6 +8,27 @@ import { contextBridge, ipcRenderer } from "electron";
 // calls stay in main behind these verb-specific IPC methods. tunnel.* is reserved
 // for S6.3.
 const api = {
+  notices: {
+    list: ():Promise<import("../main/notificationinbox").ClientNotice[]> => ipcRenderer.invoke("notices:list"),
+    markRead: (id:string):Promise<void> => ipcRenderer.invoke("notices:markRead",id),
+    onChanged: (cb:()=>void):(()=>void) => {const listener=()=>cb();ipcRenderer.on("notices:changed",listener);return ()=>ipcRenderer.removeListener("notices:changed",listener);},
+  },
+  beam: {
+    view: (input?:BeamInventory):Promise<BeamView> => ipcRenderer.invoke("beam:view",input),
+    shared: (input?:BeamInventory):Promise<BeamSharedView> => ipcRenderer.invoke("beam:shared",input),
+    notifications: ():Promise<BeamSharedView> => ipcRenderer.invoke("beam:notifications"),
+    openSharedLink: (id:string):Promise<void> => ipcRenderer.invoke("beam:openSharedLink",id),
+    checkLocal: (target:BeamTarget):Promise<{ready:boolean}> => ipcRenderer.invoke("beam:checkLocal",target),
+    create: (input:BeamCreate):Promise<BeamShare> => ipcRenderer.invoke("beam:create",input),
+    action: (input:BeamAction):Promise<BeamShare> => ipcRenderer.invoke("beam:action",input),
+    previewGrants: (input:BeamGrantsPreview):Promise<BeamGrantsImpact> => ipcRenderer.invoke("beam:previewGrants",input),
+    retry: (id:string):Promise<void> => ipcRenderer.invoke("beam:retry",id),
+    idempotencyKey: ():Promise<string> => ipcRenderer.invoke("beam:idempotencyKey"),
+    copyLink: (id:string):Promise<void> => ipcRenderer.invoke("beam:copyLink",id),
+    openLink: (id:string):Promise<void> => ipcRenderer.invoke("beam:openLink",id),
+    onShow: (cb:()=>void):(()=>void) => { let subscribed=true;let eventArrived=false;const listener=()=>{eventArrived=true;void ipcRenderer.invoke("beam:showPending");cb();};ipcRenderer.on("beam:show",listener);void ipcRenderer.invoke("beam:showPending").then((requested:unknown)=>{if(subscribed&&requested===true&&!eventArrived)cb();}).catch(()=>{});return ()=>{subscribed=false;ipcRenderer.removeListener("beam:show",listener);}; },
+    onChanged: (cb:()=>void):(()=>void) => { const listener=()=>cb();ipcRenderer.on("beam:changed",listener);return ()=>ipcRenderer.removeListener("beam:changed",listener); },
+  },
   auth: {
     login: (): Promise<{ fingerprint: string; expiresAt: string }> => ipcRenderer.invoke("auth:login"),
     logout: (): Promise<void> => ipcRenderer.invoke("auth:logout"),
