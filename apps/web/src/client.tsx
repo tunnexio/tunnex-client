@@ -1,5 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/jetbrains-mono";
+import "../../../packages/shared/generated/tokens.css";
 import "./index.css";
 import { ClientApp } from "./client/ClientApp";
 
@@ -10,7 +13,7 @@ import { ClientApp } from "./client/ClientApp";
 // branches. That is the makeshift this replaces: the client is not a small dashboard, and the
 // wireframe's own block agrees — it specifies ONE window with four regions and nothing else.
 //
-// Tokens are shared (index.css); components are its own. That is Item A's ruling.
+// Fonts and design tokens are shared; components are its own.
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ClientApp />

@@ -811,7 +811,7 @@ describe("the numbers are measured and the verb is one word", () => {
     expect(container.querySelector("[data-animation-control] [data-action]")).not.toBeNull();
     expect(container.querySelectorAll("[data-action] .tnx-connect-ripple")).toHaveLength(2);
     expect(container.querySelectorAll("[data-action] .tnx-connect-orbit-segment")).toHaveLength(3);
-    expect(screen.getByText("Click here")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Connect" }).textContent).toBe("Connect");
     // The connected state adds peak/rate values, but must not move the stats surface.
     // Reserve that row while disconnected instead of conditionally mounting it.
     expect(container.querySelector("[data-connection-rate-summary]")).not.toBeNull();

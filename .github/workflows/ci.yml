@@ -124,10 +124,10 @@ jobs:
       - name: Client — build
         run: pnpm --filter @tunnex/client build
 
-      - name: Managed enrollment renderer — typecheck and regression tests
+      - name: Desktop renderer — typecheck and regression tests
         run: |
           pnpm --filter @tunnex/web typecheck
-          pnpm --filter @tunnex/web exec vitest run test/clientapp.test.tsx
+          pnpm --filter @tunnex/web exec vitest run test/clientapp.test.tsx test/clienthandshake.test.tsx test/beampanel.test.tsx test/beamsharedpanel.test.tsx test/beamnotifications.test.tsx
 
       - name: Client — package macOS installer (universal)
         if: matrix.os == 'macos-latest'
