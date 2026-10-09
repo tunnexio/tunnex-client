@@ -26,7 +26,8 @@ import {
   type ReleaseCheck,
 } from "../lib/desktop";
 import { Logo, Tagline } from "../brand";
-import { Icon, type IconName } from "../components/Icon";
+import { Icon } from "../components/Icon";
+import "./client-workspace.css";
 import { drawGraph, pushRate, rateBetween } from "./throughput";
 import {
   createHyperState,
@@ -315,12 +316,12 @@ export function ClientApp() {
     displayStats.handshakeSec && displayStats.handshakeSec > 0
       ? Math.max(0, Math.floor(Date.now() / 1000) - displayStats.handshakeSec)
       : null;
-  const visibleStats: Array<{ label: string; value: string; icon: IconName }> = [
-    { label: "Bytes in", value: displayStats.rx === null ? "—" : formatBytes(displayStats.rx), icon: "download" },
-    { label: "Bytes out", value: displayStats.tx === null ? "—" : formatBytes(displayStats.tx), icon: "upload" },
-    { label: "Duration", value: elapsed === null ? "—" : formatDuration(elapsed), icon: "timer" },
-    { label: "Last handshake", value: handshakeAge === null ? "—" : `${handshakeAge}s ago`, icon: "clock-3" },
-    { label: "Tunnel IP", value: displayStats.address ?? "—", icon: "globe" },
+  const visibleStats: Array<{ label: string; value: string }> = [
+    { label: "Bytes in", value: displayStats.rx === null ? "—" : formatBytes(displayStats.rx) },
+    { label: "Bytes out", value: displayStats.tx === null ? "—" : formatBytes(displayStats.tx) },
+    { label: "Duration", value: elapsed === null ? "—" : formatDuration(elapsed) },
+    { label: "Last handshake", value: handshakeAge === null ? "—" : `${handshakeAge}s ago` },
+    { label: "Tunnel IP", value: displayStats.address ?? "—" },
   ];
   /**
    * ⛔ THE VERB HAD NO HANDLER AT ALL — the button rendered and did nothing.
@@ -739,32 +740,8 @@ export function ClientApp() {
   }, [displayStats.history]);
 
   return (
-    // ⛔ THE CARD, AND IT IS THE DESIGN'S OWN NUMBER — NOT A TASTE CALL.
-    //
-    // The block's client is `max-width:440px; width:100%; margin:0 auto` with an 18px radius and a
-    // glass gradient. We rendered it FULL-BLEED in an 1100px window, so every row — the stats grid,
-    // the verb, the split-tunnel line — stretched to twice the width it was drawn at. Nothing was
-    // missing; the proportions were simply not the ones specified, which is why it read as wrong
-    // rather than as broken.
-    //
-    // ⚠ THE OUTER SHELL STILL OWNS THE VIEWPORT. The card is centred inside it, so a resized window
-    // widens the MARGINS and never the card — the one behaviour a max-width alone would not give if
-    // the shell were sized to the content.
-    // ⛔ ONE SURFACE — founder-directed, and it supersedes the design's card.
-    //
-    // The block draws the client as a 440px card `margin:0 auto` on a page, which is how it has to
-    // be drawn in a WIREFRAME: the wireframe is a web page, so the card needs a page to sit on.
-    // Transcribed literally into a fixed 480px window it produced a card floating inside a window
-    // frame — **two chromes, one of them meaningless**, and an outer margin that exists only
-    // because the design needed somewhere to put the card.
-    //
-    // > **A DESIGN'S CONTAINER IS NOT ALWAYS PART OF THE DESIGN.** Some of what a wireframe shows is
-    // > the wireframe's own medium, and copying it faithfully reproduces the medium along with the
-    // > work. The 440px width was real; the page it was centred on was not.
-    //
-    // The window is now the card: it owns the frame, the OS draws the corners, and the only borders
-    // left are the ones separating content from content.
-    <div className="relative flex h-dvh flex-col overflow-hidden bg-bg text-ink-body">
+    // The native window owns the frame; only its selected pane scrolls.
+    <div className="client-workspace relative flex h-dvh flex-col overflow-hidden bg-bg text-ink-body">
       {/* ── TITLE ─────────────────────────────────────────────────────────────────────────── */}
       {/* ⛔ CLEARS THE TRAFFIC LIGHTS, AND IS THE DRAG HANDLE. With `titleBarStyle: hiddenInset` the
           page paints under the window buttons, so content at the top-left would sit BEHIND them —
@@ -775,7 +752,7 @@ export function ClientApp() {
           so this header declares itself the drag region — with the interactive children opting back
           OUT, since a button inside a drag region swallows the click. */}
       <div
-        className="flex items-center gap-2 px-3 pt-7"
+        className="client-titlebar flex items-center gap-2 px-3 pt-7"
         style={{ WebkitAppRegion: "drag" } as CSSProperties}
       >
         {/* ⛔ THE REAL MARK, via the shared Logo — the previous version drew a bare <img> at 22px
@@ -799,7 +776,7 @@ export function ClientApp() {
           aria-label="Open navigation"
           aria-expanded={drawerOpen}
           onClick={() => setDrawerOpen(true)}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-secondary hover:bg-white/[.11] hover:text-ink-heading"
+          className="client-navigation-toggle flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-secondary hover:bg-white/[.11] hover:text-ink-heading"
           style={{ WebkitAppRegion: "no-drag" } as CSSProperties}
         >
           <Icon name="menu" size={18} />
@@ -819,6 +796,7 @@ export function ClientApp() {
             looks like right now. It carries the state in its LABEL, for a screen reader and on
             hover, rather than in a word beside it. */}
         <div className="ml-auto flex items-center gap-2">
+        {simulated && <span className="client-preview-indicator" title="Browser preview: connection controls and preview traffic are simulated.">Preview</span>}
         {!preview && <BeamReviewNotifications includeReviews={authed === true} />}
         <span
           data-tray={tray}
@@ -854,7 +832,7 @@ export function ClientApp() {
             onClick={() => setDrawerOpen(false)}
             className="absolute inset-0 bg-black/60"
           />
-          <aside className="absolute inset-y-0 left-0 flex w-[calc(100%_-_64px)] max-w-[280px] flex-col border-r border-line bg-[#151515] px-3 pb-4 pt-9 shadow-2xl">
+          <aside className="client-navigation-drawer absolute inset-y-0 left-0 flex w-[calc(100%_-_64px)] max-w-[280px] flex-col border-r border-line bg-[#151515] px-3 pb-4 pt-9 shadow-2xl">
             <div className="mb-4 flex items-center justify-between px-2">
               <span className="flex flex-col justify-center">
                 <Logo size={20} wordmarkOnly />
@@ -869,17 +847,17 @@ export function ClientApp() {
                 ×
               </button>
             </div>
-            <nav aria-label="Client navigation" className="flex flex-col gap-1">
+            <nav aria-label="Client navigation" className="client-navigation flex flex-col gap-1">
               {(
                 [
-                  ["home", "Home", "house"],
-                  ["beam", "Beam", "app-window-share"],
-                  ["profiles", "Profiles", "file-text"],
-                  ["settings", "Settings", "settings"],
-                  ["logs", "Logs", "scroll-text"],
-                  ["help", "Help", "help-circle"],
+                  ["home", "Home"],
+                  ["beam", "Local Sharing"],
+                  ["profiles", "Profiles"],
+                  ["settings", "Settings"],
+                  ["logs", "Logs"],
+                  ["help", "Help"],
                 ] as const
-              ).map(([key, label, icon]) => (
+              ).map(([key, label]) => (
                 <button
                   key={key}
                   type="button"
@@ -896,27 +874,25 @@ export function ClientApp() {
                       : "text-ink-secondary hover:bg-white/[.06] hover:text-ink-body")
                   }
                 >
-                  <Icon name={icon as IconName} size={18} className="shrink-0 text-ink-secondary" />
                   <span>{label}</span>
-                  <Icon name="chevron-right" size={16} className="ml-auto shrink-0 text-ink-secondary" />
                 </button>
               ))}
             </nav>
-            <p className="mt-auto border-t border-line pt-3 font-mono text-[10px] text-ink-secondary" data-drawer-version>
+            <p className="client-drawer-version mt-auto pt-3 text-xs text-ink-secondary" data-drawer-version>
               Tunnex {appInfo ? `v${appInfo.version}` : ""}
             </p>
           </aside>
         </div>
       )}
-      <main className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 pb-5 pt-3">
+      <main className="client-main flex min-h-0 flex-1 flex-col overflow-y-auto">
         {authed === true && enrollmentBlockedByOtherUser && (
-          <div className="rounded-lg border border-warn/40 bg-warn/5 px-3 py-2 text-xs text-warn">
+          <div className="client-notice client-notice-warning text-warn">
             <p role="status">{FOREIGN_ENROLLMENT_MESSAGE}</p>
             <button
               type="button"
               disabled={busy}
               onClick={() => void onSignOut()}
-              className="mt-2 rounded border border-warn/60 px-2 py-1 disabled:opacity-50"
+              className="client-button mt-2 text-warn"
             >
               Sign out to recover enrollment
             </button>
@@ -925,7 +901,7 @@ export function ClientApp() {
         {problem && (
           <p
             role="alert"
-            className="rounded-lg border border-danger/40 bg-danger/5 px-3 py-2 text-xs text-danger"
+            className="client-notice client-notice-danger text-danger"
           >
             {problem}
           </p>
@@ -933,8 +909,38 @@ export function ClientApp() {
 
         {pane === "beam" && <BeamPanel />}
         {pane === "home" && (
-          <>
-            <div className="relative min-h-[150px] flex-1" data-animation-control>
+          <div className="client-home">
+            {/* ── STATUS HEAD ─────────────────────────────────────────────────────────────────── */}
+            <section className="client-home-status">
+              <h1
+                data-state={state}
+                className={
+                  "client-connection-state text-[26px] font-semibold leading-tight " +
+                  (view.severity === "loud"
+                    ? "text-danger"
+                    : view.severity === "ok"
+                      ? "text-accent-400"
+                      : view.severity === "warn"
+                        ? "text-warn"
+                        : "text-ink-heading")
+                }
+              >
+                {view.label}
+              </h1>
+              {state !== "connected" && (
+                <p className="mt-1 text-sm text-ink-secondary" data-status-detail>{view.detail}</p>
+              )}
+              {state === "connected" && displayStats.connectionPath && (
+                <p className="mt-1 text-sm text-ink-secondary" data-connection-path>
+                  Connection: {displayStats.connectionPath}
+                </p>
+              )}
+              {postureReason && (state === "posture_warning" || state === "posture_blocked") && (
+                <p className="mt-2 text-sm text-warn" data-posture-reason>{postureReason}</p>
+              )}
+            </section>
+
+            <div className="client-connection-visual relative" data-animation-control>
               <canvas
                 ref={hyperRef}
                 id="tnxHyper"
@@ -975,58 +981,22 @@ export function ClientApp() {
                     className={"tnx-connect-orb " + (view.action === "Disconnect" ? "tnx-connect-orb-live" : "tnx-connect-orb-idle")}
                     aria-hidden
                   />
-                  {showActionHint && view.action === "Connect" && (
-                    <span className="tnx-connect-hint" aria-hidden>Click here</span>
-                  )}
-                  {view.action === "Disconnect" && (
-                    <span className="tnx-connect-hint" aria-hidden>Disconnect</span>
-                  )}
+                  <span className={"client-connect-label " + (showActionHint ? "client-connect-label-hint" : "")} aria-hidden>{view.action}</span>
                 </button>
               ) : null}
             </div>
-            {/* ── STATUS HEAD ─────────────────────────────────────────────────────────────────── */}
-            <section>
-              <h1
-                data-state={state}
-                className={
-                  "text-[26px] font-semibold leading-tight " +
-                  (view.severity === "loud"
-                    ? "text-danger"
-                    : view.severity === "ok"
-                      ? "text-accent-400"
-                      : view.severity === "warn"
-                        ? "text-warn"
-                        : "text-ink-heading")
-                }
-              >
-                {view.label}
-              </h1>
-              {state !== "connected" && (
-                <p className="mt-1 text-sm text-ink-secondary" data-status-detail>{view.detail}</p>
-              )}
-              {state === "connected" && displayStats.connectionPath && (
-                <p className="mt-1 text-sm text-ink-secondary" data-connection-path>
-                  Connection: {displayStats.connectionPath}
-                </p>
-              )}
-              {postureReason && (state === "posture_warning" || state === "posture_blocked") && (
-                <p className="mt-2 text-sm text-warn" data-posture-reason>{postureReason}</p>
-              )}
-            </section>
-
-            <section className="rounded-xl border border-line bg-surface-inset p-3" data-connection-metrics>
-              <div className="flex items-baseline justify-between">
-                <span className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-ink-secondary">
-                  <Icon name="chart-no-axes-column-increasing" size={16} />
+            <section className="client-section client-connection-metrics" data-connection-metrics>
+              <div className="client-section-header flex items-baseline justify-between">
+                <span className="client-section-title text-ink-secondary">
                   Connection stats
                 </span>
-                <span className="font-mono text-base text-ink-heading">
+                <span className="client-connection-rate text-ink-heading tabular-nums">
                   {displayStats.rate === null ? "—" : formatRate(displayStats.rate)}
                 </span>
               </div>
               <canvas ref={graphRef} id="tnxGraph" aria-hidden className="mt-2 block h-10 w-full" />
               <div
-                className="mt-1 flex min-h-4 justify-between font-mono text-[10px] text-ink-secondary"
+                className="client-rate-summary mt-1 flex min-h-4 justify-between text-xs text-ink-secondary"
                 data-connection-rate-summary
               >
                 {displayStats.rate !== null && (
@@ -1036,38 +1006,30 @@ export function ClientApp() {
                   </>
                 )}
               </div>
-              <dl className="mt-3 divide-y divide-line/70" data-connection-stat-rows>
-                {[
-                  visibleStats.slice(0, 2),
-                  visibleStats.slice(2, 4),
-                  visibleStats.slice(4),
-                ].map((row) => (
-                  <div key={row[0].label} className={"grid gap-x-3 py-2 " + (row.length === 1 ? "grid-cols-1" : "grid-cols-2 divide-x divide-line/70")}>
-                    {row.map(({ label, value, icon }, index) => (
-                  <div key={label} className={"min-w-0 " + (index > 0 ? "pl-3" : "pr-3")}>
-                    <dt className="flex items-center gap-1.5 whitespace-nowrap font-mono text-[10px] uppercase tracking-wide text-ink-secondary" data-stat-label>
-                      <Icon name={icon} size={16} />
+              <dl className="client-facts" data-connection-stat-rows>
+                {visibleStats.map(({ label, value }) => (
+                  <div key={label} className={label === "Tunnel IP" ? "client-fact-wide" : ""}>
+                    <dt data-stat-label>
                       {label}
                     </dt>
                     <dd
-                      className="mt-1 min-w-0 truncate whitespace-nowrap font-mono text-base tabular-nums text-ink-body"
+                      className="tabular-nums"
                       title={value}
                       data-stat-value
                     >
                       {value}
                     </dd>
                   </div>
-                    ))}
-                  </div>
                 ))}
               </dl>
             </section>
 
-          </>
+          </div>
         )}
 
         {(pane === "settings" || pane === "profiles") && (
           <>
+            <h1 className="client-pane-title">{pane === "settings" ? "Settings" : "Profiles"}</h1>
             {/* ── ROUTING MODE ────────────────────────────────────────────────────────────────────
             ⛔ THE CONTROL SAID THE OPPOSITE OF WHAT IT DID, AND THE SAFE-LOOKING SETTING WAS THE
             LEAKING ONE.
@@ -1082,8 +1044,8 @@ export function ClientApp() {
             > and a checkbox cannot say which state is which — the unchecked box has no words on it.
 
             Two named options now, each stating what it DOES to traffic. No inference from a tick. */}
-            {pane === "settings" && <fieldset className="rounded-lg border border-line p-3">
-              <legend className="px-1 font-mono text-[10px] uppercase tracking-wider text-ink-secondary">
+            {pane === "settings" && <fieldset className="client-section">
+              <legend className="client-section-title">
                 Routing
               </legend>
               {(
@@ -1134,11 +1096,11 @@ export function ClientApp() {
                 do is carry a device identity, so the monitors that keep a tunnel honest have
                 nothing to poll — which is stated here and on the connection screen instead of
                 being left in a design note. */}
-            {pane === "profiles" && <section className="rounded-lg border border-line p-3">
+            {pane === "profiles" && <div className="client-pane-stack">
               {(() => {
                 const activeProfile = importedProfiles.find((profile) => profile.active);
                 return (
-                  <section className="mb-3 rounded-lg border border-line bg-surface-inset p-3" data-connection-source>
+                  <section className="client-section" data-connection-source>
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h2 className="text-sm font-medium text-ink-heading">Tunnex account</h2>
@@ -1154,7 +1116,7 @@ export function ClientApp() {
                           data-usemanagedprofile
                           disabled={busy}
                           onClick={() => void onUseManagedProfile()}
-                          className="shrink-0 rounded border border-line px-2 py-1 text-xs hover:text-ink-body disabled:opacity-50"
+                          className="client-button shrink-0"
                         >
                           Use account
                         </button>
@@ -1167,205 +1129,293 @@ export function ClientApp() {
               })()}
               {!simulated && (
                 <section
-                  className="mb-3 rounded-lg border border-line bg-surface-inset p-3"
+                  className="client-section"
                   aria-labelledby="managed-organizations-heading"
                   data-managed-organizations
                 >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2
-                      id="managed-organizations-heading"
-                      className="text-sm font-medium text-ink-heading"
-                    >
-                      Organizations
-                    </h2>
-                    <p className="mt-0.5 text-[11px] text-ink-secondary">
-                      Choose where a new managed device is enrolled.
-                    </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2
+                        id="managed-organizations-heading"
+                        className="text-sm font-medium text-ink-heading"
+                      >
+                        Organizations
+                      </h2>
+                      <p className="mt-0.5 text-[11px] text-ink-secondary">
+                        Choose where a new managed device is enrolled.
+                      </p>
+                    </div>
+                    {enrollmentLocked && (
+                      <button
+                        type="button"
+                        disabled={busy || enrollmentBlockedByOtherUser}
+                        onClick={() => void onRemoveDevice()}
+                        className="client-button shrink-0 text-warn"
+                      >
+                        {enrollmentRecoveryRequired ? "Abandon and re-enroll" : "Remove device"}
+                      </button>
+                    )}
                   </div>
-                  {enrollmentLocked && (
+                  {organizationNotice && (
+                    <p
+                      className="client-notice client-notice-warning mt-3 text-warn"
+                      role="status"
+                    >
+                      {organizationNotice}
+                    </p>
+                  )}
+                  {managedOrganizationsFailed ? (
+                    <div className="mt-3">
+                      <p className="text-xs text-warn">
+                        Organizations could not be loaded. Sign in, then try again.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void loadManagedOrganizations()}
+                        className="client-button mt-2"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : managedOrganizations === null ? (
+                    <p className="mt-3 text-xs text-ink-secondary">
+                      Loading organizations…
+                    </p>
+                  ) : managedOrganizations.length === 0 ? (
+                    <p className="mt-3 text-xs text-warn">
+                      No organizations are available for this account. Ask an administrator to add you to one.
+                    </p>
+                  ) : managedOrganizations.length === 1 ? (
+                    <div className="client-record mt-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="client-record-title text-ink-heading">
+                            {managedOrganizations[0].name}
+                          </p>
+                          <p className="client-record-detail text-ink-secondary">
+                            {managedOrganizations[0].slug}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-[10px] text-accent-400">
+                          {enrollmentLocked
+                            ? managedOrganizations[0].selected
+                              ? "Enrolled device"
+                              : "Remove device first"
+                            : "Only organization"}
+                        </span>
+                      </div>
+                      {!enrollmentLocked && (
+                        <p className="mt-2 text-[11px] text-ink-secondary">
+                          This organization will be used automatically. No selection is needed.
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      {enrollmentLocked && (
+                        <p className="mt-3 text-[11px] text-warn">
+                          This device stays with its enrolled organization. Remove device before choosing another organization.
+                        </p>
+                      )}
+                      <ul className="client-record-list" aria-label="Managed organizations">
+                        {managedOrganizations.map((organization) => {
+                          return (
+                            <li
+                              key={organization.id}
+                              className={
+                                "client-record " + (organization.selected ? "is-selected" : "")
+                              }
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <p className="client-record-title text-ink-heading">
+                                    {organization.name}
+                                  </p>
+                                  <p className="client-record-detail text-ink-secondary">
+                                    {organization.slug}
+                                  </p>
+                                </div>
+                                {organization.selected ? (
+                                  <span className="shrink-0 text-[10px] text-accent-400">
+                                    {enrollmentLocked ? "Enrolled device" : "Selected"}
+                                  </span>
+                                ) : enrollmentLocked ? (
+                                  <span className="shrink-0 text-[10px] text-ink-secondary">
+                                    Remove device first
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={busy || enrollmentBlockedByOtherUser}
+                                    onClick={() => void onSelectManagedOrganization(organization)}
+                                    aria-label={`Use ${organization.name}`}
+                                    className="client-button shrink-0"
+                                  >
+                                    Use
+                                  </button>
+                                )}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </>
+                  )}
+                </section>
+              )}
+              <section className="client-section">
+                <div className="client-section-header flex items-center justify-between gap-3">
+                  <h2 className="client-section-title">
+                    Imported profiles
+                  </h2>
+                  <button
+                    type="button"
+                    data-importconfig
+                    disabled={busy}
+                    onClick={() => void onImportConfig()}
+                    className="client-button"
+                  >
+                    Import .conf
+                  </button>
+                </div>
+                <p className="mt-2 text-[11px] text-ink-secondary">
+                  Keep separate WireGuard files for different devices or gateways. Switching disconnects the current tunnel; imported profiles do not report posture or monitor revocation in this app.
+                </p>
+                {importedProfiles.length === 0 ? (
+                  <p className="client-empty">No imported profiles yet.</p>
+                ) : (
+                  <ul className="client-record-list" aria-label="Imported profiles">
+                    {importedProfiles.map((profile) => (
+                      <li key={profile.id} className={"client-record " + (profile.active ? "is-selected" : "")}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="client-record-title text-ink-heading">{profile.name}</p>
+                            <p className="client-record-detail text-ink-secondary">{profile.endpoint || "Gateway not specified"}</p>
+                            <p className="client-record-detail text-ink-secondary">{profile.address || "No tunnel IP"} · {profile.fullTunnel ? "all traffic" : "Tunnex routes"}</p>
+                          </div>
+                          {profile.active && <span className="shrink-0 text-[10px] text-accent-400">Selected</span>}
+                        </div>
+                        <div className="client-actions mt-3">
+                          <button type="button" disabled={busy || profile.active} onClick={() => void onSelectImported(profile)} className="client-button">
+                            {profile.active ? "Selected" : "Use this profile"}
+                          </button>
+                          <button type="button" data-forgetimported={profile.id} disabled={busy} onClick={() => void onForgetImported(profile.id)} className="client-button text-warn">
+                            Remove
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>}
+
+            {/* ── SERVER ──────────────────────────────────────────────────────────────────── */}
+            {pane === "settings" && <section className="client-section">
+              <h2 className="client-section-title">
+                Server
+              </h2>
+              <p className="client-server-address mt-2 text-sm text-ink-body">
+                {serverUrl ?? "n/a"}
+              </p>
+              {identity && (
+                <p className="client-record-detail text-ink-secondary">
+                  device {identity.slice(0, 12)}
+                </p>
+              )}
+              {!simulated && !editingServer && (
+                <div className="client-actions mt-3">
+                  <button
+                    type="button"
+                    data-changeserver
+                    disabled={busy}
+                    onClick={() => {
+                      setDraftServer(serverUrl ?? "");
+                      setEditingServer(true);
+                    }}
+                    className="client-button"
+                  >
+                    Change server
+                  </button>
+                  {authed === true && (
                     <button
                       type="button"
+                      data-signout
+                      disabled={busy}
+                      onClick={() => void onSignOut()}
+                      className="client-button"
+                    >
+                      Sign out
+                    </button>
+                  )}
+                  {authed === true && (
+                    <button
+                      type="button"
+                      data-removedevice
                       disabled={busy || enrollmentBlockedByOtherUser}
                       onClick={() => void onRemoveDevice()}
-                      className="shrink-0 rounded border border-warn/60 px-2 py-1 text-xs text-warn hover:text-ink-body disabled:opacity-50"
+                      className="client-button text-warn"
                     >
                       {enrollmentRecoveryRequired ? "Abandon and re-enroll" : "Remove device"}
                     </button>
                   )}
                 </div>
-                {organizationNotice && (
-                  <p
-                    className="mt-2 rounded border border-warn/40 bg-warn/5 px-2 py-1.5 text-[11px] text-warn"
-                    role="status"
+              )}
+              {editingServer && !simulated && (
+                <form
+                  className="client-section-body"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void onChangeServer();
+                  }}
+                >
+                  <label
+                    className="block text-xs text-ink-secondary"
+                    htmlFor="tnx-server"
                   >
-                    {organizationNotice}
+                    Control-plane URL
+                  </label>
+                  <input
+                    id="tnx-server"
+                    type="url"
+                    autoComplete="off"
+                    value={draftServer}
+                    onChange={(e) => setDraftServer(e.target.value)}
+                    placeholder="https://vpn.example.com"
+                    className="client-field mt-2"
+                  />
+                  {/* ⛔ SAID BEFORE THE BUTTON IS PRESSED, NOT AFTER. Changing origin revokes the stored
+                  credential — the user must know that is the cost, not discover it. */}
+                  <p className="mt-2 text-[11px] text-warn">
+                    Switching servers signs you out and tears down the tunnel. A
+                    credential is only ever valid for the server it was issued by.
                   </p>
-                )}
-                {managedOrganizationsFailed ? (
-                  <div className="mt-3">
-                    <p className="text-xs text-warn">
-                      Organizations could not be loaded. Sign in, then try again.
-                    </p>
+                  <div className="client-actions mt-3">
+                    <button
+                      type="submit"
+                      disabled={busy || draftServer.trim().length === 0}
+                      className="client-button-primary"
+                    >
+                      Switch server
+                    </button>
                     <button
                       type="button"
-                      disabled={busy}
-                      onClick={() => void loadManagedOrganizations()}
-                      className="mt-2 rounded border border-line px-2 py-1 text-xs hover:text-ink-body disabled:opacity-50"
+                      onClick={() => setEditingServer(false)}
+                      className="client-button"
                     >
-                      Retry
+                      Cancel
                     </button>
                   </div>
-                ) : managedOrganizations === null ? (
-                  <p className="mt-3 text-xs text-ink-secondary">
-                    Loading organizations…
-                  </p>
-                ) : managedOrganizations.length === 0 ? (
-                  <p className="mt-3 text-xs text-warn">
-                    No organizations are available for this account. Ask an administrator to add you to one.
-                  </p>
-                ) : managedOrganizations.length === 1 ? (
-                  <div className="mt-3 rounded-lg border border-line p-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm text-ink-heading">
-                          {managedOrganizations[0].name}
-                        </p>
-                        <p className="mt-0.5 truncate font-mono text-[10px] text-ink-secondary">
-                          {managedOrganizations[0].slug}
-                        </p>
-                      </div>
-                      <span className="shrink-0 text-[10px] text-accent-400">
-                        {enrollmentLocked
-                          ? managedOrganizations[0].selected
-                            ? "Enrolled device"
-                            : "Remove device first"
-                          : "Only organization"}
-                      </span>
-                    </div>
-                    {!enrollmentLocked && (
-                      <p className="mt-2 text-[11px] text-ink-secondary">
-                        This organization will be used automatically. No selection is needed.
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    {enrollmentLocked && (
-                      <p className="mt-3 text-[11px] text-warn">
-                        This device stays with its enrolled organization. Remove device before choosing another organization.
-                      </p>
-                    )}
-                    <ul className="mt-3 space-y-2" aria-label="Managed organizations">
-                      {managedOrganizations.map((organization) => {
-                        return (
-                          <li
-                            key={organization.id}
-                            className={
-                              "rounded-lg border p-2.5 " +
-                              (organization.selected
-                                ? "border-accent-400/60 bg-accent-400/5"
-                                : "border-line")
-                            }
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0">
-                                <p className="truncate text-sm text-ink-heading">
-                                  {organization.name}
-                                </p>
-                                <p className="mt-0.5 truncate font-mono text-[10px] text-ink-secondary">
-                                  {organization.slug}
-                                </p>
-                              </div>
-                              {organization.selected ? (
-                                <span className="shrink-0 text-[10px] text-accent-400">
-                                  {enrollmentLocked ? "Enrolled device" : "Selected"}
-                                </span>
-                              ) : enrollmentLocked ? (
-                                <span className="shrink-0 text-[10px] text-ink-secondary">
-                                  Remove device first
-                                </span>
-                              ) : (
-                                <button
-                                  type="button"
-                                  disabled={busy || enrollmentBlockedByOtherUser}
-                                  onClick={() => void onSelectManagedOrganization(organization)}
-                                  aria-label={`Use ${organization.name}`}
-                                  className="shrink-0 rounded border border-line px-2 py-1 text-xs hover:text-ink-body disabled:opacity-50"
-                                >
-                                  Use
-                                </button>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </>
-                )}
-                </section>
-              )}
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="font-mono text-[10px] uppercase tracking-wider text-ink-secondary">
-                  Imported profiles
-                </h2>
-                <button
-                  type="button"
-                  data-importconfig
-                  disabled={busy}
-                  onClick={() => void onImportConfig()}
-                  className="rounded border border-line px-2 py-1 text-xs hover:text-ink-body disabled:opacity-50"
-                >
-                  Import .conf
-                </button>
-              </div>
-              <p className="mt-2 text-[11px] text-ink-secondary">
-                Keep separate WireGuard files for different devices or gateways. Switching disconnects the current tunnel; imported profiles do not report posture or monitor revocation in this app.
-              </p>
-              {importedProfiles.length === 0 ? (
-                <p className="mt-3 text-xs text-ink-secondary">No imported profiles yet.</p>
-              ) : (
-                <ul className="mt-3 space-y-2" aria-label="Imported profiles">
-                  {importedProfiles.map((profile) => (
-                    <li key={profile.id} className={"rounded-lg border p-2.5 " + (profile.active ? "border-accent-400/60 bg-accent-400/5" : "border-line")}>
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm text-ink-heading">{profile.name}</p>
-                          <p className="mt-0.5 truncate font-mono text-[10px] text-ink-secondary">{profile.endpoint || "Gateway not specified"}</p>
-                          <p className="mt-0.5 font-mono text-[10px] text-ink-secondary">{profile.address || "No tunnel IP"} · {profile.fullTunnel ? "all traffic" : "Tunnex routes"}</p>
-                        </div>
-                        {profile.active && <span className="shrink-0 text-[10px] text-accent-400">Selected</span>}
-                      </div>
-                      <div className="mt-2 flex gap-2">
-                        <button type="button" disabled={busy || profile.active} onClick={() => void onSelectImported(profile)} className="rounded border border-line px-2 py-1 text-xs hover:text-ink-body disabled:opacity-50">
-                          {profile.active ? "Selected" : "Use this profile"}
-                        </button>
-                        <button type="button" data-forgetimported={profile.id} disabled={busy} onClick={() => void onForgetImported(profile.id)} className="rounded border border-warn/60 px-2 py-1 text-xs text-warn hover:text-ink-body disabled:opacity-50">
-                          Remove
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                </form>
               )}
             </section>}
 
-            {/* ── ABOUT ───────────────────────────────────────────────────────────────────────
-                ⛔ THE VERSION IS THE ONE UPDATE FACT THAT IS REAL, and the client could not tell
-                you its own — the first thing any support conversation asks for.
-
-                ⛔ AND THERE IS NO "CHECK FOR UPDATES" BUTTON, DELIBERATELY. `AUTOUPDATE_ENABLED` is
-                false and PINNED false by security.test.ts (Squirrel.Mac cannot verify an unsigned
-                app, so an unsigned auto-updater is a remote-code channel with no signature check),
-                and `build.publish` is null — there is no feed to query. A button here would be a
-                control that cannot work, which this repo shipped twice today already. The state
-                model's own rule applies: a null action means NO button, plus a sentence saying
-                why. */}
-            {pane === "settings" && <section className="rounded-lg border border-line p-3">
-              <h2 className="font-mono text-[10px] uppercase tracking-wider text-ink-secondary">
+            {pane === "settings" && <section className="client-section">
+              <h2 className="client-section-title">
                 About
               </h2>
-              <p className="mt-1 font-mono text-xs text-ink-body" data-version>
+              <p className="mt-2 text-sm text-ink-body" data-version>
                 Tunnex {appInfo ? `v${appInfo.version}` : "version n/a"}
               </p>
               {appInfo && appInfo.update.kind !== "ready" && (
@@ -1387,13 +1437,13 @@ export function ClientApp() {
               {releaseCheck?.kind === "unavailable" && (
                 <p className="mt-2 text-[11px] text-warn" data-updateunavailable>{releaseCheck.reason}</p>
               )}
-              <div className="mt-2 flex gap-2">
+              <div className="client-actions mt-3">
                 <button
                   type="button"
                   data-checkupdates
                   disabled={checkingRelease}
                   onClick={() => void checkRelease()}
-                  className="mt-2 rounded border border-line px-2 py-1 text-xs hover:text-ink-body"
+                  className="client-button"
                 >
                   {checkingRelease ? "Checking…" : "Check for updates"}
                 </button>
@@ -1402,7 +1452,7 @@ export function ClientApp() {
                   type="button"
                   data-downloadupdate
                   onClick={() => void openReleaseDownload()}
-                  className="mt-2 rounded border border-line px-2 py-1 text-xs hover:text-ink-body"
+                  className="client-button"
                 >
                   Download v{releaseCheck.version}
                 </button>
@@ -1410,127 +1460,31 @@ export function ClientApp() {
               </div>
             </section>}
 
-            {/* ── SERVER ──────────────────────────────────────────────────────────────────── */}
-            {pane === "settings" && <section className="rounded-lg border border-line p-3">
-              <h2 className="font-mono text-[10px] uppercase tracking-wider text-ink-secondary">
-                Server
-              </h2>
-              <p className="mt-1 break-all font-mono text-xs text-ink-body">
-                {serverUrl ?? "n/a"}
-              </p>
-              {identity && (
-                <p className="mt-0.5 font-mono text-[10px] text-ink-secondary">
-                  device {identity.slice(0, 12)}
-                </p>
-              )}
-              {!simulated && !editingServer && (
-                <div className="mt-2 flex gap-2">
-                  <button
-                    type="button"
-                    data-changeserver
-                    disabled={busy}
-                    onClick={() => {
-                      setDraftServer(serverUrl ?? "");
-                      setEditingServer(true);
-                    }}
-                    className="rounded border border-line px-2 py-1 text-xs hover:text-ink-body disabled:opacity-50"
-                  >
-                    Change server
-                  </button>
-                  {authed === true && (
-                    <button
-                      type="button"
-                      data-signout
-                      disabled={busy}
-                      onClick={() => void onSignOut()}
-                      className="rounded border border-line px-2 py-1 text-xs hover:text-ink-body disabled:opacity-50"
-                    >
-                      Sign out
-                    </button>
-                  )}
-                  {authed === true && (
-                    <button
-                      type="button"
-                      data-removedevice
-                      disabled={busy || enrollmentBlockedByOtherUser}
-                      onClick={() => void onRemoveDevice()}
-                      className="rounded border border-warn/60 px-2 py-1 text-xs text-warn hover:text-ink-body disabled:opacity-50"
-                    >
-                      {enrollmentRecoveryRequired ? "Abandon and re-enroll" : "Remove device"}
-                    </button>
-                  )}
-                </div>
-              )}
-            </section>}
-            {pane === "settings" && editingServer && !simulated && (
-              <form
-                className="rounded-lg border border-line p-3"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void onChangeServer();
-                }}
-              >
-                <label
-                  className="block text-xs text-ink-secondary"
-                  htmlFor="tnx-server"
-                >
-                  Control-plane URL
-                </label>
-                <input
-                  id="tnx-server"
-                  type="url"
-                  autoComplete="off"
-                  value={draftServer}
-                  onChange={(e) => setDraftServer(e.target.value)}
-                  placeholder="https://vpn.example.com"
-                  className="mt-1 w-full rounded border border-line bg-transparent px-2 py-1.5 font-mono text-xs text-ink-body"
-                />
-                {/* ⛔ SAID BEFORE THE BUTTON IS PRESSED, NOT AFTER. Changing origin revokes the stored
-                credential — the user must know that is the cost, not discover it. */}
-                <p className="mt-2 text-[11px] text-warn">
-                  Switching servers signs you out and tears down the tunnel. A
-                  credential is only ever valid for the server it was issued by.
-                </p>
-                <div className="mt-2 flex gap-2">
-                  <button
-                    type="submit"
-                    disabled={busy || draftServer.trim().length === 0}
-                    className="rounded border border-line px-2 py-1 text-xs hover:text-ink-body disabled:opacity-50"
-                  >
-                    Switch server
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingServer(false)}
-                    className="rounded px-2 py-1 text-xs text-ink-secondary hover:text-ink-body"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
           </>
         )}
 
         {pane === "logs" && (
-          <section className="flex min-h-0 flex-1 flex-col">
-            <div className="flex items-center gap-2">
-              <h2 className="font-mono text-[10px] uppercase tracking-wider text-ink-secondary">
+          <section className="client-logs flex min-h-0 flex-1 flex-col">
+            <h1 className="client-pane-title">Logs</h1>
+            <div className="client-section-header flex items-center gap-2">
+              <h2 className="client-section-title">
                 Client log
               </h2>
               <button
                 type="button"
                 data-refreshlogs
+                aria-label="Refresh"
+                title="Refresh"
                 onClick={() => void loadLog()}
-                className="ml-auto rounded border border-line px-2 py-0.5 text-[10px] hover:text-ink-body"
+                className="client-button ml-auto"
               >
-                Refresh
+                <Icon name="refresh-cw" size={16} />
               </button>
               <button
                 type="button"
                 data-exportlogs
                 onClick={() => void onExportLog()}
-                className="rounded border border-line px-2 py-0.5 text-[10px] hover:text-ink-body"
+                className="client-button"
               >
                 Export
               </button>
@@ -1538,7 +1492,7 @@ export function ClientApp() {
                 type="button"
                 data-openlogs
                 onClick={() => void desktop()?.diag.openLogs()}
-                className="rounded border border-line px-2 py-0.5 text-[10px] hover:text-ink-body"
+                className="client-button"
               >
                 Reveal
               </button>
@@ -1553,7 +1507,7 @@ export function ClientApp() {
                 the window itself from becoming scrollable. */}
             <pre
               data-logview
-              className="mt-2 min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-all rounded-lg border border-line bg-surface-inset p-3 font-mono text-[10px] leading-relaxed text-ink-secondary"
+              className="client-log-output min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-all font-mono text-xs leading-relaxed text-ink-secondary"
             >
               {logText || "The log is empty."}
             </pre>
@@ -1561,10 +1515,9 @@ export function ClientApp() {
         )}
 
         {pane === "help" && (
-          <section className="rounded-lg border border-line p-3">
-            <h2 className="font-mono text-[10px] uppercase tracking-wider text-ink-secondary">
-              Help
-            </h2>
+          <div className="client-pane-stack">
+            <h1 className="client-pane-title">Help</h1>
+          <section className="client-section">
             <p className="mt-2 text-sm text-ink-body">
               Check the client log before contacting your administrator.
             </p>
@@ -1574,11 +1527,12 @@ export function ClientApp() {
             <button
               type="button"
               onClick={() => setPane("logs")}
-              className="mt-3 rounded border border-line px-2 py-1 text-xs hover:text-ink-body"
+              className="client-button mt-3"
             >
               Open logs
             </button>
           </section>
+          </div>
         )}
       </main>
     </div>

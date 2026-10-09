@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { desktop } from "../lib/desktop";
 import { BeamSharedPanel } from "./BeamSharedPanel";
 import { Modal } from "../components/ui";
+import { Icon } from "../components/Icon";
+import "./client-sharing.css";
 import type {
   BeamAction,
   BeamCreate,
@@ -11,10 +13,8 @@ import type {
   BeamView,
 } from "../lib/beamtypes";
 
-const button =
-  "rounded-lg border border-line px-3 py-2 text-xs font-medium hover:bg-white/10 disabled:opacity-40";
-const input =
-  "w-full rounded-lg border border-line bg-black/20 px-3 py-2 text-sm text-ink-heading";
+const button = "client-button";
+const input = "client-field";
 export function beamStatus(share: BeamShare, now = Date.now()): string {
   if (Date.parse(share.expires_at) <= now) return "Expired";
   if (!["active", "starting"].includes(share.state))
@@ -36,9 +36,9 @@ export function beamError(error: unknown): string {
   if (/organization.*required|organization selection/i.test(text))
     return "Choose your organization in Profiles before sharing.";
   if (/update_required/i.test(text))
-    return "Update Tunnex desktop to use Beam with this server.";
+    return "Update Tunnex desktop to use Local Sharing with this server.";
   if (/404|unsupported|protocol/i.test(text))
-    return "This server does not support Beam yet. Update the server to use sharing.";
+    return "This server does not support Local Sharing yet. Update the server to use sharing.";
   if (/401|403|session_changed|credential|authenticated/i.test(text))
     return "Sign in with an account permitted to publish in this organization.";
   if (/409|conflict|version/i.test(text))
@@ -48,15 +48,19 @@ export function beamError(error: unknown): string {
   if (/app_unavailable|target/i.test(text))
     return "The local app did not respond. Check the selected address, port and TLS trust.";
   if (/denied|disabled|ready|domain/i.test(text))
-    return "Beam is unavailable under your organization policy or domain setup.";
-  return "Beam could not complete this request. Your saved shares were kept; refresh and try again.";
+    return "Local Sharing is unavailable under your organization policy or domain setup.";
+  return "Local Sharing could not complete this request. Your saved shares were kept; refresh and try again.";
 }
 export function BeamPanel() {
   const [tab, setTab] = useState<"mine" | "shared">("mine");
-  return <div className="space-y-4">
-    <nav aria-label="Beam shares" className="flex gap-2">
-      <button className={button + (tab === "mine" ? " bg-white/10" : "")} aria-pressed={tab === "mine"} onClick={() => setTab("mine")}>My shares</button>
-      <button className={button + (tab === "shared" ? " bg-white/10" : "")} aria-pressed={tab === "shared"} onClick={() => setTab("shared")}>Shared with me</button>
+  return <div className="client-sharing">
+    <header className="client-sharing-heading">
+      <h1>Local Sharing</h1>
+      <p>Works independently of your VPN connection.</p>
+    </header>
+    <nav aria-label="Beam shares" className="client-sharing-tabs">
+      <button type="button" aria-pressed={tab === "mine"} onClick={() => setTab("mine")}>My shares</button>
+      <button type="button" aria-pressed={tab === "shared"} onClick={() => setTab("shared")}>Shared with me</button>
     </nav>
     {tab === "mine" ? <BeamPublisherPanel /> : <BeamSharedPanel />}
   </div>;
@@ -273,87 +277,82 @@ function BeamPublisherPanel() {
     key.current = null;
   };
   return (
-    <section aria-label="Tunnex Beam" className="flex flex-col gap-4">
-      <div className="rounded-2xl border border-line bg-white/[.025] p-4">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-white/60" />
-          <h1 className="text-xl font-semibold text-ink-heading">
-            Tunnex Beam
-          </h1>
-          <span className="ml-auto rounded border border-line px-2 py-0.5 text-[10px] text-ink-secondary">
-            LOCAL APP SHARING
-          </span>
-        </div>
-        <p className="mt-2 text-xs leading-5 text-ink-secondary">
-          Bring your local app to your teammates’ browser. Choose who can review
-          it and when the link ends.
-        </p>
-        <p className="mt-2 text-[10px] text-ink-secondary">
-          Works independently of your VPN connection.
-        </p>
-      </div>
+    <section aria-label="Tunnex Beam" className="client-sharing-panel">
+      <h2 className="sr-only">My shares</h2>
       {!bridge && (
-        <p role="status" className="text-sm text-ink-secondary">
+        <p role="status" className="client-empty">
           Open Tunnex desktop to publish a local app.
         </p>
       )}
       {error && (
         <p
           role="alert"
-          className="rounded-lg border border-danger/30 p-3 text-xs text-danger"
+          className="client-sharing-feedback client-sharing-feedback-error"
         >
           {error}
         </p>
       )}
       {notice && (
-        <p role="status" className="text-xs text-emerald-300">
+        <p role="status" className="client-sharing-feedback">
           {notice}
         </p>
       )}
       {bridge && !view && !error && (
-        <p role="status" className="text-sm text-ink-secondary">
+        <p role="status" className="client-empty">
           Loading your sharing policy…
         </p>
       )}
       {view && !canCreate && (
         <p
           role="status"
-          className="rounded-lg border border-warn/30 p-3 text-xs text-warn"
+          className="client-sharing-feedback client-sharing-feedback-warning"
         >
           {view.policy.reason ||
-            "Your administrator needs to enable Beam and allow publishing for your account."}
+            "Your administrator needs to enable Local Sharing and allow publishing for your account."}
         </p>
       )}
-      <div className="flex items-center gap-2">
-        <h2 className="text-sm font-semibold text-ink-heading">My shares</h2>
-        {view?.quota && (
-          <span className="text-[10px] text-ink-secondary">
-            {view.quota.active_shares} / {view.quota.max_shares} active shares
-          </span>
-        )}
+      {!creating && !editing && <div className="client-sharing-toolbar">
+        {view && <>
+          <label className="sr-only" htmlFor="beam-search">Search shares</label>
+          <input id="beam-search" className={input} placeholder="Find a share…" value={query} maxLength={120} onChange={(e) => { setQuery(e.target.value); setOffset(0); }} />
+        </>}
         <button
-          className={button + " ml-auto"}
+          className={button + " client-sharing-refresh"}
+          aria-label="Refresh"
+          title="Refresh"
           onClick={() => void refresh()}
           disabled={busy || !bridge}
         >
-          Refresh
+          <Icon name="refresh-cw" size={16} />
         </button>
         <button
-          className={button + " bg-white/10"}
+          className="client-button-primary"
           onClick={openCreate}
           disabled={busy || !canCreate}
         >
           New share
         </button>
-      </div>
+      </div>}
+      {view?.quota && !creating && !editing && <p className="client-sharing-inventory-context">{view.quota.active_shares} / {view.quota.max_shares} active shares</p>}
       {(creating || editing) && (
-        <div className="rounded-xl border border-line p-3">
-          <h2 className="mb-3 text-sm font-medium text-ink-heading">
+        <section className="client-section client-sharing-editor" aria-label={editing ? "Manage reviewer access" : "Share a local app"}>
+          <header className="client-section-header">
+          <h2>
             {editing ? "Manage reviewer access" : "Share a local app"}
           </h2>
+          <button className={button + " client-sharing-refresh"} aria-label="Refresh" title="Refresh" disabled={busy || !bridge} onClick={() => void refresh()}><Icon name="refresh-cw" size={16} /></button>
+          </header>
+          <div className="client-section-body">
+          {editing && <dl className="client-sharing-facts">
+            <div className="client-sharing-fact-wide"><dt>Application</dt><dd>{editing.name}</dd></div>
+            <div className="client-sharing-fact-wide"><dt>Shared address</dt><dd className="client-sharing-technical">{editing.hostname}</dd></div>
+            <div><dt>Local app</dt><dd className="client-sharing-technical">{editing.target.address}:{editing.target.port}</dd></div>
+            <div><dt>Link ends</dt><dd>{new Date(editing.expires_at).toLocaleString()}</dd></div>
+          </dl>}
           {!editing && (
-            <div className="flex flex-col gap-3">
-              <label className="text-xs text-ink-secondary">
+            <fieldset className="client-sharing-form-group">
+              <legend>Local app</legend>
+              <label className="client-sharing-label">
                 App name
                 <input
                   aria-label="App name"
@@ -367,8 +366,8 @@ function BeamPublisherPanel() {
                   placeholder="Checkout redesign"
                 />
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                <label className="text-xs text-ink-secondary">
+              <div className="client-sharing-field-pair">
+                <label className="client-sharing-label">
                   Loopback address
                   <select
                     className={input + " mt-1"}
@@ -381,7 +380,7 @@ function BeamPublisherPanel() {
                     <option>::1</option>
                   </select>
                 </label>
-                <label className="text-xs text-ink-secondary">
+                <label className="client-sharing-label">
                   Port
                   <input
                     aria-label="Local port"
@@ -394,20 +393,20 @@ function BeamPublisherPanel() {
                   />
                 </label>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="client-sharing-inline-actions">
                 <button className={button} disabled={busy} onClick={()=>void suggestPorts()}>Find local apps</button>
                 {suggestedPorts.map(value=><button key={value} className={button} disabled={busy} onClick={()=>{setPort(String(value));setAddress("127.0.0.1");setProtocol("http");}}>Port {value}</button>)}
               </div>
-              <p className="text-xs text-ink-secondary">Checks six common HTTP ports on this computer only when you click Find local apps.</p>
-              {view?.policy.capabilities?.includes("path_routes_v1") && <fieldset className="rounded-lg border border-line p-3">
-                <legend className="text-xs text-ink-secondary">Frontend + API (optional)</legend>
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="text-xs text-ink-secondary">API path<input aria-label="API path prefix" className={input+" mt-1"} value={apiPrefix} onChange={event=>setApiPrefix(event.target.value)} /></label>
-                  <label className="text-xs text-ink-secondary">API port<input aria-label="API local port" type="number" min={1} max={65535} className={input+" mt-1"} placeholder="8080" value={apiPort} onChange={event=>setApiPort(event.target.value)} /></label>
+              <p className="client-sharing-help-text">Checks six common HTTP ports on this computer only when you click Find local apps.</p>
+              {view?.policy.capabilities?.includes("path_routes_v1") && <fieldset className="client-sharing-api-fields">
+                <legend>Frontend + API (optional)</legend>
+                <div className="client-sharing-field-pair">
+                  <label className="client-sharing-label">API path<input aria-label="API path prefix" className={input+" mt-1"} value={apiPrefix} onChange={event=>setApiPrefix(event.target.value)} /></label>
+                  <label className="client-sharing-label">API port<input aria-label="API local port" type="number" min={1} max={65535} className={input+" mt-1"} placeholder="8080" value={apiPort} onChange={event=>setApiPort(event.target.value)} /></label>
                 </div>
-                <p className="mt-2 text-xs text-ink-secondary">The API uses the same address, protocol and HTTPS trust. Its path is preserved: /api/orders reaches /api/orders on the API port.</p>
+                <p className="client-sharing-help-text">The API uses the same address, protocol and HTTPS trust. Its path is preserved: /api/orders reaches /api/orders on the API port.</p>
               </fieldset>}
-              <label className="text-xs text-ink-secondary">
+              <label className="client-sharing-label">
                 Local protocol
                 <select
                   className={input + " mt-1"}
@@ -421,7 +420,7 @@ function BeamPublisherPanel() {
                 </select>
               </label>
               {protocol === "https" && (
-                <label className="text-xs text-ink-secondary">
+                <label className="client-sharing-label">
                   Local CA certificate (optional)
                   <textarea
                     aria-label="Local CA certificate"
@@ -433,7 +432,7 @@ function BeamPublisherPanel() {
                   />
                 </label>
               )}
-              <div className="flex items-center gap-3">
+              <div className="client-sharing-inline-actions">
                 <button
                   className={button}
                   disabled={
@@ -457,7 +456,30 @@ function BeamPublisherPanel() {
                   </span>
                 )}
               </div>
-              <label className="text-xs text-ink-secondary">
+            </fieldset>
+          )}
+          <fieldset className="client-sharing-form-group">
+            <legend>Who can review?</legend>
+            <div className="client-sharing-audience">
+              {view?.policy.audience.map((subject) => {
+                const value = `${subject.subject_kind}:${subject.subject_id}`;
+                return (
+                  <label key={value} className="client-sharing-reviewer">
+                    <input type="checkbox" checked={grants.includes(value)} onChange={(e) => {
+                      setGrants((current) => e.target.checked ? [...current, value] : current.filter((v) => v !== value));
+                      key.current = null;
+                    }} />
+                    <span>{subject.name}</span>
+                    <span className="client-sharing-reviewer-kind">{subject.subject_kind}</span>
+                  </label>
+                );
+              })}
+            </div>
+            {!view?.policy.audience.length && <p className="client-sharing-help-text text-warn">No permitted reviewers. Ask your administrator to configure the reviewer audience.</p>}
+          </fieldset>
+          {!editing && <fieldset className="client-sharing-form-group">
+            <legend>Availability</legend>
+              <label className="client-sharing-label">
                 Link lifetime
                 <select
                   className={input + " mt-1"}
@@ -493,50 +515,16 @@ function BeamPublisherPanel() {
                     ))}
                 </select>
               </label>
-            </div>
-          )}
-          <fieldset className="mt-3">
-            <legend className="text-xs text-ink-secondary">
-              Who can review?
-            </legend>
-            <div className="mt-2 max-h-40 space-y-2 overflow-auto">
-              {view?.policy.audience.map((subject) => {
-                const value = `${subject.subject_kind}:${subject.subject_id}`;
-                return (
-                  <label
-                    key={value}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={grants.includes(value)}
-                      onChange={(e) => {
-                        setGrants((current) =>
-                          e.target.checked
-                            ? [...current, value]
-                            : current.filter((v) => v !== value),
-                        );
-                        key.current = null;
-                      }}
-                    />
-                    {subject.name}
-                    <span className="ml-auto text-ink-secondary">
-                      {subject.subject_kind}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-            {!view?.policy.audience.length && (
-              <p className="mt-2 text-xs text-warn">
-                No permitted reviewers. Ask your administrator to configure the
-                reviewer audience.
-              </p>
-            )}
-          </fieldset>
-          <div className="mt-4 flex gap-2">
+          </fieldset>}
+          <p className="client-sharing-help-text">
+            Reviewers sign in before opening this link. Keep Tunnex and your
+            local app running. Closing the window keeps active shares in the
+            tray; Quit ends sharing.
+          </p>
+          </div>
+          <footer className="client-sharing-editor-footer">
             <button
-              className={button + " bg-white/10"}
+              className="client-button-primary"
               disabled={
                 busy ||
                 (!editing && !grants.length) ||
@@ -560,46 +548,25 @@ function BeamPublisherPanel() {
             >
               Cancel
             </button>
-          </div>
-          <p className="mt-3 text-[10px] leading-4 text-ink-secondary">
-            Reviewers sign in before opening this link. Keep Tunnex and your
-            local app running. Closing the window keeps active shares in the
-            tray; Quit ends sharing.
-          </p>
-        </div>
+          </footer>
+        </section>
       )}
-      {view && (
-        <>
-          <label className="sr-only" htmlFor="beam-search">
-            Search shares
-          </label>
-          <input
-            id="beam-search"
-            className={input}
-            placeholder="Find a share…"
-            value={query}
-            maxLength={120}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setOffset(0);
-            }}
-          />
-        </>
-      )}
+      {!creating && !editing && <>
       {view && !liveShares.length && (
-        <div className="rounded-xl border border-dashed border-line py-7 text-center">
-          <p className="text-sm text-ink-heading">
+        <div className="client-empty client-sharing-empty">
+          <p className="client-sharing-empty-title">
             {query || offset
               ? "No live shares match this page or search."
               : "No live shares right now."}
           </p>
-          <p className="mt-2 text-xs text-ink-secondary">
+          <p className="client-sharing-help-text">
             {query || offset
               ? "Clear the search or return to the previous page."
               : "Create a share to get feedback on a local app."}
           </p>
         </div>
       )}
+      <div className="client-sharing-list">
       {liveShares.map((share) => {
         const terminal =
           ["stopped", "expired", "revoked"].includes(share.state) ||
@@ -632,43 +599,43 @@ function BeamPublisherPanel() {
         return (
           <article
             key={share.id}
-            className="rounded-xl border border-line bg-white/[.025] p-3"
+            className="client-sharing-row"
           >
-            <div className="flex items-center gap-2">
-              <h3 className="truncate text-sm font-semibold text-ink-heading">
+            <div className="client-sharing-row-heading">
+              <h3>
                 {share.name}
               </h3>
               <span
                 role="status"
                 className={
-                  "ml-auto shrink-0 rounded-full px-2 py-1 text-[10px] " +
+                  "client-status client-sharing-live " +
                   (status === "Live"
-                    ? "bg-emerald-500/10 text-emerald-300"
-                    : "bg-white/5 text-ink-secondary")
+                    ? "client-sharing-live-ready"
+                    : "text-ink-secondary")
                 }
               >
                 {status}
               </span>
             </div>
-            <p className="mt-2 break-all font-mono text-[10px] text-ink-secondary">
+            <p className="client-sharing-hostname">
               {share.hostname}
             </p>
-            <p className="mt-2 text-[10px] text-ink-secondary">
+            <p className="client-sharing-row-context">
               {share.target.protocol} · {share.target.address}:
               {share.target.port} · {share.grants.length} audience rule
               {share.grants.length === 1 ? "" : "s"}
             </p>
             <p
-              className="mt-1 text-[10px] text-ink-secondary"
+              className="client-sharing-row-context"
               title={share.expires_at}
             >
               {terminal
                 ? `Ended · ${new Date(share.expires_at).toLocaleString()}`
                 : `Expires in ${remaining} min · ${new Date(share.expires_at).toLocaleTimeString()}`}
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="client-sharing-row-actions">
               <button
-                className={button}
+                className={button + " client-sharing-quiet-action"}
                 disabled={busy || terminal}
                 onClick={() =>
                   void run(() => bridge!.copyLink(share.id), "Link copied.")
@@ -677,7 +644,7 @@ function BeamPublisherPanel() {
                 Copy link
               </button>
               <button
-                className={button}
+                className={button + " client-sharing-open"}
                 disabled={busy || terminal}
                 onClick={() => void run(() => bridge!.openLink(share.id))}
               >
@@ -686,7 +653,7 @@ function BeamPublisherPanel() {
               {!terminal && (
                 <>
                   <button
-                    className={button}
+                    className={button + " client-sharing-quiet-action"}
                     disabled={busy}
                     onClick={() =>
                       action(
@@ -700,7 +667,7 @@ function BeamPublisherPanel() {
                   {share.state === "active" &&
                     share.local_status === "offline" && (
                       <button
-                        className={button}
+                        className={button + " client-sharing-quiet-action"}
                         disabled={busy}
                         onClick={() => void run(() => bridge!.retry(share.id))}
                       >
@@ -708,7 +675,7 @@ function BeamPublisherPanel() {
                       </button>
                     )}
                   <button
-                    className={button}
+                    className={button + " client-sharing-quiet-action"}
                     disabled={busy}
                     onClick={() => {
                       setCreating(false);
@@ -723,7 +690,7 @@ function BeamPublisherPanel() {
                     Access
                   </button>
                   <button
-                    className={button}
+                    className={button + " client-sharing-quiet-action"}
                     disabled={busy || extensionRoom < 60}
                     onClick={() => {
                       setExtending(share.id);
@@ -737,7 +704,7 @@ function BeamPublisherPanel() {
                     Extend
                   </button>
                   <button
-                    className={button + " text-danger"}
+                    className={button + " client-sharing-quiet-action client-sharing-danger"}
                     disabled={busy}
                     onClick={() => action(share, "stop")}
                   >
@@ -747,8 +714,8 @@ function BeamPublisherPanel() {
               )}
             </div>
             {extending === share.id && !terminal && (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <label className="text-xs text-ink-secondary">
+              <div className="client-sharing-extension">
+                <label className="client-sharing-label">
                   Add time
                   <select
                     aria-label="Add share time"
@@ -785,22 +752,23 @@ function BeamPublisherPanel() {
               </div>
             )}
             {share.local_status === "app_unavailable" && (
-              <p className="mt-3 text-xs text-warn">
+              <p className="client-sharing-help-text text-warn">
                 Start your app on the same address and port. Your link and
                 expiry stay the same.
               </p>
             )}
             {terminal && (
-              <p className="mt-3 text-[10px] text-ink-secondary">
+              <p className="client-sharing-help-text">
                 Create a new share to publish this app again.
               </p>
             )}
           </article>
         );
       })}
-      {view?.page && (
+      </div>
+      {view?.page && (offset > 0 || view.page.has_next) && (
         <div
-          className="flex items-center justify-between gap-2"
+          className="client-sharing-pagination"
           aria-label="Share pages"
         >
           <button
@@ -824,33 +792,36 @@ function BeamPublisherPanel() {
           </button>
         </div>
       )}
-      <details className="rounded-xl border border-line p-3 text-xs text-ink-secondary">
-        <summary className="cursor-pointer font-medium text-ink-heading">
+      </>}
+      <details className="client-sharing-disclosure client-sharing-help">
+        <summary>
           App compatibility and sharing help
         </summary>
-        <p className="mt-3 leading-5">
+        <div className="client-sharing-disclosure-body">
+        <p>
           Use a web app served from its root path on the selected loopback
           address and port. Changing the target requires a new share. HTTPS
           needs a valid certificate or the local app’s CA certificate.
         </p>
-        <p className="mt-3 leading-5">
+        <p>
           For Vite or another development server, allow the exact Beam hostname
           in its allowed-host configuration and configure its public WebSocket
           URL if needed. Beam preserves WebSocket subprotocols and streams SSE;
           WebSocket compression is unavailable in v1.
         </p>
-        <p className="mt-3 leading-5">
+        <p>
           Uploads and HTTP responses are limited to 16 MiB. WebSocket frames are
           limited to 1 MiB and fragmented messages to 16 MiB. Cookies must stay
           on this app’s host; external redirects and broad cookie domains are
           rejected.
         </p>
-        <p className="mt-3 leading-5">
+        <p>
           Keep your app and Tunnex running. Closing the desktop window keeps
           active shares in the tray. Quit ends sharing. After a full restart,
           choose Reconnect for an eligible share; terminal links require a new
           share.
         </p>
+        </div>
       </details>
       {removal && (
         <Modal
@@ -860,7 +831,7 @@ function BeamPublisherPanel() {
             if (!busy) setRemoval(null);
           }}
           actions={
-            <>
+            <div className="client-sharing-confirmation-actions">
               <button
                 className={button}
                 disabled={busy}
@@ -875,7 +846,7 @@ function BeamPublisherPanel() {
               >
                 Remove access
               </button>
-            </>
+            </div>
           }
         >
           <p className="text-sm text-ink-secondary">
