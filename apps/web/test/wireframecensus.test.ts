@@ -30,28 +30,17 @@ import { stripJsComments } from "./support/source";
 // forever by a lazy floor, while equality forces a DELIBERATE, REVIEWABLE edit when the design
 // gains a block.
 
-const WIREFRAME = join(
+// Pinned design banners extracted from committed core source, owned by this
+// standalone renderer. The original core design is not shipped in this repo.
+const DESIGN_CONTRACT = join(
   __dirname,
-  "..",
-  "..",
-  "..",
-  "docs",
-  "design",
-  "TUNNEX-wireframe-v2.html.txt",
+  "fixtures",
+  "core-design-contract.json",
 );
 const APP = join(__dirname, "..", "src", "App.tsx");
 
 /** Flipped to true when EPIC 14 is declared closed. Until then the close-gate assertion is inert. */
 const EPIC_CLOSING = false;
-
-/** A screen banner is `<!-- ===== NAME ===== -->`. Parsed, never transcribed. */
-/** Remove comments so a source scan judges CODE, not the prose describing it. */
-
-function banners(src: string): string[] {
-  return [
-    ...src.matchAll(/<!--\s*=+\s*([A-Z][A-Za-z0-9 ./&\-–]{2,60})\s*=+\s*-->/g),
-  ].map((m) => m[1].trim());
-}
 
 type Disposition =
   // ⛔ A BLOCK IS EITHER A ROUTE OR AN ENTRY, AND THE CHECK DIFFERS. Most screens are React Router
@@ -194,9 +183,11 @@ function mainSources(dir = ""): string[] {
   );
 }
 
-const wireframe = readFileSync(WIREFRAME, "utf8");
+const design = JSON.parse(readFileSync(DESIGN_CONTRACT, "utf8")) as {
+  banners: string[];
+};
 const app = readFileSync(APP, "utf8");
-const BLOCKS = banners(wireframe);
+const BLOCKS = design.banners;
 
 describe("wireframe census — the DESIGN is the authoritative set", () => {
   it("finds the screen banners at all (vacuity floor)", () => {

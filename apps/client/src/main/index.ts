@@ -19,6 +19,7 @@ import { AUTOUPDATE_ENABLED } from "./flags";
 import { CLIENT_ENTRY } from "./entry";
 import { ManagedLifecycleCoordinator } from "./managedlifecycle";
 import { startSingleInstance } from "./singleinstance";
+import { NotificationInbox, notificationScope } from "./notificationinbox";
 
 // The SPA bundle (apps/web build). Overridable for dev; falls back to the
 // packaged resources dir.
@@ -39,6 +40,9 @@ let mainWindow: BrowserWindow | null = null;
 let allowInsecureStorage = false; // captured from the store at setup for the setup page
 let primaryConfig: Config | null = null;
 let focusPending = false;
+let beamActive = () => 0;
+let appQuitting = false;
+let beamNavigationRequested = false;
 
 function createWindow(config: Config): BrowserWindow {
   // ⛔ SIZED TO THE DESIGN'S CARD, NOT TO A DASHBOARD. 1100x760 was inherited from the days this
@@ -70,6 +74,7 @@ function createWindow(config: Config): BrowserWindow {
     },
   });
   mainWindow = win;
+  win.on("close",event=>{if(!appQuitting&&beamActive()>0){event.preventDefault();win.hide();}});
   win.on("closed", () => {
     if (mainWindow === win) mainWindow = null; // drop the ref so nothing sends to a destroyed webContents
   });
@@ -164,6 +169,17 @@ function initializePrimary(): void {
   primaryConfig = config;
   // App-lifetime singletons — built ONCE, not per-window.
   const store = buildCredentialStore(allowInsecure);
+  // Electron's development executable reports its own version; release
+  // discovery must compare the Tunnex version in both packaged and dev builds.
+  const desktopVersion = app.isPackaged ? app.getVersion() : (require("../../package.json") as {version:string}).version;
+  const notices = new NotificationInbox({read:()=>config.getNotifications(),write:entries=>config.setNotifications(entries)}, () => {
+    const credential = store.load();
+    return credential && credential.server === config.getServerUrl() && Date.parse(credential.expiresAt) > Date.now() ? notificationScope(credential.server,credential.token) : null;
+  });
+  const noticeSender = (event: Electron.IpcMainInvokeEvent): void => {if (!event.senderFrame?.url.startsWith("app://")) throw Error("notification_sender_denied");};
+  ipcMain.handle("notices:list",event=>{noticeSender(event);return notices.list();});
+  ipcMain.handle("notices:markRead",(event,id:unknown)=>{noticeSender(event);notices.markRead(id as string);});
+  notices.subscribe(()=>{if(mainWindow&&!mainWindow.isDestroyed()) mainWindow.webContents.send("notices:changed");});
   const tunnelStore = buildTunnelConfigStore(allowInsecure);
   const enrollmentAnchorStore = buildEnrollmentAnchorStore(allowInsecure);
   const lifecycle = new ManagedLifecycleCoordinator(() => store.load());
@@ -212,6 +228,7 @@ function initializePrimary(): void {
     return new Response(fs.readFileSync(real), { headers: { "content-type": contentTypeFor(real), "content-security-policy": csp } });
   });
   initUpdater();
+  ipcMain.handle("beam:showPending",()=>{const requested=beamNavigationRequested;beamNavigationRequested=false;return requested;});
 
   // IPC handlers + tunnel controls: registered ONCE. They resolve the live window via
   // the getter (null-safe) so a closed window never breaks the tunnel, and vice versa.
@@ -226,7 +243,7 @@ function initializePrimary(): void {
   // ⛔ THE VERSION IS THE ONE UPDATE FACT THAT IS REAL TODAY. It is also the first thing any support
   // conversation asks for, and until now the client could not tell you its own.
   ipcMain.handle("diag:appInfo", () => ({
-    version: app.getVersion(),
+    version: desktopVersion,
     // `build.publish` is null in package.json — there is no release channel to query — so the
     // feed is reported as absent rather than assumed present.
     update: updateStatus(AUTOUPDATE_ENABLED, false),
@@ -237,7 +254,9 @@ function initializePrimary(): void {
     try {
       const response = await fetch(DESKTOP_RELEASE_ENDPOINT, { headers: { Accept: "application/json" } });
       if (!response.ok) return { kind: "unavailable", reason: "Tunnex could not reach the desktop release service." };
-      return releaseCheckFor(app.getVersion(), await response.json());
+      const result = releaseCheckFor(desktopVersion, await response.json());
+      notices.release(result);
+      return result;
     } catch {
       return { kind: "unavailable", reason: "Tunnex could not reach the desktop release service." };
     }
@@ -264,7 +283,10 @@ function initializePrimary(): void {
     tunnelStore,
     enrollmentAnchorStore,
     lifecycle,
+    notices,
   );
+
+  beamActive = () => controls.beam.activeCount();
 
   // Tray: one instance for the app lifetime, subscribed to tunnel state. Its actions
   // target the singleton controls + showWindow (recreates the window if closed).
@@ -273,10 +295,12 @@ function initializePrimary(): void {
     onDisconnect: () => void controls.disconnect().catch(() => {}),
     onShow: () => showWindow(config),
     onQuit: () => app.quit(),
+    onShowBeam: () => { beamNavigationRequested=true; const win=showWindow(config); win.webContents.send("beam:show"); },
   });
   tray.init();
   controls.subscribe((s) => tray.update(s));
   tray.update(controls.currentState());
+  controls.beam.subscribe(()=>tray.updateBeam(controls.beam.activeCount()));
 
   // Graceful quit (S6.8): on a CLEAN exit, bring the tunnel Down BEFORE dying so the
   // helper restores routing + releases the kill-switch instantly — instead of the app
@@ -293,8 +317,9 @@ function initializePrimary(): void {
     e.preventDefault(); // block EVERY quit attempt until Down completes
     if (quitting) return; // teardown already in flight — just keep blocking
     quitting = true;
+    appQuitting = true;
     void gracefulQuit(
-      () => controls.disconnect(),
+      async () => { await controls.beam.retire(); await controls.disconnect(); },
       () => {
         teardownDone = true;
         app.quit();
@@ -311,7 +336,7 @@ function initializePrimary(): void {
   });
 
   app.on("window-all-closed", () => {
-    if (process.platform !== "darwin") app.quit();
+    if (process.platform !== "darwin" && beamActive() === 0) app.quit();
   });
 }
 

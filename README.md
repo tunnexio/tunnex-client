@@ -25,6 +25,7 @@ packages/shared Generated API types and design tokens, consumed by the renderer 
 ## Build
 
 ```bash
+# Build prerequisites: Node 24.21.0 LTS, pnpm 10.34.5, Go 1.27.1
 pnpm install                 # electron's postinstall needs pnpm.onlyBuiltDependencies
 make gates                   # everything CI checks
 make pack-mac                # → apps/client/release/Tunnex-macOS-universal.pkg

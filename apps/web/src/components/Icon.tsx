@@ -22,6 +22,8 @@ import type { SVGProps } from "react";
 export type IconName = keyof typeof ICON_PATHS;
 
 export const ICON_PATHS = {
+  // Beam: a web app window shared outward, drawn with the same 24px outline stroke.
+  "app-window-share": '<path d="M13 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M3 9h8"/><path d="m13 11 8-8"/><path d="M15 3h6v6"/>',
   "alert-triangle":
     '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 20h16a2 2 0 0 0 1.73-2z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
   "arrow-right-left":

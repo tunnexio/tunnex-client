@@ -5,6 +5,23 @@ export function supportsRelayMode(platform: NodeJS.Platform, fullTunnel?: boolea
   return !fullTunnel && (platform === "darwin" || platform === "win32");
 }
 
+// Never surface untrusted helper text: it may contain endpoint or credential data.
+export function relayPreparationFailure(response: HelperResponse): Error {
+  const reasons: Record<string, string> = {
+    relay_session_expired: "Relay session expired. Reconnect to request a fresh session.",
+    relay_clock_skew: "Relay session timing could not be validated.",
+    relay_gather_failed: "Relay negotiation could not gather a usable network connection.",
+    relay_busy: "VPN helper is still connected. Disconnect before reconnecting.",
+    helper_outdated: "VPN helper needs an update.",
+    unknown_verb: "Installed VPN helper does not support relay preparation.",
+    relay_unavailable: "VPN helper rejected the relay configuration.",
+  };
+  const code = response.code ?? "";
+  return Object.hasOwn(reasons, code)
+    ? new Error(`${code}: ${reasons[code]}`)
+    : new Error("relay_helper_prepare_failed: VPN helper could not prepare the relay connection.");
+}
+
 // Helper ICE operations have a 30s deadline. IPC allows bounded delivery
 // overhead without changing ordinary requests or the authorization lease.
 export const RELAY_NEGOTIATION_TIMEOUT_MS = 35_000;
@@ -133,9 +150,11 @@ export class TunnelController {
           if (!s.relay) throw new Error("relay_profile_unavailable");
           const prepared = await this.conn.request({ version: PROTOCOL_VERSION, auth_mode: "path_check", verb: "relay_prepare", relay_prepare: {
             id: s.session_id, device_public_key: s.device_public_key, gateway_public_key: s.gateway_public_key,
-            url: s.relay.url, username: s.relay.username, password: s.relay.password, expires_at: s.expires_at,
+            url: s.relay.url, username: s.relay.username, password: s.relay.password,
+            // Never exceed either the helper local bound or CP authorization.
+            expires_at: new Date(Math.min(Date.parse(s.expires_at), Date.now() + 600_000)).toISOString(),
           } }, RELAY_NEGOTIATION_TIMEOUT_MS);
-          if (!prepared.ok || !prepared.relay_offer) throw new Error("relay_helper_prepare_failed");
+          if (!prepared.ok || !prepared.relay_offer) throw relayPreparationFailure(prepared);
           candidate.assertCurrent();
           s = await candidate.api.publish(s, prepared.relay_offer);
           const deadline = Date.now() + 25_000;

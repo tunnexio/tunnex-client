@@ -1,0 +1,2746 @@
+{
+  "provenance": {
+    "repository": "tunnexio/tunnex",
+    "revision": "7ed12a91a2c4d4f9f0e7f30a3e6ae19eb5e219aa",
+    "path": "openapi/openapi.yaml",
+    "sha256": "355fcc47d423da58d33440d3486fe2545501b52f323ca1e90c106b1b9c3daab7"
+  },
+  "operations": [
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/company-apps",
+      "method": "get",
+      "summary": "Discover explicitly visible published apps in this organization; origin and route details remain private",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/access-management",
+      "method": "get",
+      "summary": "Read catalog visibility and assigned App admin with both manage and grant permissions",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/access-management",
+      "method": "patch",
+      "summary": "Assign the App admin and opt into Company apps using the current application version",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/managed-apps",
+      "method": "get",
+      "summary": "List safe display metadata and pending counts for apps the current user may administer grants for",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/access-requests",
+      "method": "get",
+      "summary": "Read own request history or the current app administration queue; pending requests survive reassignment and hiding",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/access-requests",
+      "method": "post",
+      "summary": "Request access to a currently visible published app; duplicate pending submissions return the existing request",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/access-requests/{requestId}/decision",
+      "method": "post",
+      "summary": "Atomically approve or reject a pending request; terminal replay never creates or re-enables a grant",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/managed-grants",
+      "method": "get",
+      "summary": "List grants for this exact app under current assigned or global grant authority",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/managed-grants",
+      "method": "post",
+      "summary": "Create a grant for this exact app; body app_id must equal the path appId",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/managed-grants/{grantId}",
+      "method": "patch",
+      "summary": "Update a grant only when its stored app matches this exact path and current actor authority",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/managed-grants/{grantId}/revoke",
+      "method": "post",
+      "summary": "Revoke a grant for this exact app; no organization-wide grant administration is implied",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/grant-subjects",
+      "method": "get",
+      "summary": "Read minimum same-organization active user or group choices for an app the actor administers",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/gateways/{gatewayId}/status",
+      "method": "get",
+      "summary": "Read observed App Access connector capability; supported does not mean published or ready",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/checks",
+      "method": "post",
+      "summary": "Queue a bounded exact-draft origin check; never publishes or grants browser access",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/checks/{checkId}",
+      "method": "get",
+      "summary": "Read bounded origin-only check evidence; history remains readable after feature loss",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/grants",
+      "method": "get",
+      "summary": "List explicit application grants under grant administration permission",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/grants",
+      "method": "post",
+      "summary": "Create an explicit user or group grant; application stays unpublished",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/grants/{grantId}",
+      "method": "patch",
+      "summary": "Update enabled state and validity with optimistic version; application and subject are immutable",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/grants/{grantId}/revoke-impact",
+      "method": "get",
+      "summary": "Count current eligible grant matches and surviving allows; no live session impact claim",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/grants/{grantId}/revoke",
+      "method": "post",
+      "summary": "Revoke this grant idempotently; confirms authority change without claiming live session termination",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/effective-access",
+      "method": "post",
+      "summary": "Preview current grant matching; drafts cannot authorize browser application access",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/mfa-policy",
+      "method": "patch",
+      "summary": "Update the live per-application MFA policy",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/publication",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/publication-operations",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/publication-operations/{operationId}",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/publication-operations/by-key/{idempotencyKey}",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/publication-operations/{operationId}/cancel",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/publication/disable",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/rollback-draft",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/my-apps",
+      "method": "get",
+      "summary": "List current-user published application availability without private origin metadata",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/my-apps/{appId}/launch",
+      "method": "post",
+      "summary": "Create a parent-bound single-use launch code for an exact published app host",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/my-sessions",
+      "method": "get",
+      "summary": "List only the current user app sessions without bearer tokens",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/my-sessions/{sessionId}",
+      "method": "delete",
+      "summary": "Revoke only the current user app session",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/sessions",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/sessions/{sessionId}",
+      "method": "delete",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/events",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/publication/impact",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/settings",
+      "method": "get",
+      "summary": "Read App Access availability and organization opt-in",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/settings",
+      "method": "patch",
+      "summary": "Update App Access opt-in; enabling does not publish applications",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications",
+      "method": "get",
+      "summary": "List application drafts without claiming connector readiness",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications",
+      "method": "post",
+      "summary": "Create an application draft; no route or access is published",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}",
+      "method": "get",
+      "summary": "Read an application draft",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}",
+      "method": "patch",
+      "summary": "Replace draft configuration using optimistic version",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}",
+      "method": "delete",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/app-access/applications/{appId}/revisions/{revision}",
+      "method": "get",
+      "summary": "Read an immutable draft configuration revision",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/workloads",
+      "method": "get",
+      "summary": "List stable workloads and their applied policies",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/workloads",
+      "method": "post",
+      "summary": "Create a workload without a user or network device",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/workloads/{workloadId}",
+      "method": "put",
+      "summary": "Update policy or disable workload access immediately",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/workloads/{workloadId}/enrollment-keys",
+      "method": "get",
+      "summary": "List enrollment keys without their secrets",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/workloads/{workloadId}/enrollment-keys",
+      "method": "post",
+      "summary": "Create a workload-bound enrollment key shown once",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/workloads/{workloadId}/enrollment-keys/{keyId}/revoke",
+      "method": "post",
+      "summary": "Stop future enrollment and optionally revoke enrolled instances",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/workloads/{workloadId}/instances",
+      "method": "get",
+      "summary": "List independent workload replicas",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/workloads/{workloadId}/instances/{instanceId}/revoke",
+      "method": "post",
+      "summary": "Revoke only this instance; no automatic reenrollment",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/workload/enroll",
+      "method": "post",
+      "summary": "Atomically register an instance public key using a signed enrollment proof",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/workload/token",
+      "method": "post",
+      "summary": "Exchange a private_key_jwt for a five-minute AI gateway token",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/workload/rotate",
+      "method": "post",
+      "summary": "Rotate the instance key with proofs from both keys and a durable request ID",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/workload/retire",
+      "method": "post",
+      "summary": "Retire the authenticated instance on graceful shutdown",
+      "edition_required": false
+    },
+    {
+      "path": "/ai/v1/models",
+      "method": "get",
+      "summary": "List currently authorized models using a workload bearer",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/user-groups",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/user-model-grants",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/user-model-grants",
+      "method": "post",
+      "summary": "Grant or revoke an exact model for a human user group",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/my-models",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/inference/v1/chat/completions",
+      "method": "post",
+      "summary": "Execute an allowed model using a short-lived AI credential",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/inference/v1/completions",
+      "method": "post",
+      "summary": "Execute an authorized completions model",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/inference/v1/embeddings",
+      "method": "post",
+      "summary": "Execute an authorized embeddings model",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/inference/v1/audio/speech",
+      "method": "post",
+      "summary": "Execute an authorized audio/speech model",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/inference/v1/audio/transcriptions",
+      "method": "post",
+      "summary": "Execute an authorized audio/transcriptions model",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/inference/v1/images/generations",
+      "method": "post",
+      "summary": "Execute an authorized images/generations model",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/inference/v1/videos",
+      "method": "post",
+      "summary": "Execute an authorized videos model",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/inference/v1/rerank",
+      "method": "post",
+      "summary": "Execute an authorized rerank model",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/inference/v1/videos/{jobId}",
+      "method": "get",
+      "summary": "Read an owned video job with current model authorization",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/inference/v1/videos/{jobId}/content",
+      "method": "get",
+      "summary": "Read an owned video job with current model authorization",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/inference/anthropic/v1/messages",
+      "method": "post",
+      "summary": "Execute an allowed model through the qualified Anthropic-compatible path",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/providers",
+      "method": "get",
+      "summary": "List organization-owned provider connections and legacy key references",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/providers",
+      "method": "post",
+      "summary": "Add an encrypted private-engine provider connection",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/providers/model-catalog",
+      "method": "post",
+      "summary": "Search an endpoint's model catalog using unsaved credentials",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/providers/test-connection",
+      "method": "post",
+      "summary": "Test new or saved provider credentials with one bounded model request",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/providers/{connectionId}",
+      "method": "put",
+      "summary": "Edit, rotate or disable an owned provider connection",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/providers/{connectionId}",
+      "method": "delete",
+      "summary": "Remove an unreferenced connection while retaining its ownership tombstone",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/providers/{connectionId}/test",
+      "method": "post",
+      "summary": "Check saved provider catalog access without inference or model spend",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/models",
+      "method": "get",
+      "summary": "Browse cached qualified-provider model suggestions without a provider key",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/teams",
+      "method": "get",
+      "summary": "List configured AI team policies",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/teams/{teamId}",
+      "method": "put",
+      "summary": "Set exact model policy for an existing Agent Group",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/agents",
+      "method": "get",
+      "summary": "List explicit AI team assignments and synchronization status",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/agents/{deviceId}",
+      "method": "put",
+      "summary": "Assign one AI team or disable access for an agent",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/agents/{deviceId}/reconcile",
+      "method": "post",
+      "summary": "Retry verified private-engine policy synchronization",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway/usage",
+      "method": "get",
+      "summary": "Read scoped native usage estimates over at most 31 days",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/runtime/ai-credential",
+      "method": "post",
+      "summary": "Exchange current enrolled-agent identity for a five-minute AI credential",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway",
+      "method": "get",
+      "summary": "Read AI gateway opt-in and installation availability",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ai-gateway",
+      "method": "put",
+      "summary": "Explicitly enable or disable the organization's AI gateway",
+      "edition_required": false
+    },
+    {
+      "path": "/ai/v1/chat/completions",
+      "method": "post",
+      "summary": "Execute an allowed model using a short-lived AI credential",
+      "edition_required": false
+    },
+    {
+      "path": "/ai/v1/completions",
+      "method": "post",
+      "summary": "Execute an authorized completions model",
+      "edition_required": false
+    },
+    {
+      "path": "/ai/v1/embeddings",
+      "method": "post",
+      "summary": "Execute an authorized embeddings model",
+      "edition_required": false
+    },
+    {
+      "path": "/ai/v1/audio/speech",
+      "method": "post",
+      "summary": "Execute an authorized audio/speech model",
+      "edition_required": false
+    },
+    {
+      "path": "/ai/v1/audio/transcriptions",
+      "method": "post",
+      "summary": "Execute an authorized audio/transcriptions model",
+      "edition_required": false
+    },
+    {
+      "path": "/ai/v1/images/generations",
+      "method": "post",
+      "summary": "Execute an authorized images/generations model",
+      "edition_required": false
+    },
+    {
+      "path": "/ai/v1/videos",
+      "method": "post",
+      "summary": "Execute an authorized videos model",
+      "edition_required": false
+    },
+    {
+      "path": "/ai/v1/rerank",
+      "method": "post",
+      "summary": "Execute an authorized rerank model",
+      "edition_required": false
+    },
+    {
+      "path": "/ai/v1/videos/{jobId}",
+      "method": "get",
+      "summary": "Read an owned video job with current model authorization",
+      "edition_required": false
+    },
+    {
+      "path": "/ai/v1/videos/{jobId}/content",
+      "method": "get",
+      "summary": "Read an owned video job with current model authorization",
+      "edition_required": false
+    },
+    {
+      "path": "/ai/anthropic/v1/messages",
+      "method": "post",
+      "summary": "Execute an allowed model through the qualified Anthropic-compatible path",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/connectivity-profile",
+      "method": "get",
+      "summary": "Read relay fallback configuration without secrets",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/connectivity-profile",
+      "method": "put",
+      "summary": "Configure one customer-hosted relay (admin/owner)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/devices/{deviceId}/connectivity-sessions",
+      "method": "post",
+      "summary": "Create or supersede an opted-in device owner's negotiation session",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/devices/{deviceId}/connectivity-sessions/{sessionId}",
+      "method": "get",
+      "summary": "Read the latest bounded signaling snapshots (device owner only)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/devices/{deviceId}/connectivity-sessions/{sessionId}",
+      "method": "put",
+      "summary": "Replace the device's complete signaling snapshot (not a trickle delta)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/devices/{deviceId}/connectivity-sessions/{sessionId}",
+      "method": "delete",
+      "summary": "Close a negotiation session and clear its snapshots",
+      "edition_required": false
+    },
+    {
+      "path": "/healthz",
+      "method": "get",
+      "summary": "Liveness probe",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/signup",
+      "method": "post",
+      "summary": "Create a local account (sends a verification email)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/login",
+      "method": "post",
+      "summary": "Verify credentials",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/mfa/enroll",
+      "method": "post",
+      "summary": "Start TOTP enrollment (OPEN — all editions)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/mfa/enroll/confirm",
+      "method": "post",
+      "summary": "Confirm TOTP enrollment with a code (OPEN)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/mfa",
+      "method": "delete",
+      "summary": "Disenroll the current user's MFA (OPEN)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/mfa/step-up",
+      "method": "post",
+      "summary": "Verify account MFA for the current authenticated session",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/mfa/verify",
+      "method": "post",
+      "summary": "Complete a login MFA challenge (public — challenge-token bound)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/mfa-enforce",
+      "method": "get",
+      "summary": "Get org MFA enforcement (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/mfa-enforce",
+      "method": "put",
+      "summary": "Set org MFA enforcement (enterprise; unlock-then-opt-in, default OFF)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/members/{userId}/mfa-reset",
+      "method": "post",
+      "summary": "Admin-reset a member's MFA — disenroll only (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/verify-email",
+      "method": "post",
+      "summary": "Verify an email address with a token",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/password-reset",
+      "method": "post",
+      "summary": "Request a password-reset email",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/password-reset/confirm",
+      "method": "post",
+      "summary": "Set a new password using a reset token",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/meta",
+      "method": "get",
+      "summary": "Public deployment metadata (edition, enabled SSO providers)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/verify-email/resend",
+      "method": "post",
+      "summary": "Resend the current user's email-verification link",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/me",
+      "method": "get",
+      "summary": "The current authenticated user",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/password",
+      "method": "post",
+      "summary": "Change your own password",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/logout",
+      "method": "post",
+      "summary": "Revoke the current session",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/sso/{provider}/start",
+      "method": "get",
+      "summary": "Begin an SSO login (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/sso/{provider}/callback",
+      "method": "get",
+      "summary": "SSO callback (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sso/{provider}",
+      "method": "get",
+      "summary": "Read an SSO provider's config (enterprise) — never returns the secret",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sso/{provider}",
+      "method": "put",
+      "summary": "Configure an SSO provider for an organization (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sso-connections",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sso-connections/{connectionId}",
+      "method": "put",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sso-connections/{connectionId}/activation",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sso-connections/{connectionId}/test",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sso-connections/available",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sso-connections/{connectionId}/link",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/sso-connections/{connectionId}/start",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/sso-connections/callback",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/cli/authorize",
+      "method": "post",
+      "summary": "Mint a one-time CLI authorization code (browser leg)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/cli/token",
+      "method": "post",
+      "summary": "Exchange a one-time code (+ PKCE verifier) for a CLI credential",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/cli/credentials",
+      "method": "get",
+      "summary": "List the caller's CLI credentials (metadata only — never tokens)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/cli/credentials/{credentialId}",
+      "method": "delete",
+      "summary": "Revoke one of the caller's CLI credentials (immediate)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/cli/device",
+      "method": "post",
+      "summary": "Start the device-code fallback (browserless hosts)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/cli/device/approve",
+      "method": "post",
+      "summary": "Approve a device-code login (browser leg)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/cli/device/token",
+      "method": "post",
+      "summary": "Poll for the device-flow credential",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/enroll",
+      "method": "post",
+      "summary": "Enroll a tunnex-node agent with a join token",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes",
+      "method": "get",
+      "summary": "List enrolled nodes",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents",
+      "method": "get",
+      "summary": "List the organization's AI agents",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/bootstrap-token",
+      "method": "post",
+      "summary": "Issue a single-use managed agent bootstrap token",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/sandbox/bootstrap",
+      "method": "post",
+      "summary": "Redeem a single-use sandbox bootstrap credential",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/bootstrap",
+      "method": "post",
+      "summary": "Redeem a managed agent bootstrap token",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/runtime/poll",
+      "method": "get",
+      "summary": "Poll managed agent configuration",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/runtime/report",
+      "method": "post",
+      "summary": "Report managed agent runtime state",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/runtime/mcp-tool-policy",
+      "method": "get",
+      "summary": "Get the current local-proxy MCP tool policy for this runtime",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/runtime/mcp-oauth-lease",
+      "method": "get",
+      "summary": "Lease one connected MCP OAuth access token to this runtime",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/runtime/mcp-tool-approval-permit",
+      "method": "post",
+      "summary": "Consume an approved one-use MCP tool permit or create a pending request",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/runtime/workflow-signing-key",
+      "method": "post",
+      "summary": "Register one managed agent workflow-signing public key",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/runtime/workflow-provenance",
+      "method": "post",
+      "summary": "Record one signed managed-agent workflow assertion",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/runtime/credential-candidate",
+      "method": "post",
+      "summary": "Prepare a locally generated runtime credential successor",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/runtime/wireguard-candidate",
+      "method": "post",
+      "summary": "Prepare a locally generated WireGuard public-key successor",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}",
+      "method": "get",
+      "summary": "Get an agent profile and canonical lifecycle/telemetry",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}",
+      "method": "patch",
+      "summary": "Update agent metadata or request an explicit lifecycle transition",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}/runtime-status",
+      "method": "get",
+      "summary": "Get managed agent runtime status",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}/mcp-inventory",
+      "method": "get",
+      "summary": "Get an agent's observed MCP inventory",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}/effective-mcp-profile",
+      "method": "get",
+      "summary": "Get an agent's effective inherited MCP profile",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}/mcp-tool-policy",
+      "method": "get",
+      "summary": "Get the current immutable MCP tool policy for one agent",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}/mcp-tool-policy",
+      "method": "put",
+      "summary": "Create the next immutable MCP tool policy version",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}/mcp-tool-approval-requests",
+      "method": "get",
+      "summary": "List bounded MCP step-up approval requests",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}/mcp-tool-approval-requests/{requestId}/approve",
+      "method": "post",
+      "summary": "Approve one pending MCP step-up request",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}/mcp-oauth-connections",
+      "method": "get",
+      "summary": "List an agent's MCP OAuth trust connections",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}/mcp-oauth-connections",
+      "method": "post",
+      "summary": "Start MCP OAuth consent for one observed protected resource",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}/workflow-provenance",
+      "method": "get",
+      "summary": "List an agent's signed workflow provenance evidence",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/mcp/oauth/callback",
+      "method": "get",
+      "summary": "Complete a browser MCP OAuth consent transaction",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}/test-access",
+      "method": "get",
+      "summary": "Explain one managed agent access path without probing or changing it",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}/credential-rotation",
+      "method": "get",
+      "summary": "Get secret-free runtime credential rotation status",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agents/{deviceId}/credential-rotation",
+      "method": "post",
+      "summary": "Request runtime credential rotation for one active managed agent",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/join-token",
+      "method": "post",
+      "summary": "Issue a single-use node join token",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/lifecycle-claims/{claim}",
+      "method": "get",
+      "summary": "Read token-blind Kubernetes gateway lifecycle-claim state",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/lifecycle-claims/{claim}/remint",
+      "method": "post",
+      "summary": "CAS-mint or remint an exact Kubernetes gateway lifecycle claim",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/lifecycle-claims/{claim}/ack",
+      "method": "post",
+      "summary": "Acknowledge Kubernetes CAS persistence of an exact remint response",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/lifecycle-claims/{claim}/abort",
+      "method": "post",
+      "summary": "CAS-abort an exact Kubernetes gateway lifecycle claim and revoke its partial node",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/lifecycle-claims/{claim}/install-operations",
+      "method": "get",
+      "summary": "Read the latest token-blind install operation for an immutable lifecycle claim",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/lifecycle-claims/{claim}/install-operations",
+      "method": "post",
+      "summary": "Linearize an exact provider-neutral Kubernetes install operation before Helm mutation",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/lifecycle-claims/{claim}/install-operations/{operationId}/heartbeat",
+      "method": "post",
+      "summary": "Heartbeat an exact active install epoch without extending its absolute deadline",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/lifecycle-claims/{claim}/install-operations/{operationId}/cancel",
+      "method": "post",
+      "summary": "Release an exact install epoch after stopping all Helm mutation",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/lifecycle-claims/{claim}/install-operations/{operationId}/abort",
+      "method": "post",
+      "summary": "Durably request abort and take over an exact released or expired install epoch",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/lifecycle-claims/{claim}/install-operations/{operationId}/complete",
+      "method": "post",
+      "summary": "Complete an exact active install after consumed-claim and release-ready proof",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/lifecycle-claims/{claim}/install-operations/{operationId}/finalize-abort",
+      "method": "post",
+      "summary": "Atomically abort the exact claim after taken-over release-absence proof",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/{nodeId}/revoke",
+      "method": "post",
+      "summary": "Revoke a node (renewal will be refused)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/{nodeId}/restore-devices",
+      "method": "post",
+      "summary": "Restore the devices a gateway revoke cascaded, onto a replacement gateway",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/{nodeId}",
+      "method": "patch",
+      "summary": "Rename a gateway",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/{nodeId}",
+      "method": "delete",
+      "summary": "Delete a REVOKED gateway permanently",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/{nodeId}/transfer-devices",
+      "method": "post",
+      "summary": "Move every live device homed on this gateway to another gateway",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/nodes/{nodeId}/hub-priority",
+      "method": "put",
+      "summary": "Pin (or clear) a gateway's HA hub priority (S8.6)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ipsec/configuration-check",
+      "method": "post",
+      "summary": "Validate an IPsec configuration without saving it",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ipsec/eligibility",
+      "method": "get",
+      "summary": "Read an advisory IPsec gateway eligibility snapshot",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ipsec/connections",
+      "method": "get",
+      "summary": "List stored IPsec connection records, including tombstones",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ipsec/connections",
+      "method": "post",
+      "summary": "Store a disabled provider connection",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ipsec/connections/{connectionId}/configuration",
+      "method": "get",
+      "summary": "Read stored nonsecret provider configuration",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ipsec/connections/{connectionId}",
+      "method": "get",
+      "summary": "Read a nonsecret stored IPsec connection record",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ipsec/connections/{connectionId}",
+      "method": "delete",
+      "summary": "Request deletion with acknowledged cleanup",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ipsec/connections/{connectionId}/status",
+      "method": "get",
+      "summary": "Read independent gateway-reported tunnel status",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ipsec/connections/{connectionId}/rotate-psks",
+      "method": "post",
+      "summary": "Replace customer-provided IPsec keys during maintenance",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ipsec/connections/{connectionId}/intent",
+      "method": "put",
+      "summary": "Request enabled or disabled IPsec intent",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ipsec/settings",
+      "method": "get",
+      "summary": "Read organization IPsec opt-in settings",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ipsec/settings",
+      "method": "put",
+      "summary": "Configure organization IPsec opt-in settings",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/hub-set",
+      "method": "get",
+      "summary": "The org's persisted HA hub set + per-member metrics (S8.6)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/overview",
+      "method": "get",
+      "summary": "Dashboard overview — counts + recent activity",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/audit-logs",
+      "method": "get",
+      "summary": "The org's audit log — filterable, keyset-paginated (read-only)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/audit-log-retention",
+      "method": "get",
+      "summary": "Read the organization's effective audit-log retention policy and latest pruning status",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/audit-log-retention",
+      "method": "put",
+      "summary": "Update the organization's audit-log retention policy (organization admin)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/audit-log-retention/actions/prune",
+      "method": "post",
+      "summary": "Run bounded audit-log pruning now using the saved organization policy",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/access-events",
+      "method": "get",
+      "summary": "The org's Zero Trust access/flow events — keyset-paginated (enterprise, read-only)",
+      "edition_required": true
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/access-log/health",
+      "method": "get",
+      "summary": "Access-event collector and durable retention health (enterprise)",
+      "edition_required": true
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/access-event-retention",
+      "method": "get",
+      "summary": "Read the organization's effective access-event retention policy and latest pruning status",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/access-event-retention",
+      "method": "put",
+      "summary": "Update the organization's access-event retention policy (organization admin)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/access-event-retention/actions/prune",
+      "method": "post",
+      "summary": "Run bounded access-event pruning now using the persisted organization policy",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/idp-sync/{provider}",
+      "method": "put",
+      "summary": "Connect / update a directory-sync provider credential (enterprise)",
+      "edition_required": true
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/idp-sync/{provider}/health",
+      "method": "get",
+      "summary": "Directory-sync two-tier health (enterprise)",
+      "edition_required": true
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/idp-sync/{provider}/trigger",
+      "method": "post",
+      "summary": "Reconcile the org's mapped directory groups now (enterprise)",
+      "edition_required": true
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/idp-sync/{provider}/groups",
+      "method": "post",
+      "summary": "Map a directory group to a Tunnex group — new or an EMPTY manual group (enterprise)",
+      "edition_required": true
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/idp-sync/{provider}/groups/{groupId}",
+      "method": "delete",
+      "summary": "Un-map a directory group (reverts the Tunnex group to manual, empty) (enterprise)",
+      "edition_required": true
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/devices",
+      "method": "get",
+      "summary": "List devices (own devices for members; all for admins)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/devices",
+      "method": "post",
+      "summary": "Create a device/peer bound to the owning user",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/cross-gateway-settings",
+      "method": "put",
+      "summary": "Set optional cross-gateway connectivity for human clients and agents",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ovpn-settings",
+      "method": "put",
+      "summary": "\"Set the org OpenVPN opt-in (S9.1 D-S9.5-OPTIN — unlock-then-opt-in, OFF by default)\"",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/ovpn-profiles",
+      "method": "post",
+      "summary": "\"Mint an OpenVPN device + return its .ovpn profile ONCE (S9.1 D-S9.5-OPTIN gated)\"",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/devices/{deviceId}/revoke",
+      "method": "post",
+      "summary": "Revoke a device (peer removed from the gateway within seconds)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/devices/{deviceId}/mode",
+      "method": "patch",
+      "summary": "Change split/full mode without creating a new device",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/devices/{deviceId}",
+      "method": "delete",
+      "summary": "Remove a REVOKED device from the roster (soft delete)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/devices/pending",
+      "method": "get",
+      "summary": "The device-approval queue",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/devices/{deviceId}/approve",
+      "method": "post",
+      "summary": "Approve a pending device (peer + grants land org-wide within seconds)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/devices/{deviceId}/reject",
+      "method": "post",
+      "summary": "Reject a pending device (revoked, tunnel address freed)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/device-approval",
+      "method": "get",
+      "summary": "Get the org device-approval mode",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/device-approval",
+      "method": "put",
+      "summary": "Set the org device-approval mode — enabling gates new enrollments",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/health-checks",
+      "method": "get",
+      "summary": "List the org's configured posture checks",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/health-checks/{checkKind}",
+      "method": "put",
+      "summary": "Opt the org into a posture check, or change its mode/param",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/health-checks/{checkKind}",
+      "method": "delete",
+      "summary": "Turn a posture check off (idempotent; blocked devices unblock on their next report)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/devices/{deviceId}/health",
+      "method": "post",
+      "summary": "Self-report device posture facts (owner only; server evaluates)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/groups",
+      "method": "get",
+      "summary": "List user-groups (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/groups",
+      "method": "post",
+      "summary": "Create a user-group (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/groups/{groupId}",
+      "method": "patch",
+      "summary": "Rename / re-describe a user-group (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/groups/{groupId}",
+      "method": "delete",
+      "summary": "Delete a user-group (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/groups/{groupId}/members",
+      "method": "get",
+      "summary": "List a group's members (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/groups/{groupId}/members",
+      "method": "post",
+      "summary": "Add a member to a group (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/groups/{groupId}/members/{userId}",
+      "method": "delete",
+      "summary": "Remove a member from a group (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/machine-credentials",
+      "method": "get",
+      "summary": "List machine credentials — the GitOps operator's org identity (S10.2; machine:manage). Fingerprint only, never the secret.",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/machine-credentials",
+      "method": "post",
+      "summary": "Mint a machine credential — the token is shown ONCE (S10.2; machine:manage, owner-only). One-time-secret ceremony.",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/machine-credentials/{credentialId}",
+      "method": "delete",
+      "summary": "Revoke a machine credential — severs on its next request (S10.2; machine:manage).",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/machine-credentials/{credentialId}",
+      "method": "put",
+      "summary": "Assign the human owner of a machine credential (S15.1/D14; machine:manage, owner-only). The admin CHOOSES — created_by does not exist, so nothing is suggested.",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/resources",
+      "method": "get",
+      "summary": "List policy resources (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/resources",
+      "method": "post",
+      "summary": "Create a policy resource (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/resources/{resourceId}",
+      "method": "patch",
+      "summary": "Update a policy resource (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/resources/{resourceId}",
+      "method": "delete",
+      "summary": "Delete a policy resource (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/fqdn-resources",
+      "method": "get",
+      "summary": "List resolver-backed FQDN access resources",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/fqdn-resources",
+      "method": "post",
+      "summary": "Create a normalized FQDN access resource or draft",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/fqdn-resources/{resourceId}",
+      "method": "get",
+      "summary": "Read the bounded authoritative FQDN resource workspace projection",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/fqdn-resources/{resourceId}",
+      "method": "patch",
+      "summary": "Update an FQDN resource and selected Site/Gateway pair",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/fqdn-resources/{resourceId}",
+      "method": "delete",
+      "summary": "Delete an unreferenced FQDN resource",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/fqdn-resources/{resourceId}/impact",
+      "method": "get",
+      "summary": "Read server-computed FQDN deletion impact",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/fqdn-resources/{resourceId}/impact",
+      "method": "post",
+      "summary": "Preview the server-known impact of an enforcement-changing FQDN resource edit",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/fqdn-resources/setting",
+      "method": "get",
+      "summary": "Read explicit FQDN enforcement opt-in",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/fqdn-resources/setting",
+      "method": "put",
+      "summary": "Set explicit FQDN enforcement opt-in",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/fqdn-resources/setting/impact",
+      "method": "get",
+      "summary": "Read the current bounded rule impact before changing FQDN enforcement opt-in",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/fqdn-resolver-contexts/{siteId}/{gatewayId}",
+      "method": "get",
+      "summary": "Read the server-managed DNS endpoints for a selected Site/Gateway context",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/fqdn-resolver-contexts/{siteId}/{gatewayId}",
+      "method": "put",
+      "summary": "Atomically replace the server-managed DNS endpoints for a selected Site/Gateway context",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/fqdn-resolver-contexts/{siteId}/{gatewayId}",
+      "method": "delete",
+      "summary": "Remove the active DNS resolver endpoint configuration for a selected Site/Gateway context",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/policies",
+      "method": "get",
+      "summary": "List allow-rules (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/policies",
+      "method": "post",
+      "summary": "Create an allow-rule (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/policies/{ruleId}",
+      "method": "delete",
+      "summary": "Delete an allow-rule (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/policies/{ruleId}",
+      "method": "put",
+      "summary": "Extend a temporary grant's expiry window in place (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/policies/{ruleId}",
+      "method": "patch",
+      "summary": "Enable or disable an allow-rule without deleting it (enterprise, F3)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/zero-trust-mode",
+      "method": "get",
+      "summary": "Get the org enforcement mode (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/zero-trust-mode",
+      "method": "put",
+      "summary": "Set the org enforcement mode — enabling turns on default-deny (enterprise)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/license",
+      "method": "get",
+      "summary": "What this deployment is entitled to",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/license",
+      "method": "post",
+      "summary": "Install a licence key — takes effect immediately, no restart",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/auth/invitations/accept",
+      "method": "post",
+      "summary": "Accept an invitation",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/invitations",
+      "method": "get",
+      "summary": "List the organization's invitations",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/invitations",
+      "method": "post",
+      "summary": "Invite a user to the organization",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/invitations/resend",
+      "method": "post",
+      "summary": "Resend an invitation (new token, old invalidated)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/invitations/revoke",
+      "method": "post",
+      "summary": "Revoke a pending invitation",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/members",
+      "method": "get",
+      "summary": "List the organization's members (roster incl. deactivated)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/members/{userId}/role",
+      "method": "put",
+      "summary": "Change a member's role (RBAC-gated; refuses demoting the last owner)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/members/{userId}/roles",
+      "method": "put",
+      "summary": "Replace a member's role set (RBAC-gated; refuses demoting the last owner)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/members/{userId}/deactivate",
+      "method": "post",
+      "summary": "Deactivate a member's account (freezes access, revokes sessions)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/members/{userId}/reactivate",
+      "method": "post",
+      "summary": "Reactivate a deactivated member",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/admin/organizations/{orgId}/members/{userId}/role",
+      "method": "put",
+      "summary": "Grant or change a user's role in ANY organization (deployment admin)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/admin/users/{userId}/cp-admin",
+      "method": "put",
+      "summary": "Grant or revoke the deployment-administrator capability",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/admin/ai-transport-settings",
+      "method": "get",
+      "summary": "Read deployment-wide AI transport policy (verified server administrator)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/admin/ai-transport-settings",
+      "method": "put",
+      "summary": "Set deployment-wide HTTP access for AI with a revision precondition",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/admin/app-access/domains",
+      "method": "get",
+      "summary": "Read deployment-wide App Access addresses (server administrator)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/admin/app-access/domains",
+      "method": "patch",
+      "summary": "Save deployment-wide portal and app addresses",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/admin/email-settings",
+      "method": "get",
+      "summary": "Read deployment-wide email settings (verified server administrator)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/admin/email-settings",
+      "method": "put",
+      "summary": "Save encrypted email settings with a revision precondition",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/admin/email-settings/test",
+      "method": "post",
+      "summary": "Test candidate SMTP settings without saving",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/admin/upgrade",
+      "method": "get",
+      "summary": "Read the local host-upgrade runner state",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/admin/upgrade",
+      "method": "post",
+      "summary": "Approve the exact signed release currently shown by the control plane",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/admin/gateway-endpoint",
+      "method": "get",
+      "summary": "Get the deployment-wide gateway control endpoint",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/admin/gateway-endpoint",
+      "method": "put",
+      "summary": "Set the deployment-wide gateway control endpoint",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/rekey/challenge",
+      "method": "post",
+      "summary": "Request a single-use nonce for proof-of-possession re-key (unauthenticated)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/agent/rekey",
+      "method": "post",
+      "summary": "Re-key an existing gateway by proof of possession (unauthenticated)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations",
+      "method": "get",
+      "summary": "List organizations",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations",
+      "method": "post",
+      "summary": "Create an organization",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}",
+      "method": "get",
+      "summary": "Get an organization",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}",
+      "method": "patch",
+      "summary": "Update organization settings (name only; slug is immutable)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}",
+      "method": "delete",
+      "summary": "Soft-delete an organization (refused while it still owns resources)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-quota",
+      "method": "put",
+      "summary": "Set the organization managed-agent identity quota",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/deletion-preflight",
+      "method": "get",
+      "summary": "What still blocks deleting this organization",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/pool-cidr",
+      "method": "put",
+      "summary": "Resize the org's WireGuard address pool (grow-superset or shrink-subset)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sites",
+      "method": "get",
+      "summary": "List the org's sites (S8.1)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sites",
+      "method": "post",
+      "summary": "Register a site gateway (S8.1; site:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-runtime-settings",
+      "method": "put",
+      "summary": "Enable or disable managed-agent runtime synchronization for an organization",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/alerting-settings",
+      "method": "get",
+      "summary": "Read the explicit organization alerting opt-in",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/alerting-settings",
+      "method": "put",
+      "summary": "Enable or disable organization alert delivery",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/alert-destinations",
+      "method": "get",
+      "summary": "List alert destinations without their endpoint secrets",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/alert-destinations",
+      "method": "post",
+      "summary": "Create an outbound alert destination",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/alert-destinations/{destinationId}/subscriptions",
+      "method": "get",
+      "summary": "List an alert destination's subscribed event types",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/alert-destinations/{destinationId}/subscriptions",
+      "method": "post",
+      "summary": "Subscribe an alert destination to one typed event",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/alert-destinations/{destinationId}",
+      "method": "delete",
+      "summary": "Archive an alert destination without deleting delivery history",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/alert-destinations/{destinationId}/test",
+      "method": "post",
+      "summary": "Send one synthetic generic-webhook alert without enqueuing a production event",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/alert-destinations/{destinationId}/subscriptions/{eventKey}",
+      "method": "delete",
+      "summary": "Stop an alert destination receiving one typed event",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/alert-deliveries",
+      "method": "get",
+      "summary": "List recent alert delivery outcomes without payloads or endpoint secrets",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/alert-occurrences",
+      "method": "get",
+      "summary": "List active or resolved product alert conditions",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/routed-ranges",
+      "method": "get",
+      "summary": "The org's VOLATILE network-topology facts for a split-tunnel device (S8.5 + WF-A). Carries ONLY what the network currently looks like (ranges, and — with device_id — the device's dial endpoint + gateway pubkey); NEVER device-identity material (no private key, no pool-address re-issue, no enrollment token). The device's own identity is minted once and never re-fetched; the gateway it dials is a routing fact the network makes volatile (WF-A — the hub can change beneath a running device). Approved-only, sorted + canonical. Empty is a first-class answer.",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/routed-lans",
+      "method": "post",
+      "summary": "One-screen \"route a LAN through this gateway\" (S8.5 D1; site:manage). Composes register-site + bind-gateway + advertise-subnet + approve into one call — byte-identical DB state + the four constituent audit events. On a range collision the site+bind+pending-subnet persist and the typed refusal is returned.",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sites/{siteId}",
+      "method": "get",
+      "summary": "Count what references a site — cascade preview + reverse link (S8.3; site:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sites/{siteId}",
+      "method": "delete",
+      "summary": "Delete a site — cascades its subnets + site-referencing rules (S8.3; site:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sites/{siteId}/subnets",
+      "method": "get",
+      "summary": "List a site's subnets (S8.1; org:view — MEMBER-READABLE)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sites/{siteId}/subnets",
+      "method": "post",
+      "summary": "Advertise a subnet on a site — pending approval (S8.1; site:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sites/{siteId}/dns-forwards",
+      "method": "get",
+      "summary": "List a site's cross-site DNS forwarding zones (S8.4; site:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sites/{siteId}/dns-forwards",
+      "method": "post",
+      "summary": "Add/update a forwarded zone (S8.4; site:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sites/{siteId}/dns-forwards/{domain}",
+      "method": "delete",
+      "summary": "Remove a forwarded zone — full-sweep withdraws it from all gateways (S8.4; site:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sites/{siteId}/bind",
+      "method": "post",
+      "summary": "Bind a gateway node to a site — single-node v1 (S8.1; site:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sites/{siteId}/bind",
+      "method": "delete",
+      "summary": "Unbind a gateway node from the site — D6 replace-node (S8.1/S8.6 #3; site:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/clusters",
+      "method": "get",
+      "summary": "List the org's Kubernetes clusters (S10.3; org:view)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/clusters",
+      "method": "post",
+      "summary": "Register a Kubernetes cluster + its synthetic VIP range (S10.3; k8s:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/clusters/{clusterId}",
+      "method": "get",
+      "summary": "Fetch one cluster by id (S10.2; org:view) — the operator's confirm-by-ID before a drift-recreate",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/clusters/{clusterId}",
+      "method": "delete",
+      "summary": "Deregister a cluster — full-sweep of its Services + rules (S10.3; k8s:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/clusters/{clusterId}/connector",
+      "method": "put",
+      "summary": "Set the private in-cluster gateway that fronts this cluster (S10.3a; k8s:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/clusters/{clusterId}/connector-pool",
+      "method": "get",
+      "summary": "Read one cluster's explicit connector-pool configuration (S20.3b; k8s_ha:view)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/clusters/{clusterId}/connector-pool",
+      "method": "put",
+      "summary": "Create or reconcile one cluster's exact connector-pool membership (S20.3b; k8s_ha:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/clusters/{clusterId}/provider-metadata",
+      "method": "put",
+      "summary": "Correct provider/platform presentation metadata without changing traffic (S20.4; k8s:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/ha-settings",
+      "method": "get",
+      "summary": "Read the explicit organization connector-HA opt-in (S20.3b; k8s_ha:view)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/ha-settings",
+      "method": "put",
+      "summary": "Enable or begin draining organization connector HA (S20.3b; k8s_ha:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/connector-pools/ha-status",
+      "method": "get",
+      "summary": "List truthful requested/actual HA convergence per connector pool (S20.3b; k8s_ha:view)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/connector-pools/{poolId}/ha-mode",
+      "method": "get",
+      "summary": "Read truthful requested/actual HA convergence for one connector pool (S20.3b; k8s_ha:view)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/connector-pools/{poolId}/ha-mode",
+      "method": "put",
+      "summary": "Request fenced HA or legacy drain for one pool (S20.3b; k8s_ha:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/clusters/{clusterId}/services",
+      "method": "get",
+      "summary": "List a cluster's exposed Services (S10.3; org:view)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/clusters/{clusterId}/services",
+      "method": "post",
+      "summary": "Expose an in-cluster Service to the fabric — allocates a VIP (S10.3; k8s:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/cluster-scope-settings",
+      "method": "get",
+      "summary": "Read the licensed, explicit cluster-scope opt-in (S20.4; k8s_scope:view + policy:view)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/cluster-scope-settings",
+      "method": "put",
+      "summary": "Opt an organization into or out of cluster-scope enforcement (S20.4; human k8s_scope:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/clusters/{clusterId}/inventory",
+      "method": "get",
+      "summary": "Page current active-connector Service inventory without raw Kubernetes UIDs (S20.4; k8s:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/clusters/{clusterId}/inventory/{inventoryRef}/expose",
+      "method": "post",
+      "summary": "Atomically expose selected exact ports from current connector inventory (S20.4; k8s:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/cluster-scopes",
+      "method": "get",
+      "summary": "List preserved cluster-scope grants (S20.4; k8s_scope:view + policy:view)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/cluster-scopes",
+      "method": "post",
+      "summary": "Create one human-approved exact-child cluster scope (S20.4; k8s_scope:manage + policy:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/cluster-scopes/{ruleId}",
+      "method": "get",
+      "summary": "Read one cluster scope (S20.4; k8s_scope:view + policy:view)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/cluster-scopes/{ruleId}",
+      "method": "put",
+      "summary": "Enable or disable one scope with optimistic revision (S20.4; human k8s_scope:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/cluster-scopes/{ruleId}",
+      "method": "delete",
+      "summary": "Irreversibly delete one scope after explicit confirmation (S20.4; human k8s_scope:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/cluster-scopes/{ruleId}/initial-candidates",
+      "method": "get",
+      "summary": "Page immutable initial offered/selected evidence (S20.4; k8s_scope:view + policy:view)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/cluster-scopes/{ruleId}/memberships",
+      "method": "get",
+      "summary": "Page one scope's durable membership decisions (S20.4; k8s_scope:view + policy:view)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/cluster-scope-review-queue",
+      "method": "get",
+      "summary": "Page pending later-exposure decisions across the organization (S20.4; k8s_scope:view + policy:view)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/cluster-scopes/{ruleId}/memberships/{serviceChildId}/decision",
+      "method": "post",
+      "summary": "Irreversibly approve or reject one pending later exposure (S20.4; human k8s_scope:approve)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/services",
+      "method": "get",
+      "summary": "List ALL exposed Services in the org — the grant destination picker + K8s overview (S10.3; org:view)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/services/{serviceId}",
+      "method": "get",
+      "summary": "Fetch one exposed Service by id (S10.2; org:view) — the operator's confirm-by-ID before a drift-recreate",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/k8s/services/{serviceId}",
+      "method": "delete",
+      "summary": "Unexpose a Service — full-sweep withdraws its VIP + DNS answer (S10.3; k8s:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/site-subnets/pending",
+      "method": "get",
+      "summary": "List advertised-but-unapproved subnets — the review queue (S8.1; site:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/site-subnets/{subnetId}/approve",
+      "method": "post",
+      "summary": "Approve an advertised subnet after disjointness (S8.1; site:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/site-subnets/{subnetId}",
+      "method": "delete",
+      "summary": "Un-advertise / remove a site subnet (S8.2c WF-5; site:manage)",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-policy-template-settings",
+      "method": "put",
+      "summary": "Enable or disable managed-agent groups and policy templates",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-policy-template-destination-impact",
+      "method": "get",
+      "summary": "Count immutable F09 template references before deleting a destination",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-mcp-profiles",
+      "method": "get",
+      "summary": "List reusable managed-agent MCP profiles",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-mcp-profiles",
+      "method": "post",
+      "summary": "Create immutable reusable managed-agent MCP profile",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-mcp-profiles/{profileId}/assignments",
+      "method": "post",
+      "summary": "Assign an MCP profile to a managed-agent group",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-mcp-assignments",
+      "method": "get",
+      "summary": "List active and historical MCP profile assignments",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-groups/{groupId}/mcp-profile-impact",
+      "method": "post",
+      "summary": "Preview the exact impact of replacing or removing a group MCP profile",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-groups/{groupId}/mcp-profile",
+      "method": "put",
+      "summary": "Atomically set or replace a group MCP profile",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-groups/{groupId}/mcp-profile",
+      "method": "delete",
+      "summary": "Atomically unassign a group MCP profile",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-mcp-profiles/{profileId}/archive",
+      "method": "post",
+      "summary": "Archive an unused MCP profile",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-groups",
+      "method": "get",
+      "summary": "List F09 managed-agent groups",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-groups",
+      "method": "post",
+      "summary": "Create an F09 managed-agent group",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-groups/{groupId}",
+      "method": "patch",
+      "summary": "Rename or update one agent group",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-groups/{groupId}",
+      "method": "delete",
+      "summary": "Archive an empty agent group",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-groups/{groupId}/members",
+      "method": "get",
+      "summary": "List current managed-agent members",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-groups/{groupId}/members",
+      "method": "post",
+      "summary": "Add one active managed agent to a group",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-groups/{groupId}/members/{deviceId}",
+      "method": "delete",
+      "summary": "Remove one member and report exact compiled access withdrawal",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-policy-templates",
+      "method": "get",
+      "summary": "List F09 reusable policy templates",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-policy-templates",
+      "method": "post",
+      "summary": "Create reusable policy-template metadata",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-policy-templates/{templateId}",
+      "method": "patch",
+      "summary": "Rename or update reusable template metadata",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-policy-templates/{templateId}",
+      "method": "delete",
+      "summary": "Archive template metadata without changing live assignments",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-policy-templates/{templateId}/versions",
+      "method": "get",
+      "summary": "List immutable versions of one agent policy template",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-policy-templates/{templateId}/versions",
+      "method": "post",
+      "summary": "Create the next immutable template version",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-policy-template-preview",
+      "method": "post",
+      "summary": "Pure preview using the canonical policy compiler",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-policy-template-assignments",
+      "method": "get",
+      "summary": "List current applied template assignments",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-policy-template-assignments",
+      "method": "post",
+      "summary": "Atomically apply an exact template version after a fresh preview",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-policy-template-assignments/{assignmentId}",
+      "method": "delete",
+      "summary": "Atomically withdraw one assignment and only its orphaned ordinary rules",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-jit-access-settings",
+      "method": "get",
+      "summary": "Read the Scale-gated JIT access opt-in and server-owned blockers",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-jit-access-settings",
+      "method": "put",
+      "summary": "Enable or disable Scale-gated approval-based temporary agent access",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-access-requests",
+      "method": "get",
+      "summary": "List approval requests visible to the accountable human",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-access-requests",
+      "method": "post",
+      "summary": "Request temporary access for one managed agent",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-access-destinations",
+      "method": "get",
+      "summary": "List named destinations available to an authorized JIT requester",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-access-requests/{requestId}",
+      "method": "get",
+      "summary": "Read one visible request and its immutable transition ledger",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-access-requests/{requestId}/approve",
+      "method": "post",
+      "summary": "Approve once and materialize one expiring ordinary policy rule",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-access-requests/{requestId}/reject",
+      "method": "post",
+      "summary": "Reject a pending request without creating a policy rule",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-access-requests/{requestId}/cancel",
+      "method": "post",
+      "summary": "Cancel a pending request without creating a policy rule",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/agent-access-requests/{requestId}/revoke",
+      "method": "post",
+      "summary": "Emergency-revoke approved temporary access and remove its rule",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/saved-ssh-keys",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/saved-ssh-keys",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/saved-ssh-keys/{keyId}",
+      "method": "delete",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/saved-ssh-keys/{keyId}/default",
+      "method": "put",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandboxes",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandboxes",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandboxes/{sandboxId}",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandboxes/{sandboxId}/actions",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandbox-setup",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandbox-setup",
+      "method": "put",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandbox-catalog/{templateId}",
+      "method": "put",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandbox-templates",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandbox-skills",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandbox-custom-skills",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandbox-custom-skills",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandbox-custom-skills/{skillId}",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandbox-custom-skills/{skillId}",
+      "method": "put",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandbox-custom-skills/{skillId}",
+      "method": "delete",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandbox-delegation-settings",
+      "method": "put",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandbox-delegations",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/sandbox-delegations/{delegationId}",
+      "method": "delete",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access",
+      "method": "get",
+      "summary": "getServerAccessWorkspace",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access",
+      "method": "put",
+      "summary": "Explicitly opt this organization in or out of the local terminal capability",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/recording-storage",
+      "method": "get",
+      "summary": "getServerAccessRecordingStorage",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/recording-storage",
+      "method": "put",
+      "summary": "updateServerAccessRecordingStorage",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/recording-storage/test",
+      "method": "post",
+      "summary": "Verify write read and deletion of an owned storage probe",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/recording-archive",
+      "method": "get",
+      "summary": "Read safe optional S3 recording archive configuration",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/recording-archive",
+      "method": "put",
+      "summary": "Configure optional S3 archiving after PostgreSQL recording retention",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/recording-archive/test",
+      "method": "post",
+      "summary": "Test S3 archive write read and deletion without saving configuration",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/servers",
+      "method": "post",
+      "summary": "createServerAccessServer",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/servers/{serverId}",
+      "method": "put",
+      "summary": "updateServerAccessServer",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/servers/{serverId}",
+      "method": "delete",
+      "summary": "Retire server enrollment and revoke its access while preserving evidence",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/servers/{serverId}/enrollment",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/servers/{serverId}/enrollment",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/enrollments/{enrollmentId}",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/enrollments/{enrollmentId}",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/enrollments/{enrollmentId}",
+      "method": "delete",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/servers/{serverId}/check",
+      "method": "post",
+      "summary": "checkServerAccessServer",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/trust",
+      "method": "get",
+      "summary": "getServerAccessTrust",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/grants",
+      "method": "post",
+      "summary": "createServerAccessGrant",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/grants/{grantId}",
+      "method": "delete",
+      "summary": "revokeServerAccessGrant",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/sessions",
+      "method": "post",
+      "summary": "createServerAccessSession",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/sessions/{sessionId}",
+      "method": "delete",
+      "summary": "endServerAccessSession",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/sessions/{sessionId}/recording",
+      "method": "get",
+      "summary": "Read an authorized bounded encrypted recording",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/recording-import",
+      "method": "post",
+      "summary": "Decrypt an authorized self-contained recording package without original database rows",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/sessions/{sessionId}/recording/export-s3",
+      "method": "post",
+      "summary": "Request an idempotent bounded S3 recording export",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/sessions/{sessionId}/recording/download",
+      "method": "get",
+      "summary": "Download authorized integrity-checked recording events as JSON",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/sessions/{sessionId}/terminal",
+      "method": "get",
+      "summary": "connectServerAccessTerminal",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/organizations/{orgId}/server-access/sessions/editor",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/server-access/editor/exchange",
+      "method": "post",
+      "summary": "",
+      "edition_required": false
+    },
+    {
+      "path": "/api/v1/server-access/editor/{sessionId}",
+      "method": "get",
+      "summary": "",
+      "edition_required": false
+    }
+  ]
+}

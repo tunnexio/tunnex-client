@@ -58,8 +58,14 @@ func relayUAPIConfig(cfg *TunnelConfig) (string, error) {
 }
 
 func prepareRelay(p *RelayPreparation) (*relayNegotiation, string, error) {
-	if !relayPlatformSupported(runtime.GOOS) || p == nil || len(p.ID) < 1 || len(p.ID) > 128 || validKey(p.DevicePublicKey) != nil || validKey(p.GatewayPublicKey) != nil || len(p.Username) < 1 || len(p.Username) > 512 || len(p.Password) < 1 || len(p.Password) > 512 || !p.ExpiresAt.After(time.Now()) || p.ExpiresAt.After(time.Now().Add(10*time.Minute)) {
+	if !relayPlatformSupported(runtime.GOOS) || p == nil || len(p.ID) < 1 || len(p.ID) > 128 || validKey(p.DevicePublicKey) != nil || validKey(p.GatewayPublicKey) != nil || len(p.Username) < 1 || len(p.Username) > 512 || len(p.Password) < 1 || len(p.Password) > 512 {
 		return nil, "", relayError()
+	}
+	if !p.ExpiresAt.After(time.Now()) {
+		return nil, "", &ProtocolError{Code: "relay_session_expired", Msg: "relay session expired"}
+	}
+	if p.ExpiresAt.After(time.Now().Add(10 * time.Minute)) {
+		return nil, "", &ProtocolError{Code: "relay_clock_skew", Msg: "relay deadline exceeds local clock bound"}
 	}
 	// Parse using the TURN URI shape, applying the same safe endpoint rules as
 	// ordinary WireGuard config. The transport library validates TLS normally.
@@ -79,7 +85,7 @@ func prepareRelay(p *RelayPreparation) (*relayNegotiation, string, error) {
 	ep, offer, err := icewire.Gather(neg, icewire.Relay{URL: p.URL, Username: p.Username, Password: p.Password}, p.DevicePublicKey)
 	if err != nil {
 		cancel()
-		return nil, "", relayError()
+		return nil, "", &ProtocolError{Code: "relay_gather_failed", Msg: "relay candidate gathering failed"}
 	}
 	r := &relayNegotiation{prep: *p, endpoint: ep, ctx: ctx, cancel: cancel}
 	r.lease = time.AfterFunc(30*time.Second, r.close)

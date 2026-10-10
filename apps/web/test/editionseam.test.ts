@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { readGeneratedFile } from "./support/source";
 import {
   ENTERPRISE_PATHS,
   isEnterprisePath,
   isEnterprise,
   gate,
 } from "../src/lib/edition";
-import { stripYamlComments } from "./support/source";
 
 // ⛔ THE SWEEP, MADE STRUCTURAL.
 //
@@ -15,69 +14,34 @@ import { stripYamlComments } from "./support/source";
 // at a call site does not reach the call sites beside it — only an enumeration finds the rest, and only a
 // census keeps the enumeration true.
 
-const spec = stripYamlComments(
-  readFileSync(
-    fileURLToPath(new URL("../../../openapi/openapi.yaml", import.meta.url)),
-    "utf8",
+// The standalone desktop renderer consumes a pinned core API contract snapshot.
+// Refresh from committed core source with test/support/refresh-core-contracts.mjs;
+// this repository has no generated control-plane OpenAPI tree.
+const contract = JSON.parse(
+  readGeneratedFile(
+    fileURLToPath(
+      new URL("./fixtures/core-operation-contract.json", import.meta.url),
+    ),
+    fileURLToPath(new URL("./fixtures/", import.meta.url)),
   ),
-);
-
-/** Parse the spec the way the sweep did: an operation is enterprise if it says so in its OWN block. */
+) as {
+  provenance: { revision: string; sha256: string };
+  operations: Array<{
+    path: string;
+    summary: string;
+    edition_required: boolean;
+  }>;
+};
 function specEnterprisePaths(): Set<string> {
-  const lines = spec.split("\n");
-  const out = new Set<string>();
-  let path: string | null = null;
-  let inOp = false;
-  let buf: string[] = [];
-  const flush = () => {
-    if (inOp && path) {
-      const blk = buf.join("\n");
-      // ⛔ WIDENED, S14.5 — AND THE NARROW VERSION MISSED THREE GENUINELY-GATED ENDPOINTS.
-      //
-      // It was `/summary:.*\(enterprise\)/`, which requires the word ALONE inside its parentheses. The spec
-      // does not consistently write it that way:
-      //
-      //   "Approve a pending device (peer + grants land org-wide within seconds, enterprise)"
-      //   "Reject a pending device (revoked, tunnel address freed, enterprise)"
-      //   "Self-report device posture facts (owner only; server evaluates, enterprise)"
-      //
-      // All three call `deviceApprovalEditionRequired()` / gate on `deviceHealthEnabled` in the handler —
-      // they are REALLY enterprise — and none was registered, because the parenthetical carried other words.
-      //
-      // THIS IS THE CENSUS FAILING ITS OWN LAW: *an absence found by one encoding is not an absence.* The
-      // instrument built to stop the edition class had the edition class inside it.
-      //
-      // Now: the word `enterprise` anywhere in the summary, on a word boundary. Wider means occasional false
-      // positives, which are visible and cheap (a red naming a path), against silent false negatives, which
-      // are the entire failure mode.
-      if (
-        blk.includes("edition_required") ||
-        /summary:.*\benterprise\b/i.test(blk)
+  return new Set(
+    contract.operations
+      .filter(
+        (operation) =>
+          operation.edition_required ||
+          /\benterprise\b/i.test(operation.summary),
       )
-        out.add(path);
-    }
-    inOp = false;
-    buf = [];
-  };
-  for (const l of lines) {
-    const p = /^ {2}(\/\S+):\s*$/.exec(l);
-    if (p) {
-      flush();
-      path = p[1]!;
-      continue;
-    }
-    if (/^ {4}(get|post|put|patch|delete):\s*$/.test(l)) {
-      flush();
-      inOp = true;
-      continue;
-    }
-    if (inOp) {
-      if (/^ {4}\S/.test(l) || /^ {2}\S/.test(l)) flush();
-      else buf.push(l);
-    }
-  }
-  flush();
-  return out;
+      .map((operation) => operation.path),
+  );
 }
 
 describe("ENTERPRISE_PATHS is held to the SPEC, not to memory", () => {
@@ -111,6 +75,26 @@ describe("ENTERPRISE_PATHS is held to the SPEC, not to memory", () => {
 describe("gate() — the render decision, taken at the seam", () => {
   const ENT = "/api/v1/organizations/{orgId}/policies";
   const OPEN = "/api/v1/organizations/{orgId}/nodes";
+
+  it("Community agent inventory, approval and health capabilities remain reachable", () => {
+    for (const path of [
+      "agents",
+      "device-approval",
+      "devices/pending",
+      "devices/{deviceId}/approve",
+      "devices/{deviceId}/reject",
+      "devices/{deviceId}/health",
+      "health-checks",
+      "health-checks/{checkKind}",
+    ]) {
+      expect(
+        gate("open", `/api/v1/organizations/{orgId}/${path}`, {
+          state: "ok",
+          data: true,
+        }),
+      ).toEqual({ state: "ok", data: true });
+    }
+  });
 
   it("open edition + enterprise endpoint = ABSENT, never failed", () => {
     // The exact defect: the open edition rendered "could not load" IN RED for a feature it was never sold.

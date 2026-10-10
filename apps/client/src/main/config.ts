@@ -1,6 +1,7 @@
 import Store from "electron-store";
 import { normalizeServerUrl, validateServer, serverChangeRequiresRelogin } from "./serverurl";
 import { controlPlaneRequest } from "./controlplanerequest";
+import type { StoredNotice } from "./notificationinbox";
 
 // An empty selection preserves RC20's legacy imported-profile fallback. This explicit sentinel
 // means a person chose their managed Tunnex account, even if that legacy file is still retained.
@@ -10,6 +11,8 @@ interface ConfigShape {
   serverUrl: string;
   importedProfileId: string;
   managedOrganizationSelections: Record<string, string>;
+  beamOpenedShares: string[];
+  notifications: StoredNotice[];
 }
 
 // Config owns the server URL (a MAIN-process concern — it's where auth + the
@@ -26,12 +29,24 @@ export class Config {
   constructor(store?: Store<ConfigShape>) {
     this.store = store ?? new Store<ConfigShape>({
       name: "tunnex",
-      defaults: { serverUrl: "", importedProfileId: "", managedOrganizationSelections: {} },
+      defaults: { serverUrl: "", importedProfileId: "", managedOrganizationSelections: {}, beamOpenedShares: [], notifications: [] },
     });
   }
 
   getServerUrl(): string {
     return this.store.get("serverUrl", "");
+  }
+
+  hasOpenedBeamShare(key: string): boolean {
+    return this.store.get("beamOpenedShares", []).includes(key);
+  }
+  getNotifications(): StoredNotice[] {return this.store.get("notifications", []);}
+  setNotifications(entries: StoredNotice[]): void {this.store.set("notifications", entries);}
+
+  markBeamShareOpened(key: string): void {
+    const opened = this.store.get("beamOpenedShares", []).filter(value => value !== key);
+    // Persist only hashed account/server/org/share keys, never credentials or app URLs.
+    this.store.set("beamOpenedShares", [...opened, key].slice(-10000));
   }
 
   getImportedProfileId(): string {

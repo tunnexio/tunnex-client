@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import { randomUUID } from "node:crypto";
 import * as path from "node:path";
-import { ipcMain, BrowserWindow, dialog } from "electron";
+import { ipcMain, BrowserWindow, dialog, clipboard, shell } from "electron";
 import { Config, MANAGED_PROFILE_SELECTION } from "./config";
 import { CredentialStore } from "./credential";
 import type { EnrollmentAnchorStore } from "./enrollmentanchor";
@@ -58,6 +58,9 @@ import {
 } from "./managedlifecycleflows";
 import { projectTransportStatus, SingleFlightStatusReader } from "./statusreader";
 import { isCanonicalUuid } from "./uuid";
+import { BeamRuntime } from "./beamruntime";
+import { notificationScope, type NotificationInbox } from "./notificationinbox";
+import type { BeamAction, BeamCreate, BeamGrantsPreview } from "./beamtypes";
 
 // ClientTunnelStatus is what main forwards: the helper's TunnelStatus plus the
 // client-synthesized states the helper never emits — "revoked", "pending_approval",
@@ -86,6 +89,7 @@ type ManagedRemoveContext =
 // the SAME connect/disconnect path the renderer uses — no duplicated tunnel logic, one
 // source of truth for monitor + notification + state emission.
 export interface TunnelControls {
+  beam: BeamRuntime;
   connect(fullTunnel: boolean): Promise<ClientTunnelStatus>;
   disconnect(): Promise<void>;
   currentState(): TrayState;
@@ -104,6 +108,7 @@ export function registerIpc(
   tunnelStore: TunnelConfigStore,
   enrollmentAnchorStore: EnrollmentAnchorStore,
   lifecycle: ManagedLifecycleCoordinator,
+  notices: NotificationInbox,
 ): TunnelControls {
   // Every managed API is pinned to the immutable credential carried by the
   // operation lease. No request can observe a later store replacement.
@@ -147,6 +152,44 @@ export function registerIpc(
       enrollmentBlockedByOtherUser: enrollmentAnchorBlocksUser(anchor, lease.credential.server, lease.userId),
     };
   };
+
+  const beam = new BeamRuntime(async () => {
+    const lease = await captureManagedLease();
+    const context = await organizationContext(lease);
+    const view = organizationSelector.organizations(lease.credential.server,context.userId,context.organizations,context.enrolledOrganizationId,context.hasStoredManagedRecord);
+    const orgId = view.organizations.find(org=>org.selected)?.id;
+    if (!orgId) throw new Error("beam_organization_required");
+    const credential = lease.credential;
+    const assertCurrent = () => {
+      const current = store.load();
+      if (!current || current.token !== credential.token || current.server !== credential.server || config.getServerUrl() !== credential.server || CredentialStore.isExpired(current,new Date()) || !Number.isFinite(Date.parse(current.expiresAt))) throw new Error("beam_session_changed");
+      const chosen = organizationSelector.organizations(credential.server,context.userId,context.organizations,context.enrolledOrganizationId,context.hasStoredManagedRecord).organizations.find(org=>org.selected)?.id;
+      if (chosen !== orgId) throw new Error("beam_session_changed");
+    };
+    assertCurrent();
+    return {server:credential.server,token:credential.token,expiresAt:credential.expiresAt,userId:lease.userId,orgId,assertCurrent};
+  }, undefined, {has: key => config.hasOpenedBeamShare(key), mark: key => config.markBeamShareOpened(key)}, (context,share,episode)=>{
+    notices.record("access_revoked",`${share.id}:${episode}`,"App access revoked",`You no longer have access to ${share.name}. Contact the publisher or your administrator.`,notificationScope(context.server,context.token));
+  });
+  const beamHandle = (channel:string, handler:(...args:unknown[])=>unknown) => ipcMain.handle(channel,(event,...args:unknown[])=>{
+    if (!event.senderFrame?.url.startsWith("app://")) throw new Error("beam_sender_denied");
+    return handler(...args);
+  });
+  beamHandle("beam:view",input=>beam.view(input as import("./beamtypes").BeamInventory | undefined));
+  beamHandle("beam:shared",input=>beam.shared(input as import("./beamtypes").BeamInventory | undefined));
+  beamHandle("beam:notifications",()=>beam.notifications());
+  beamHandle("beam:openSharedLink",id=>beam.openShared(id as string,url=>shell.openExternal(url)));
+  beamHandle("beam:checkLocal",target=>beam.check(target));
+  beamHandle("beam:create",input=>beam.create(input as BeamCreate));
+  beamHandle("beam:action",input=>beam.action(input as BeamAction));
+  beamHandle("beam:previewGrants",input=>beam.previewGrants(input as BeamGrantsPreview));
+  beamHandle("beam:retry",id=>beam.retry(id as string));
+  beamHandle("beam:idempotencyKey",()=>beam.newIdempotencyKey());
+  beamHandle("beam:copyLink",async id=>{await clipboard.writeText(await beam.url(id as string));});
+  beamHandle("beam:openLink",async id=>{await shell.openExternal(await beam.url(id as string));});
+  beam.subscribe(()=>{
+    const win=getWindow();if(win&&!win.isDestroyed())win.webContents.send("beam:changed");
+  });
 
   const activeImportedProfile = () => {
     const selected = config.getImportedProfileId();
@@ -298,6 +341,7 @@ export function registerIpc(
         }
       },
       publishRevoked: () => {
+        notices.record("device_revoked",deviceId,"Device revoked","This device was revoked. Contact an administrator to approve or enroll a replacement device.",notificationScope(lease.credential.server,lease.credential.token));
         lastSynth = { state: "revoked" }; // survive a renderer remount until next connect/disconnect
         emit({ state: "revoked" });
         try {
@@ -391,6 +435,7 @@ export function registerIpc(
       : ({ state: "posture_warning", failed_checks: r.failed_checks } as const);
     lastSynth = state;
     emit(state);
+    if (next === "blocked") notices.record("access_revoked",`posture:${JSON.stringify(r.failed_checks)}`,"Access blocked by device policy","A required device-health check failed. Check your device requirements in Home or contact your administrator.");
     notifyTunnel(next === "blocked" ? "posture_blocked" : "posture_warning", r.failed_checks);
   };
   // collectHealthFacts gathers what main can read directly (platform, OS product
@@ -698,6 +743,7 @@ export function registerIpc(
         const connectionLease = connection.lease;
         const { origin: connectionOrigin, api: connectionApi } = connection.context;
         if (e instanceof DeviceRevokedError) {
+          notices.record("device_revoked",tunnelStore.get(connectionOrigin)?.deviceId ?? connectionLease.credential.fingerprint,"Device revoked","This device was revoked. Contact an administrator to approve or enroll a replacement device.",notificationScope(connectionLease.credential.server,connectionLease.credential.token));
           // This is terminal for the newly prepared managed lease. Fence it but
           // retain activeManagedLease as a stale tombstone so any delayed helper
           // callback is guard-discarded instead of entering the imported path.
@@ -841,6 +887,7 @@ export function registerIpc(
   });
 
   ipcMain.handle("auth:login", async () => {
+    await beam.retire();
     const r = await lifecycle.replaceLogin({
       resolveServer: () => config.requireServerUrl(), // resolved only after login owns the FIFO turn
       sessionIsValid: async (credential) => !CredentialStore.isExpired(credential, new Date()),
@@ -864,6 +911,7 @@ export function registerIpc(
   });
 
   ipcMain.handle("auth:logout", async () => {
+    await beam.retire();
     // Sign-out is session-only. The encrypted device config stays so the next sign-in
     // can validate and reuse the same server-side device instead of minting another row.
     await lifecycle.serial(async (owner) => {
@@ -1020,6 +1068,7 @@ export function registerIpc(
     const lease = await captureManagedLease();
     const context = await organizationContext(lease);
     assertManagedEnrollmentOwner(enrollmentAnchorStore.get(lease.credential.server), lease.credential.server, lease.userId);
+    await beam.retire();
     const organizations = organizationSelector.select(
       lease.credential.server,
       context.userId,
@@ -1167,6 +1216,7 @@ export function registerIpc(
     // change, revoke + clear the old credential BEFORE the new URL is persisted,
     // so there is no window where (origin=new, credential=old) can attach.
     if (reloginRequired) {
+      await beam.retire();
       await tunnel.down();
       organizationSelectionRequiredPending = false;
       publishConfirmedDown();
@@ -1202,6 +1252,7 @@ export function registerIpc(
   }));
 
   return {
+    beam,
     connect,
     disconnect,
     currentState: () => trayState,
