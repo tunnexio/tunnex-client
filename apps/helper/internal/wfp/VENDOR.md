@@ -39,3 +39,9 @@ and the exported `Clean()`). `rules.go` (the filter set) is untouched.
 On any bump of `golang.zx2c4.com/wireguard/windows`, re-diff this copy against the new upstream
 `firewall` package and re-apply the three behavioral deltas as a SEPARATE reviewed sync. Do not let
 this copy drift silently. (Named in the PLAN.)
+
+Tunnex-only `scoped_dns_windows.go` adds atomic replacement of four fixed-key
+DNS permit filters for current scoped resolvers. Each matches exact resolver IPs,
+UDP/TCP port 53 and the live tunnel LUID. It leaves the upstream DNS deny and
+kill-switch filters installed; the existing provider cleanup also removes these
+permits on disconnect. `rules.go` remains unchanged.

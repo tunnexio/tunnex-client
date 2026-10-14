@@ -314,3 +314,49 @@ test("dial tier drives full-tunnel too (D-WFA-4): dialEnabled=true re-homes on a
   assert.equal(await m.checkOnce(), "applied");
   assert.deepEqual(rehomed[0], { endpoint: "gw-b:51820", pubkey: "KB" });
 });
+
+for (const pauseAt of ["routes", "forwards"] as const) {
+  test(`disconnect during ${pauseAt} apply prevents remaining DNS or dial effects`, async () => {
+    let release!: () => void;
+    let started!: () => void;
+    const pending = new Promise<void>((resolve) => { release = resolve; });
+    const applying = new Promise<void>((resolve) => { started = resolve; });
+    const effects: string[] = [];
+    const apply = async (tier: string) => {
+      effects.push(tier);
+      if (tier === pauseAt) { started(); await pending; }
+    };
+    const monitor = new RoutedRangesMonitor("org", ["10.99.0.0/24"], {
+      routedConfig: async () => ({ ranges: ["10.180.0.0/16"],
+        forwards: [FWD("aws.tunnex.app", "10.99.0.1")], dial: DIAL("new:51820", "new-key") }),
+    }, () => apply("routes"), () => apply("forwards"), undefined, undefined, undefined, undefined,
+    true, "device", () => apply("dial"), true);
+    const check = monitor.checkOnce();
+    await applying;
+    monitor.stop();
+    release();
+    assert.equal(await check, "skipped");
+    assert.deepEqual(effects, pauseAt === "routes" ? ["routes"] : ["routes", "forwards"]);
+  });
+}
+
+test("new private DNS waits for its route while withdrawal proceeds during a route failure", async () => {
+  const oldForward = FWD("old.internal", "10.99.0.1");
+  const nextForward = FWD("aws.tunnex.app", "10.98.0.1");
+  let snapshot = { ranges: ["10.99.0.1/32"], forwards: [oldForward], dial: null };
+  let routeFailure = false;
+  const installed: ResolverForward[][] = [];
+  const monitor = new RoutedRangesMonitor("org", ["10.99.0.0/24"], {
+    routedConfig: async () => snapshot,
+  }, async () => { if (routeFailure) throw new Error("route denied"); }, async (forwards) => { installed.push(forwards); });
+  assert.equal(await monitor.checkOnce(), "applied");
+  snapshot = { ranges: ["10.98.0.1/32", "10.180.0.0/16"], forwards: [nextForward], dial: null };
+  routeFailure = true;
+  assert.equal(await monitor.checkOnce(), "inconclusive");
+  assert.deepEqual(installed, [[oldForward], []], "withdraw old DNS without installing an unrouted gateway resolver");
+  assert.equal(await monitor.checkOnce(), "inconclusive");
+  assert.equal(installed.length, 2, "failed route retries do not churn DNS");
+  routeFailure = false;
+  assert.equal(await monitor.checkOnce(), "applied");
+  assert.deepEqual(installed.at(-1), [nextForward], "install private DNS once the gateway route succeeds");
+});

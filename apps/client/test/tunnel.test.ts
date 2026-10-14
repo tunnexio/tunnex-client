@@ -8,6 +8,8 @@ import fs from "node:fs";
 import { encodeFrame, FrameDecoder, HelperConnection, MAX_MESSAGE_BYTES, PROTOCOL_VERSION, type ResolverForward, type TunnelConfig, type TunnelStatus } from "../src/main/helperclient";
 import { projectTransportStatus, SingleFlightStatusReader } from "../src/main/statusreader";
 import { helperSocketPath, TunnelController } from "../src/main/tunnel";
+import { RoutedRangesMonitor } from "../src/main/routedrangesmonitor";
+import { parseRoutedConfig } from "../src/main/deviceconfig";
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -1101,3 +1103,68 @@ test("HelperConnection timeout poisons one FIFO socket before a late response ca
     try { fs.unlinkSync(sockPath); } catch { /* gone */ }
   }
 });
+
+for (const fullTunnel of [false, true]) {
+  test(`private DNS and cloud routes reconcile through helper IPC across revoke/reconnect (${fullTunnel ? "full" : "split"})`, async () => {
+    const sockPath = testEndpoint(`managed-dns-${fullTunnel}`);
+    const sockets: net.Socket[] = [];
+    const requests: Array<{ verb: string; allowed_ips?: string[]; resolvers?: ResolverForward[] }> = [];
+    const server = net.createServer((socket) => {
+      sockets.push(socket);
+      const decoder = new FrameDecoder();
+      socket.on("data", (chunk: Buffer) => {
+        for (const message of decoder.push(chunk)) {
+          const request = message as (typeof requests)[number];
+          requests.push(request);
+          socket.write(encodeFrame({ version: PROTOCOL_VERSION, ok: true,
+            status: { state: request.verb === "tunnel_down" ? "down" : "up" } }));
+        }
+      });
+    });
+    await new Promise<void>((resolve) => server.listen(sockPath, resolve));
+    const ctrl = new TunnelController(sockPath);
+    const base = fullTunnel ? ["0.0.0.0/0"] : ["10.99.0.0/24"];
+    const config = { address: "10.99.0.2/32", allowed_ips: base, full_tunnel: fullTunnel } as TunnelConfig;
+    let snapshot = parseRoutedConfig({ ranges: ["10.180.0.0/16"],
+      forwards: [{ domain: "aws.tunnex.app", resolver_ip: "10.99.0.1" }] });
+    const connectedSnapshot = snapshot;
+    const newMonitor = () => new RoutedRangesMonitor("org", ctrl.baseAllowedIPs(),
+      { routedConfig: async () => snapshot }, (ranges) => ctrl.setAllowedIPs(ranges),
+      (forwards) => ctrl.setResolvers(forwards), undefined, undefined, undefined, undefined, !fullTunnel);
+    try {
+      await ctrl.up(async () => config);
+      const first = newMonitor();
+      assert.equal(await first.checkOnce(), "applied");
+      assert.equal(await first.checkOnce(), "unchanged");
+      assert.deepEqual(requests.filter((r) => r.verb === "set_resolvers").map((r) => r.resolvers), [snapshot.forwards]);
+      assert.deepEqual(requests.filter((r) => r.verb === "set_allowed_ips").map((r) => r.allowed_ips),
+        fullTunnel ? [] : [["10.180.0.0/16", "10.99.0.0/24"]]);
+
+      snapshot = parseRoutedConfig({ ranges: [], forwards: [] }); // explicit access withdrawal
+      assert.equal(await first.checkOnce(), "applied");
+      assert.deepEqual(requests.filter((r) => r.verb === "set_resolvers").at(-1)?.resolvers, []);
+      if (!fullTunnel) assert.deepEqual(requests.filter((r) => r.verb === "set_allowed_ips").at(-1)?.allowed_ips, base);
+      snapshot = connectedSnapshot;
+      await first.checkOnce();
+      first.stop();
+      await ctrl.down();
+      assert.deepEqual(requests.slice(-2).map((r) => [r.verb, r.resolvers]), [["set_resolvers", []], ["tunnel_down", undefined]]);
+      const count = requests.length;
+      await assert.rejects(ctrl.setResolvers(snapshot.forwards), /tunnel_not_active/);
+      await assert.rejects(ctrl.setAllowedIPs(snapshot.ranges), /tunnel_not_active/);
+      assert.equal(requests.length, count, "late work must not reconnect a status-only helper socket");
+
+      await ctrl.up(async () => config);
+      const second = newMonitor();
+      assert.equal(await first.checkOnce(), "skipped", "old session remains stopped");
+      assert.equal(await second.checkOnce(), "applied", "fresh session restores current private DNS automatically");
+      second.stop();
+      await ctrl.down();
+    } finally {
+      (ctrl as unknown as { conn: HelperConnection }).conn.close();
+      sockets.forEach((socket) => socket.destroy());
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      try { fs.unlinkSync(sockPath); } catch { /* gone */ }
+    }
+  });
+}

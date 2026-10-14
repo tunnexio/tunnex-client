@@ -1,6 +1,7 @@
 import os from "node:os";
 import {
   isValidManagedTunnelModeConfig,
+  parseRoutedConfig,
   type DeviceApi,
   type DeviceModeConfig,
   type DeviceRecord,
@@ -11,7 +12,6 @@ import {
   type ManagedEnrollmentPreparation,
   type RoutedConfig,
 } from "./deviceconfig";
-import type { ResolverForward } from "./helperclient";
 import { encodeUuidPathSegment, isCanonicalUuid } from "./uuid";
 import { controlPlaneRequest, CONTROL_PLANE_REQUEST_TIMEOUT_MS } from "./controlplanerequest";
 
@@ -459,14 +459,7 @@ export class HttpDeviceApi implements DeviceApi {
       : `?device_id=${encodeUuidPathSegment(deviceId, "routed_ranges_failed: invalid_request")}`;
     return this.request(`/api/v1/organizations/${orgPath}/routed-ranges${q}`, { headers: this.headers() }, async (r) => {
       if (!r.ok) throw new Error(`routed_ranges_failed: ${r.status}`);
-      const body = (await r.json()) as {
-        ranges?: string[];
-        forwards?: ResolverForward[];
-        dial_endpoint?: string | null;
-        dial_pubkey?: string | null;
-      };
-      const dial = body.dial_endpoint && body.dial_pubkey ? { endpoint: body.dial_endpoint, pubkey: body.dial_pubkey } : null;
-      return { ranges: body.ranges ?? [], forwards: body.forwards ?? [], dial };
+      return parseRoutedConfig(await r.json());
     });
   }
 

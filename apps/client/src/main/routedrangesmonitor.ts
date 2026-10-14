@@ -31,11 +31,9 @@ export function canonDial(d: DialTarget | null): string {
 export type RangesOutcome = "skipped" | "applied" | "unchanged" | "inconclusive";
 
 // RoutedRangesMonitor is the S8.5 volatile-config poll — the RevocationMonitor's sibling (same cadence,
-// self-scheduling lifecycle, error posture). While a SPLIT-tunnel session is up it fetches the org's
-// declared ranges AND reachable DNS forwards in ONE poll, and live-applies each tier via the helper ONLY
-// when it changes: ranges → set_allowed_ips (base ∪ ranges), forwards → set_resolvers (the full gated set).
-// It is NOT constructed for a full-tunnel session (0.0.0.0/0 subsumes every range and the DNS is the
-// full-tunnel resolver — the CLIENT layer skips, so no pointless privileged call; ipc.ts owns that gate).
+// self-scheduling lifecycle, error posture). While connected it fetches authorized
+// ranges and DNS forwards in one poll. Split tunnels apply base ∪ ranges; both
+// modes reconcile the complete scoped DNS set, including gateway-served profiles.
 //
 // Discipline (BOTH tiers, independently):
 //   - fail-STATIC: a poll THROW (or an apply THROW) keeps that tier's last-applied set — a CP blip never
@@ -43,8 +41,8 @@ export type RangesOutcome = "skipped" | "applied" | "unchanged" | "inconclusive"
 //   - no-CHURN: canonical compare → apply only on change. N identical polls = ZERO helper calls.
 //   - full-SWEEP: ranges = base ∪ current-ranges (never accumulated); forwards = the full current gated
 //     set (helper reconciles owned files) — a removed range/forward vanishes on the next differing poll.
-// The two tiers are INDEPENDENT: a set_resolvers failure never blocks a routes apply, and vice-versa —
-// DNS and routing degrade separately (a resolver-write refusal must not strand the office-LAN route).
+// Resolver failure never blocks routing. New resolvers wait for their route
+// snapshot to succeed; DNS withdrawals still proceed when routing fails.
 export class RoutedRangesMonitor extends PollMonitor {
   // lastRanges = the canonical join of the AllowedIPs the helper currently holds. Seeded to the BAKED
   // BASE: tunnel_up already applied it, so an empty-ranges org yields "unchanged" on the ranges tier —
@@ -53,6 +51,7 @@ export class RoutedRangesMonitor extends PollMonitor {
   // lastForwards = the canonical fold of the resolvers the helper currently holds. Seeded EMPTY: up()
   // applies dns_forwards=[] (forwards are volatile, never baked), so an empty-forwards org is "unchanged".
   private lastForwards = "";
+  private appliedForwardPairs = new Set<string>();
   // lastDial = the canonical fold (endpoint|pubkey) of the gateway peer the helper currently dials (WF-A).
   // Seeded from the MINTED peer (currentDial), so the first poll returning that same active hub is
   // "unchanged" — zero helper calls until the active primary actually moves (failover).
@@ -108,11 +107,11 @@ export class RoutedRangesMonitor extends PollMonitor {
       if (this.stopped) return "skipped"; // disconnecting — abandon the result
       const merged = canonRanges([...this.base, ...cfg.ranges]);
       const rangesKey = merged.join(",");
-      const forwardsKey = canonForwards(cfg.forwards);
       const dialKey = canonDial(cfg.dial);
 
       let changed = false;
       let failed = false;
+      let routesFailed = false;
       // RANGES tier — apply base ∪ ranges via set_allowed_ips on change; fail-static (keep lastRanges).
       // Skipped entirely for a full-tunnel session (#5): 0.0.0.0/0 subsumes every range (no route calls).
       if (this.routesEnabled && rangesKey !== this.lastRanges) {
@@ -122,18 +121,28 @@ export class RoutedRangesMonitor extends PollMonitor {
           changed = true;
         } catch {
           failed = true;
+          routesFailed = true;
         }
       }
-      // FORWARDS tier — apply the full gated set via set_resolvers on change; INDEPENDENT fail-static.
+      if (this.stopped) return "skipped"; // teardown may have run while routes applied
+      // New DNS may depend on a gateway /32 introduced by this same snapshot.
+      // If routing failed, still withdraw obsolete DNS, but defer additions until
+      // the desired routes are installed. Full tunnel already covers these IPs.
+      const forwards = routesFailed
+        ? cfg.forwards.filter((forward) => this.appliedForwardPairs.has(canonForwards([forward])))
+        : cfg.forwards;
+      const forwardsKey = canonForwards(forwards);
       if (forwardsKey !== this.lastForwards) {
         try {
-          await this.applyForwards(cfg.forwards);
+          await this.applyForwards(forwards);
           this.lastForwards = forwardsKey;
+          this.appliedForwardPairs = new Set(forwards.map((forward) => canonForwards([forward])));
           changed = true;
         } catch {
           failed = true;
         }
       }
+      if (this.stopped) return "skipped"; // do not re-home after resolver teardown
       // DIAL tier (WF-A) — re-home the gateway peer via set_gateway_peer when the active hub moved.
       // INDEPENDENT fail-static, same as the other tiers. A NULL dial folds to "" and — because we only act
       // on a DIFFERING non-empty key — never swaps the peer away (a single-gateway org or a server blip that
