@@ -57,12 +57,13 @@ func hasV6Default(allowedIPs []string) bool {
 // (idempotent, no persisted token — the GUID IS the durable key); the Supervisor's dead-man + the
 // auto-start service's startup CleanStale + reboot bound an un-recovered crash.
 type windowsBackend struct {
-	mu     sync.Mutex
-	dev    *device.Device
-	tunDev tun.Device
-	luid   uint64
-	armed  bool // WFP kill-switch installed (kernel-resident)
-	relay  *relayNegotiation
+	resolverMu sync.Mutex // serializes scoped resolver writes across reconnects
+	mu         sync.Mutex
+	dev        *device.Device
+	tunDev     tun.Device
+	luid       uint64
+	armed      bool // WFP kill-switch installed (kernel-resident)
+	relay      *relayNegotiation
 	// Endpoint host-route pinned on the PHYSICAL interface (so WG's own encrypted
 	// packets don't loop into the tunnel); removed on Down.
 	epDest   netip.Prefix

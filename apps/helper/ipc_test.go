@@ -419,3 +419,35 @@ func TestIPCFailedUpOwnsConnection(t *testing.T) {
 		time.Sleep(5 * time.Millisecond)
 	}
 }
+
+type resolverAwareBackend struct {
+	fakeBackend
+	desired []ResolverForward
+	calls   int
+}
+
+func (backend *resolverAwareBackend) SetResolvers(desired []ResolverForward) error {
+	backend.calls++
+	backend.desired = append([]ResolverForward(nil), desired...)
+	return nil
+}
+
+func TestIPCSetResolversUsesBackendPolicyWithoutChangingWireContract(t *testing.T) {
+	backend := &resolverAwareBackend{}
+	server, supervisor := newServer(t, backend, trustedResolver)
+	client, peer := net.Pipe()
+	go server.handle(peer)
+	defer client.Close()
+	if response, err := Do(client, req(VerbTunnelUp, goodConfig())); err != nil || !response.OK {
+		t.Fatalf("up: %v %v", response, err)
+	}
+	for _, desired := range [][]ResolverForward{{{Domain: "aws.tunnex.app", ResolverIP: "10.99.0.1"}}, nil} {
+		response, err := Do(client, &Request{Version: ProtocolVersion, AuthMode: AuthModePathCheck, Verb: VerbSetResolvers, Resolvers: desired})
+		if err != nil || !response.OK || len(backend.desired) != len(desired) {
+			t.Fatalf("backend resolver apply: %v %v desired%v", response, err, backend.desired)
+		}
+	}
+	if backend.calls != 2 || supervisor.State() != StateUp {
+		t.Fatalf("resolver backend calls%d state%s", backend.calls, supervisor.State())
+	}
+}

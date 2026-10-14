@@ -259,6 +259,7 @@ export class TunnelController {
   // THROWS on failure — the RoutedRangesMonitor catches it, keeps its last-applied set (fail-static),
   // and retries with backoff. A refusal (old helper unknown_verb) or a wire error both throw.
   async setAllowedIPs(allowedIPs: string[]): Promise<void> {
+    this.requireActiveTunnel();
     const r = await this.conn.request({ version: PROTOCOL_VERSION, auth_mode: "path_check", verb: "set_allowed_ips", allowed_ips: allowedIPs });
     if (!r.ok) throw new Error(r.code ? `${r.code}: ${r.error ?? ""}` : (r.error ?? "set_allowed_ips failed"));
   }
@@ -273,6 +274,7 @@ export class TunnelController {
   // Latches resolversActive on any non-empty attempt so down()'s sweep can never STRAND monitor-installed
   // resolver files — the monitor is a SECOND writer to the same helper resolver state (the F5 strand class).
   async setResolvers(fwds: ResolverForward[]): Promise<void> {
+    this.requireActiveTunnel();
     const r = await this.resolverApply(fwds); // the ONE set_resolvers path + latch (#6)
     if (r.ok || r.code === "resolvers_unsupported") return; // unsupported = Windows stub: clean skip, no thrash
     throw new Error(r.code ? `${r.code}: ${r.error ?? ""}` : (r.error ?? "set_resolvers failed"));
@@ -527,6 +529,12 @@ export class TunnelController {
     this.clearPublishedTunnelState();
     this.resolversActive = true;
     this.publishFailedOnce(generation, reason);
+  }
+
+  // A late monitor must never open a new helper socket to mutate a disconnected
+  // or cleanup-required session. Main's lifecycle lease also fences reconnects.
+  private requireActiveTunnel(): void {
+    if (!this.owns("up", this.sessionGeneration)) throw new Error("tunnel_not_active");
   }
 
   private owns(kind: Exclude<TunnelOwnership["kind"], "inactive">, generation: number): boolean {
