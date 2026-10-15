@@ -28,7 +28,8 @@ import {
 } from "../src/main/deviceconfig";
 import { EnrollmentAnchorStore } from "../src/main/enrollmentanchor";
 import { OrganizationSelectionConflictError, OrganizationSelectionRequiredError } from "../src/main/orgselection";
-import { ManagedLifecycleCoordinator, type CredentialSnapshot } from "../src/main/managedlifecycle";
+import { ManagedLifecycleCoordinator, StaleManagedLeaseError, type CredentialSnapshot } from "../src/main/managedlifecycle";
+import { buildManagedConnectPreparation } from "../src/main/managedlifecycleflows";
 import { signOutPreservingDevice } from "../src/main/sessionlifecycle";
 import { InsecureStorageError, type Persistence, type SafeStorageLike } from "../src/main/credential";
 
@@ -496,7 +497,7 @@ function fakeApi(): DeviceApi & {
   };
 }
 
-test("resolveTunnelConfig: get-or-create, never re-fetch (D2)", async () => {
+test("resolveTunnelConfig: reconnect refreshes facts without reissuing identity (D2)", async () => {
   const store = new TunnelConfigStore(fakeSafe(), fakePersist(), false);
   const api = fakeApi();
   const origin = "https://t.example";
@@ -506,7 +507,7 @@ test("resolveTunnelConfig: get-or-create, never re-fetch (D2)", async () => {
   assert.deepEqual(api.selectedOrganizations, ["00000000-0000-4000-8000-000000000201"]);
   assert.equal(store.get(origin)?.ownerUserId, USER_A);
   assert.equal(c1.full_tunnel, true); // intent-set, not guessed
-  // Second call reuses the stored config — NO second create (never re-fetch).
+  // Second call refreshes mutable facts; private identity is never reissued.
   const c2 = await resolveTunnelConfig(origin, true, api, store, "00000000-0000-4000-8000-000000000201", USER_A);
   assert.equal(api.creates, 1);
   assert.equal(c2.private_key, c1.private_key);
@@ -1001,7 +1002,7 @@ test("managed owner removal retains exact recovery state on stale lease or post-
   assert.equal(racedStore.get(racedOrigin)?.ownerUserId, USER_B);
 });
 
-test("resolveTunnelConfig: local owner mismatch refuses before status/mode; same owner keeps fail-static reuse", async () => {
+test("resolveTunnelConfig: local owner mismatch refuses before status/mode; same owner can refresh after inconclusive status", async () => {
   const store = new TunnelConfigStore(fakeSafe(), fakePersist(), false);
   const api = fakeApi();
   const origin = "https://shared-mac.example";
@@ -1022,7 +1023,7 @@ test("resolveTunnelConfig: local owner mismatch refuses before status/mode; same
 
   const reused = await resolveTunnelConfig(origin, false, unreadable, store, "00000000-0000-4000-8000-000000000202", USER_A);
   assert.equal(statusReads, 1);
-  assert.equal(reused.private_key, first.private_key, "same bound owner retains existing fail-static behavior");
+  assert.equal(reused.private_key, first.private_key, "same bound owner refreshes facts without replacing identity");
 });
 
 test("connect preflight refuses a bound record with a malformed device identity before any API read", async () => {
@@ -1307,6 +1308,137 @@ test("resolveTunnelConfig: a revoked device stays terminal (no automatic re-enro
     deviceStatus: async () => { throw new Error("network"); },
   };
   await assert.rejects(() => resolveTunnelConfig(origin, false, flakyApi, store, "00000000-0000-4000-8000-000000000201", USER_A), DeviceRevokedError);
+  assert.equal(api.creates, 1);
+});
+
+test("resolveTunnelConfig: same-mode reconnect refreshes MTU and routing facts without replacing identity", async () => {
+  for (const fullTunnel of [false, true]) {
+    const store = new TunnelConfigStore(fakeSafe(), fakePersist(), false);
+    const api = fakeApi();
+    const origin = "https://reconnect-mtu.example";
+    const orgId = "00000000-0000-4000-8000-000000000201";
+    const readMode = api.updateDeviceMode!.bind(api);
+    let mtu = 1420;
+    api.updateDeviceMode = async (...args) => ({ ...await readMode(...args), mtu });
+    await resolveTunnelConfig(origin, fullTunnel, api, store, orgId, USER_A);
+    const before = store.get(origin)!;
+
+    mtu = 1380;
+    api.updateDeviceMode = async (...args) => {
+      assert.deepEqual(args, [before.deviceId, orgId, fullTunnel], "refresh retains the requested mode");
+      return { ...await readMode(...args), mtu, endpoint: "198.51.100.2:51820" };
+    };
+    const refreshed = await resolveTunnelConfig(origin, fullTunnel, api, store, orgId, USER_A);
+    assert.equal(refreshed.mtu, 1380);
+    assert.equal(refreshed.endpoint, "198.51.100.2:51820");
+    assert.equal(refreshed.private_key, before.config.private_key);
+    assert.equal(refreshed.address, before.config.address);
+    assert.equal(refreshed.full_tunnel, fullTunnel);
+    assert.deepEqual(refreshed.allowed_ips, before.config.allowed_ips);
+    assert.equal(store.get(origin)?.config.mtu, 1380);
+    assert.equal(store.get(origin)?.deviceId, before.deviceId);
+    assert.equal(store.get(origin)?.ownerUserId, before.ownerUserId);
+    assert.equal(store.get(origin)?.orgId, before.orgId);
+    assert.equal(api.modeUpdates, 2);
+    assert.equal(api.creates, 1);
+    assert.deepEqual(api.revoked, []);
+  }
+});
+
+test("resolveTunnelConfig: failed same-mode refresh preserves the credential and refuses stale fallback", async () => {
+  const tracked = trackedPersist();
+  const store = new TunnelConfigStore(fakeSafe(), tracked.persistence, false);
+  const api = fakeApi();
+  const origin = "https://reconnect-offline.example";
+  const orgId = "00000000-0000-4000-8000-000000000201";
+  await resolveTunnelConfig(origin, false, api, store, orgId, USER_A);
+  const before = tracked.bytes();
+  const writes = tracked.writes();
+  api.updateDeviceMode = async () => { throw new Error("control_plane_request_timeout"); };
+
+  await assert.rejects(() => resolveTunnelConfig(origin, false, api, store, orgId, USER_A), /control_plane_request_timeout/);
+  assert.deepEqual(tracked.bytes(), before);
+  assert.equal(tracked.writes(), writes);
+  assert.equal(api.creates, 1);
+  assert.deepEqual(api.revoked, []);
+});
+
+test("resolveTunnelConfig: a late reconnect refresh cannot persist after its managed lease expires", async () => {
+  const tracked = trackedPersist();
+  const store = new TunnelConfigStore(fakeSafe(), tracked.persistence, false);
+  const api = fakeApi();
+  const origin = "https://reconnect-lease.example";
+  const orgId = "00000000-0000-4000-8000-000000000201";
+  await resolveTunnelConfig(origin, false, api, store, orgId, USER_A);
+  const before = tracked.bytes();
+  const writes = tracked.writes();
+  let credential: CredentialSnapshot | null = {
+    server: origin, token: "lease-test-token", fingerprint: "lease-test-fingerprint", expiresAt: "2999-01-01T00:00:00Z",
+  };
+  const lifecycle = new ManagedLifecycleCoordinator(() => credential);
+  const lease = await lifecycle.capture(async () => USER_A);
+  const readMode = api.updateDeviceMode!.bind(api);
+  api.updateDeviceMode = async (...args) => {
+    const mode = await readMode(...args);
+    credential = null;
+    return { ...mode, mtu: 1380 };
+  };
+  const prepared = buildManagedConnectPreparation({
+    lease, origin, api, organizationId: orgId, fullTunnel: false,
+    resolveConfig: (fixed) => resolveTunnelConfigWithRecovery(
+      fixed.origin, fixed.fullTunnel, fixed.api, store, fixed.organizationId, fixed.userId,
+      undefined, fixed.assertCurrent,
+    ),
+  });
+
+  await lifecycle.serial(async (owner) => {
+    const current = owner.advance(lease);
+    await assert.rejects(() => prepared.configProvider(() => lifecycle.assertCurrent(current)), StaleManagedLeaseError);
+  });
+  assert.deepEqual(tracked.bytes(), before);
+  assert.equal(tracked.writes(), writes);
+  assert.equal(api.creates, 1);
+  assert.deepEqual(api.revoked, []);
+});
+
+test("resolveTunnelConfig: same-mode refresh rejects changed identity, address and malformed MTU", async () => {
+  const changes = [
+    { deviceId: DEVICE_A }, { ownerUserId: USER_B },
+    { publicKey: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" },
+    { address: "10.99.0.99/32" }, { mtu: 1279 }, { mtu: 1501 }, { fullTunnel: true },
+  ];
+  for (const change of changes) {
+    const tracked = trackedPersist();
+    const store = new TunnelConfigStore(fakeSafe(), tracked.persistence, false);
+    const api = fakeApi();
+    const origin = "https://reconnect-invalid.example";
+    const orgId = "00000000-0000-4000-8000-000000000201";
+    await resolveTunnelConfig(origin, false, api, store, orgId, USER_A);
+    const before = tracked.bytes();
+    const writes = tracked.writes();
+    const readMode = api.updateDeviceMode!.bind(api);
+    api.updateDeviceMode = async (...args) => ({ ...await readMode(...args), ...change });
+
+    await assert.rejects(() => resolveTunnelConfig(origin, false, api, store, orgId, USER_A), /update_device_mode_failed: invalid_response/);
+    assert.deepEqual(tracked.bytes(), before);
+    assert.equal(tracked.writes(), writes);
+    assert.equal(api.creates, 1);
+    assert.deepEqual(api.revoked, []);
+  }
+});
+
+test("resolveTunnelConfig: pending response during reconnect gates helper configuration", async () => {
+  const store = new TunnelConfigStore(fakeSafe(), fakePersist(), false);
+  const api = fakeApi();
+  const origin = "https://reconnect-pending.example";
+  const orgId = "00000000-0000-4000-8000-000000000201";
+  await resolveTunnelConfig(origin, false, api, store, orgId, USER_A);
+  const before = store.get(origin)!;
+  const readMode = api.updateDeviceMode!.bind(api);
+  api.updateDeviceMode = async (...args) => ({ ...await readMode(...args), status: "pending" });
+  await assert.rejects(() => resolveTunnelConfig(origin, false, api, store, orgId, USER_A), PendingApprovalError);
+  assert.equal(store.get(origin)?.pending, true);
+  assert.equal(store.get(origin)?.config.private_key, before.config.private_key);
   assert.equal(api.creates, 1);
 });
 

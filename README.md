@@ -37,6 +37,12 @@ its integrity check on the target machine.
 
 ## Things that are load-bearing and look like details
 
+**Managed reconnect refreshes gateway configuration.** Each connect fetches current settings,
+including MTU, using the existing enrolled device and local private key. A failed or invalid
+control-plane refresh refuses the connection and retains the encrypted enrollment for retry;
+it does not fall back to stale settings or enroll a replacement device. Disconnect and reconnect
+to apply a changed MTU to an existing session. Manually imported profiles are unchanged.
+
 **`pnpm.onlyBuiltDependencies: ["electron", "esbuild"]`** in the root `package.json`. Without it
 electron's postinstall never runs and there is no binary to launch.
 

@@ -685,6 +685,7 @@ export function registerIpc(
               anchorStore: enrollmentAnchorStore,
               credentialFingerprint: fixed.credential.fingerprint,
             },
+            fixed.assertCurrent,
           ),
         });
         return Object.freeze({
@@ -719,7 +720,8 @@ export function registerIpc(
       // GUI admin prompt (no-op if already installed / off macOS). This is deliberately
       // after fixed identity, owner, and organization proof.
       installHelper: () => ensureHelperInstalled(),
-      up: (configProvider) => tunnel.up(configProvider, async (config) => {
+      up: (configProvider, connection) => tunnel.up(
+        () => configProvider(() => lifecycle.assertCurrent(connection.lease)), async (config) => {
         const fixedLease = activeManagedLease;
         if (!fixedLease) throw new Error("managed_lease_required");
         lifecycle.assertCurrent(fixedLease);

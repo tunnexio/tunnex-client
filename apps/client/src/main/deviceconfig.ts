@@ -116,8 +116,8 @@ export interface DeviceApi {
   // createDevice sends a client public key and returns public identity facts
   // only. A private key or config in the HTTP response is invalid.
   createDevice(intent: ManagedEnrollmentCreate): Promise<ManagedEnrollmentDevice>;
-  // Update routing mode in-place. The server preserves device identity and returns
-  // mutable config facts; the locally-held private key is never re-issued.
+  // Update routing mode in-place, or refresh mutable config with the same mode.
+  // The server preserves device identity; the local private key is never re-issued.
   updateDeviceMode?(deviceId: string, orgId: string, fullTunnel: boolean): Promise<DeviceModeConfig>;
   // revokeDevice revokes a bound device against its recorded organization. A
   // legacy record without orgId uses the separate complete-scan proof below.
@@ -1215,7 +1215,9 @@ export async function resolveTunnelConfig(
   enrollmentOrganizationId?: string,
   authenticatedUserId?: string,
   enrollmentRecovery?: ManagedEnrollmentRecoveryContext,
+  assertCurrent?: () => void,
 ): Promise<TunnelConfig> {
+  assertCurrent?.();
   // WF-A: for a FULL tunnel, attach the CP endpoint so the helper carves the kill-switch to it (the control
   // channel must survive the tunnel going down to re-home). NEVER persisted — it's an origin-derived routing
   // fact, re-attached each connect on top of the stored identity-only config. Split → no carve-out.
@@ -1259,6 +1261,7 @@ export async function resolveTunnelConfig(
       // An inconclusive read must not turn a pending credential into a new enrollment.
       throw new PendingApprovalError(existing.deviceId);
     }
+    assertCurrent?.();
     if (status === "pending") throw new PendingApprovalError(existing.deviceId);
     if (status === "gone") {
       markDeviceRevoked(existing, store);
@@ -1268,9 +1271,10 @@ export async function resolveTunnelConfig(
       store.put(existing);
     }
   }
-  if (existing && existing.config.full_tunnel !== fullTunnel) {
-    // MODE CHANGED (split↔full): mutate the existing device identity in place. The API
-    // returns route/config facts only; preserve the locally-held private key atomically.
+  if (existing) {
+    // Every managed connect refreshes mutable facts, including the gateway's
+    // applied MTU. A same-mode request is an idempotent read-through; it does not
+    // toggle routing mode or mint a new identity.
     if (existing.pending) throw new PendingApprovalError(existing.deviceId);
     // Verify terminal existence before asking that device to change mode. A 404
     // means the control plane revoked/deleted that identity; it must NEVER turn
@@ -1282,17 +1286,27 @@ export async function resolveTunnelConfig(
     } catch {
       stillThere = true;
     }
+    assertCurrent?.();
     if (!stillThere) {
       markDeviceRevoked(existing, store);
       throw new DeviceRevokedError(existing.deviceId);
     }
   }
-  if (existing && existing.config.full_tunnel !== fullTunnel) {
-    // MODE CHANGED (split↔full): mutate the existing device identity in place. The API
-    // returns route/config facts only; preserve the locally-held private key atomically.
+  if (existing) {
+    // Refresh failures are inconclusive: retain the encrypted identity for retry,
+    // but never hand stale configuration to the helper for a new connection.
     if (!api.updateDeviceMode) throw new Error("device_mode_update_unsupported");
     const mode = await api.updateDeviceMode(existing.deviceId, existing.orgId, fullTunnel);
-    if (mode.fullTunnel !== fullTunnel) throw new Error("update_device_mode_failed: invalid_response");
+    assertCurrent?.();
+    if (
+      mode.deviceId !== existing.deviceId
+      || mode.ownerUserId !== existing.ownerUserId
+      || !isCanonicalUuid(mode.nodeId)
+      || mode.publicKey !== deriveWireGuardPublicKey(existing.config.private_key)
+      || mode.address !== existing.config.address
+      || (mode.status !== "active" && mode.status !== "pending")
+      || mode.fullTunnel !== fullTunnel
+    ) throw new Error("update_device_mode_failed: invalid_response");
     const config: TunnelConfig = {
       ...existing.config,
       address: mode.address,
@@ -1311,20 +1325,12 @@ export async function resolveTunnelConfig(
     if (!isValidManagedTunnelConfig(config)) {
       throw new Error("update_device_mode_failed: invalid_response");
     }
+    if (mode.status === "pending") {
+      store.put({ ...existing, pending: true });
+      throw new PendingApprovalError(existing.deviceId);
+    }
     store.put({ ...existing, config, pending: false });
     return withCP(config);
-  } else if (existing) {
-    // Same mode: a definitive missing device is terminal, not an invitation to
-    // mint another credential. A transient read error keeps the config intact.
-    let stillThere = true;
-    try {
-      stillThere = await api.deviceExists(existing.deviceId, existing.orgId);
-    } catch {
-      stillThere = true;
-    }
-    if (stillThere) return withCP(existing.config);
-    markDeviceRevoked(existing, store);
-    throw new DeviceRevokedError(existing.deviceId);
   }
 
   if (!enrollmentOrganizationId) throw new OrganizationSelectionRequiredError();
