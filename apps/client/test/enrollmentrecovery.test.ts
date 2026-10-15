@@ -495,8 +495,8 @@ test("a visible final record is re-proved before it can clear the recovery ancho
     assert.equal(anchors.get(ORIGIN), null);
     assert.deepEqual(
       { list: state.listCalls, create: state.createCalls, mode: state.modeCalls },
-      calls,
-      "visible final is trusted only after reproof, without re-enrollment",
+      { ...calls, mode: calls.mode + 1 },
+      "visible final is re-proved before mutable config refresh, without re-enrollment",
     );
     assert.equal(state.existsCalls, 1);
   } finally {
@@ -656,7 +656,7 @@ test("final publish before anchor-clear failure is recognized exactly on retry",
   await resolveTunnelConfig(ORIGIN, false, api, final, ORGANIZATION_ID, OWNER_ID, recovery(anchors));
   assert.equal(anchors.get(ORIGIN), null);
   assert.equal(state.createCalls, creates);
-  assert.equal(state.modeCalls, modes);
+  assert.equal(state.modeCalls, modes + 1, "reconnect refreshes mutable facts after exact anchor clear");
   assert.equal(state.listCalls, lists);
   assert.equal(state.existsCalls, 1, "normal final-record liveness resumes only after exact anchor clear");
 });

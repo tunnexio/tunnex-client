@@ -5,7 +5,7 @@ import type {
 
 type MaybePromise<T> = T | Promise<T>;
 
-export type ManagedConfigProvider<TConfig> = () => Promise<TConfig>;
+export type ManagedConfigProvider<TConfig> = (assertCurrent?: () => void) => Promise<TConfig>;
 
 export interface ManagedConnectPreparation<TContext, TConfig> {
   readonly lease: ManagedLease;
@@ -28,6 +28,7 @@ export interface ManagedConnectProviderArguments<TApi> {
   readonly fullTunnel: boolean;
   readonly origin: string;
   readonly api: TApi;
+  readonly assertCurrent?: () => void;
 }
 
 export interface ManagedConnectPreparationInput<TApi, TConfig> {
@@ -81,7 +82,12 @@ export function buildManagedConnectPreparation<TApi, TConfig>(
     organizationId: providerArguments.organizationId,
     fullTunnel: providerArguments.fullTunnel,
     context,
-    configProvider: () => resolveConfig(providerArguments),
+    configProvider: async (assertCurrent?: () => void) => {
+      assertCurrent?.();
+      const config = await resolveConfig(Object.freeze({ ...providerArguments, assertCurrent }));
+      assertCurrent?.();
+      return config;
+    },
   });
 }
 
