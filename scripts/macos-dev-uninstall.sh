@@ -37,5 +37,5 @@ echo -n "  socket:  "; ls "$SOCK" 2>&1 | head -1
 echo -n "  pf rules:"; sudo pfctl -a tunnex -s rules 2>&1 | head -1
 echo -n "  pf token: "; ls /var/run/tunnex/pf.token 2>&1 | head -1
 echo -n "  split-default routes: "; netstat -rn 2>/dev/null | grep -E '^(0\.0\.0\.0/1|128\.0\.0\.0/1|::/1|8000::/1) ' | head -1 || echo "none"
-echo -n "  net now works (curl):"; curl -s -m 5 -o /dev/null -w '%{http_code}\n' https://api.ipify.org || echo "FAILED — pf may still be enforcing; reboot to clear"
+echo -n "  net now works (curl):"; curl -s -m 5 -o /dev/null -w '%{http_code}\n' https://api.ipify.org || echo "FAILED, pf may still be enforcing; reboot to clear"
 echo ">> DONE."

@@ -8,30 +8,30 @@ import {
   within,
 } from "@testing-library/react";
 
-// SLICE 8 — AuditLog, and the last of the tier's accountable screens.
+// SLICE 8, AuditLog, and the last of the tier's accountable screens.
 //
 // IT NEARLY DID NOT EARN A TEST. The tier's definition is "the decision the user gets", and a read-only log
-// that only displays would have been an honest EXEMPTION rather than a test asserting that data appears — the
+// that only displays would have been an honest EXEMPTION rather than a test asserting that data appears, the
 // same judgement that exempted Dashboard. It earns one because it holds a real decision, stated in the
 // product's own comment:
 //
-//   `filters` is the EDITING state; `applied` is the set that produced the current list — "Load more" must page
+//   `filters` is the EDITING state; `applied` is the set that produced the current list, "Load more" must page
 //   with `applied`, NEVER mid-edit `filters`, or the keyset cursor (from the applied list) mixes with a
 //   different filter set.
 //
 // THE CONSEQUENCE: paging with mid-edit filters APPENDS A PAGE FROM A DIFFERENT QUERY to the current list.
-// Not an error — WRONG DATA, silently, in the surface whose entire value is being trustworthy. An audit log
+// Not an error, WRONG DATA, silently, in the surface whose entire value is being trustworthy. An audit log
 // that quietly interleaves two filter sets is worse than one that fails, because it is still legible.
 //
 // QUERY RULES 1-5 BIND.
 
-afterEach(cleanup); // docs/laws.md — no globals/setup file, so auto-cleanup never registers
+afterEach(cleanup); // docs/laws.md, no globals/setup file, so auto-cleanup never registers
 
-// Every audit-log request, captured at the NETWORK boundary — the query is the assertion target.
+// Every audit-log request, captured at the NETWORK boundary, the query is the assertion target.
 const queries: Array<Record<string, unknown>> = [];
 let logFail = false;
 
-// ⛔ `actor_id`, NOT `actor_user_id`. The mock sent a field the spec does not have — and ActivityEntry is
+// ⛔ `actor_id`, NOT `actor_user_id`. The mock sent a field the spec does not have, and ActivityEntry is
 // `additionalProperties: false`, so the server can NEVER send it. The page reads `a.actor_id`, so every row
 // in every audit-log test rendered the "system" FALLBACK and no test ever saw an actor name.
 //
@@ -104,7 +104,7 @@ import { AuthProvider } from "../src/lib/auth";
 
 const withAuth = (ui: React.ReactElement) =>
   // ⛔ THE ORG PROVIDER IS PART OF THE AUTHENTICATED SHELL (S12.5), so it is part of the harness that
-  // stands in for it. A page rendered without it throws — deliberately: `useOrg()` refuses to guess, and a
+  // stands in for it. A page rendered without it throws, deliberately: `useOrg()` refuses to guess, and a
   // test that quietly rendered without an org would be exercising a state production never reaches.
   render(
     <AuthProvider>
@@ -117,7 +117,7 @@ beforeEach(() => {
   logFail = false;
 });
 
-describe("AuditLog — wiring: paging must use the APPLIED filter set, not the one being edited", () => {
+describe("AuditLog, wiring: paging must use the APPLIED filter set, not the one being edited", () => {
   it("'Load more' pages with the filters that produced the list, ignoring an un-applied edit", async () => {
     withAuth(<AuditLog />);
 
@@ -134,7 +134,7 @@ describe("AuditLog — wiring: paging must use the APPLIED filter set, not the o
     fireEvent.click(loadMore);
 
     // THE DECISION: the next page must carry the APPLIED filter set (empty), plus a cursor. Carrying the
-    // mid-edit `action` would append rows from a DIFFERENT query onto the current list — and the cursor,
+    // mid-edit `action` would append rows from a DIFFERENT query onto the current list, and the cursor,
     // which came from the applied list, would be meaningless against it.
     await waitFor(() => expect(queries.length).toBeGreaterThan(1));
     const paged = queries.at(-1)!;
@@ -143,8 +143,8 @@ describe("AuditLog — wiring: paging must use the APPLIED filter set, not the o
   });
 });
 
-describe("AuditLog — failure path", () => {
-  // D1(b). An empty audit log reads as "nothing happened" — which on a compliance surface is a claim, not an
+describe("AuditLog, failure path", () => {
+  // D1(b). An empty audit log reads as "nothing happened", which on a compliance surface is a claim, not an
   // absence of data. A failed load has no standing to make it.
   it("a failed load is surfaced rather than rendering as an empty history", async () => {
     logFail = true;
@@ -155,10 +155,10 @@ describe("AuditLog — failure path", () => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════
-// THE ACTOR COLUMN — asserting a NAME, never the fallback.
+// THE ACTOR COLUMN, asserting a NAME, never the fallback.
 //
 // ⛔ WHY THIS TEST EXISTS AND DID NOT BEFORE. The mock sent `actor_user_id`; the page reads `actor_id`; the
-// suite passed. Every row rendered "system", and no assertion ever looked at the actor column — so the only
+// suite passed. Every row rendered "system", and no assertion ever looked at the actor column, so the only
 // branch ever exercised was the one nobody wanted.
 //
 //   THE MOCK AND THE PAGE DISAGREED, THE TEST PASSED, AND THE PASSING BRANCH WAS THE ONE NOBODY WANTED.
@@ -168,7 +168,7 @@ describe("AuditLog — failure path", () => {
 // exists to prevent. So the assertion is on the NAME.
 // ══════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-describe("AuditLog — the actor column names the human", () => {
+describe("AuditLog, the actor column names the human", () => {
   it("⛔ renders the ACTOR'S NAME for a human-actor row, not 'system'", async () => {
     withAuth(<AuditLog />);
     const table = await waitFor(() =>
@@ -194,7 +194,7 @@ describe("AuditLog — the actor column names the human", () => {
  * ⛔ TWO PAGERS ON ONE SCREEN, AND THE FIX WAS TO NAME THEM RATHER THAN DELETE ONE.
  *
  * This page fetches with a keyset cursor (server-side) AND renders a table that pages what has been fetched
- * (client-side). Fearing the collision, I first disabled the client pager here — which made this the one
+ * (client-side). Fearing the collision, I first disabled the client pager here, which made this the one
  * screen that dumped every loaded row at once, the exact thing pagination exists to prevent. The founder saw
  * it on sight.
  *
@@ -205,17 +205,17 @@ describe("AuditLog — the actor column names the human", () => {
  * ⛔ THIS SURFACE PAGES ON THE SERVER, AND ITS PROOF COUNTS DOM ROWS.
  *
  * `e2e/tests/audit.spec.ts` asserts 51 rows, then 54 after "Load more", to show the keyset cursor stitches
- * pages with NO OVERLAP and NO GAP — a re-served or skipped row changes the count. A CLIENT pager renders 25
+ * pages with NO OVERLAP and NO GAP, a re-served or skipped row changes the count. A CLIENT pager renders 25
  * of whatever was fetched, so that count stops meaning what the proof needs it to mean.
  *
  * ⚠ THESE TWO TESTS ONCE ASSERTED THE OPPOSITE, and that is worth recording rather than quietly deleting.
  * The founder asked the log surfaces to paginate, so a client pager was added here and pinned. The e2e then
- * red-lined, the pager was reverted — and THESE TESTS WERE LEFT BEHIND, still asserting a pager that no
+ * red-lined, the pager was reverted, and THESE TESTS WERE LEFT BEHIND, still asserting a pager that no
  * longer exists. They passed locally only because the suite was not re-run after that revert, and CI caught
  * them. Re-expressing the keyset proof to survive client paging is a decide-item, not a fold.
  */
-describe("AuditLog — the server is its pager", () => {
-  it("⛔ EVERY FETCHED ROW RENDERS — the e2e's stitching proof counts them", async () => {
+describe("AuditLog, the server is its pager", () => {
+  it("⛔ EVERY FETCHED ROW RENDERS, the e2e's stitching proof counts them", async () => {
     // The fixture serves PAGE+1 = 51 so the has-more probe trips; the page displays PAGE = 50.
     // 50 body rows + 1 header. The precise number matters: "at least some" would also pass on a component
     // that rendered one row, which is a different defect wearing the same result.
@@ -226,7 +226,7 @@ describe("AuditLog — the server is its pager", () => {
     expect(within(table).getAllByRole("row")).toHaveLength(51);
   });
 
-  it("⚠ AND THE SERVER CONTROL IS THE ONLY PAGER — no client one beside it", async () => {
+  it("⚠ AND THE SERVER CONTROL IS THE ONLY PAGER, no client one beside it", async () => {
     // Its absence would cap the log at one fetch forever; a client pager beside it would put two paging
     // controls on one screen that disagree about which set they describe.
     withAuth(<AuditLog />);

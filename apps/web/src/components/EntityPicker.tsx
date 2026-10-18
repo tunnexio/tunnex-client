@@ -1,10 +1,10 @@
 import { useMemo, useRef, useState } from "react";
 
 /**
- * ONE PICKER PER SIDE, ACROSS EVERY KIND — the shape ruled in `docs/rule-validity-matrix.md`.
+ * ONE PICKER PER SIDE, ACROSS EVERY KIND, the shape ruled in `docs/rule-validity-matrix.md`.
  *
  * ⛔ WHY NOT NETBIRD'S TWO PICKERS AS-IS. Netbird's rule form is groups → groups because netbird has two
- * kinds. This product has five source kinds and four destination kinds — sites, CIDRs, Kubernetes Services
+ * kinds. This product has five source kinds and four destination kinds, sites, CIDRs, Kubernetes Services
  * and AI agents each earned their own story and each has a live call site. Copying the LAYOUT while keeping
  * the kinds behind a disclosure would make our own capabilities harder to find than the cascade did.
  *
@@ -20,19 +20,19 @@ export interface PickerOption {
   /** Stable value handed back on select. For a literal CIDR this is the CIDR itself. */
   value: string;
   kind: string;
-  /** Short uppercase tag — GROUP, SITE, AGENT. */
+  /** Short uppercase tag, GROUP, SITE, AGENT. */
   tag: string;
   label: string;
   /** Extra searchable/displayed context, e.g. an agent's gateway. */
   detail?: string;
-  /** Heading this option is filed under. Carries facts a per-row tag cannot — e.g. that a whole section is
+  /** Heading this option is filed under. Carries facts a per-row tag cannot, e.g. that a whole section is
    *  port-unscoped. */
   section?: string;
   /**
    * ⛔ A reason this option cannot be chosen RIGHT NOW, given the other side's selection.
    *
    * Rendered, never hidden. An option that silently vanishes when you change the other side teaches nothing;
-   * one that says *"a site cannot reach itself"* teaches the rule. This mirrors the server's refusal — the
+   * one that says *"a site cannot reach itself"* teaches the rule. This mirrors the server's refusal, the
    * API is the guard, this is the explanation.
    */
   unavailable?: string;
@@ -71,8 +71,8 @@ export function EntityPicker({
             (o.detail ?? "").toLowerCase().includes(q),
         )
       : options;
-    // ⚠ A TYPED CIDR IS OFFERED AS ITSELF. A literal prefix is the one source that cannot be in a list —
-    // there is nothing to enumerate — so the search box doubles as its entry field rather than the form
+    // ⚠ A TYPED CIDR IS OFFERED AS ITSELF. A literal prefix is the one source that cannot be in a list ,
+    // there is nothing to enumerate, so the search box doubles as its entry field rather than the form
     // carrying a separate control that is empty 95% of the time.
     if (acceptCidr && isCidr(query.trim())) {
       return [
@@ -113,7 +113,7 @@ export function EntityPicker({
         }}
         onKeyDown={(e) => {
           // ⛔ A COMBOBOX YOU CANNOT DRIVE FROM THE KEYBOARD IS A TEXT BOX WITH DECORATION. What this
-          // replaced was four <select>s — every one arrow-navigable and type-ahead searchable for FREE.
+          // replaced was four <select>s, every one arrow-navigable and type-ahead searchable for FREE.
           // Something prettier that only works with a mouse is a regression wearing a redesign, so the keys
           // the native control gave us are re-implemented rather than quietly lost.
           if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -126,7 +126,7 @@ export function EntityPicker({
             });
           } else if (e.key === "Enter") {
             const o = shown[active];
-            // ⚠ Enter must not select what the rules forbid — the same refusal the click path honours.
+            // ⚠ Enter must not select what the rules forbid, the same refusal the click path honours.
             if (o && !o.unavailable) {
               e.preventDefault();
               onSelect(o);
@@ -139,7 +139,7 @@ export function EntityPicker({
         }}
         className="mt-1 w-full rounded-md border border-white/10 bg-ink-900 px-3 py-2 text-sm text-white placeholder:text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-400"
       />
-      {/* The chosen thing keeps saying WHAT it is once the box is closed — otherwise "eu-lan" alone is
+      {/* The chosen thing keeps saying WHAT it is once the box is closed, otherwise "eu-lan" alone is
           ambiguous between a site and a group with the same name. */}
       {!open && selected && (
         <span className="pointer-events-none absolute right-3 top-[2.1rem] font-mono text-[10px] text-slate-500">
@@ -161,7 +161,7 @@ export function EntityPicker({
             </li>
           )}
           {/* ⛔ GROUPED BY SECTION, IN ORDER. Nine flat options teach nothing; a heading that reads
-              "Networks & devices — ALL ports" teaches the model's most consequential fact at the exact
+              "Networks & devices, ALL ports" teaches the model's most consequential fact at the exact
               moment the choice is made. The index used for keyboard focus is the FLAT one, so grouping
               changes what the eye sees without changing what the arrow keys do. */}
           {shown.map((o, idx) => (
@@ -224,7 +224,7 @@ export function EntityPicker({
   );
 }
 
-/** Loose CIDR shape check — the server parses authoritatively; this only decides whether to OFFER it. */
+/** Loose CIDR shape check, the server parses authoritatively; this only decides whether to OFFER it. */
 export function isCidr(s: string): boolean {
   return /^\d{1,3}(\.\d{1,3}){3}\/\d{1,2}$/.test(s);
 }

@@ -8,12 +8,12 @@ import type { Node } from "../src/lib/api";
 
 // ⛔ THE DEFECT: A macOS LAPTOP WAS HOMED ON AN IN-CLUSTER KUBERNETES GATEWAY.
 //
-// `defaultDeviceNode` returned `selectableNodes(nodes)[0]` — the first ACTIVE node in `created_at` order. On
+// `defaultDeviceNode` returned `selectableNodes(nodes)[0]`, the first ACTIVE node in `created_at` order. On
 // the live rig the `k8s` gateway was enrolled four days before the general-purpose VM gateway, so it won. The
 // device was minted and that gateway has never recorded a handshake from any peer.
 //
 // > **`nodes[0]` OVER A FILTERED LIST IS STILL `nodes[0]`.** S13.1 replaced "first, including dead ones" with
-// > "first, excluding dead ones" and left FIRST standing — an ordering detail of `ListNodes` doing duty as a
+// > "first, excluding dead ones" and left FIRST standing, an ordering detail of `ListNodes` doing duty as a
 // > product decision.
 //
 // Measured before fixing: NOTHING in the Node payload distinguishes a gateway that can serve a laptop from
@@ -25,13 +25,13 @@ const gw = (id: string, created: string, status: Node["status"] = "active") =>
   ({ id, name: `gw-${id}`, status, enrolled_at: created }) as unknown as Node;
 
 describe("⛔ the product asks rather than guessing", () => {
-  it("ONE eligible gateway is a default — the ordinary case still works without a prompt", () => {
+  it("ONE eligible gateway is a default, the ordinary case still works without a prompt", () => {
     const nodes = [gw("a", "2026-07-27"), gw("b", "2026-08-01", "revoked")];
     expect(requiresGatewayChoice(nodes)).toBe(false);
     expect(defaultDeviceNode(nodes)?.id).toBe("a");
   });
 
-  it("⛔ TWO eligible gateways is a QUESTION — no default, whatever the order", () => {
+  it("⛔ TWO eligible gateways is a QUESTION, no default, whatever the order", () => {
     // The exact live shape: k8s (older) and the VM gateway (newer), both active.
     const nodes = [gw("k8s", "2026-07-27"), gw("vm", "2026-08-01")];
     expect(requiresGatewayChoice(nodes)).toBe(true);
@@ -41,7 +41,7 @@ describe("⛔ the product asks rather than guessing", () => {
     expect(defaultDeviceNode([...nodes].reverse())).toBeNull();
   });
 
-  it("NONE eligible is still null — but it is a DIFFERENT null", () => {
+  it("NONE eligible is still null, but it is a DIFFERENT null", () => {
     // "no gateway can take this device" is an error to explain; "several can, pick one" is a question to
     // ask. A caller that cannot tell them apart renders the wrong sentence.
     const nodes = [gw("a", "2026-07-27", "revoked")];

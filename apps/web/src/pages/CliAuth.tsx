@@ -7,8 +7,8 @@ import { Button, ErrorText } from "../components/ui";
 
 // CliAuth is the consent page for `tunnex login` (S5.1). The CLI opens the
 // browser here with its loopback redirect_uri + PKCE challenge + state. This
-// page is the HUMAN CHECKPOINT (flag-1 acceptance): it NEVER auto-approves —
-// minting requires an explicit click — and it DISPLAYS the loopback target
+// page is the HUMAN CHECKPOINT (flag-1 acceptance): it NEVER auto-approves ,
+// minting requires an explicit click, and it DISPLAYS the loopback target
 // (host + port) so the user sees which local process is asking. On approve it
 // mints the one-time code (cliAuthorize) and redirects the browser to the
 // loopback carrying code + state.
@@ -23,12 +23,12 @@ export default function CliAuth() {
   const cliState = params.get("state") ?? "";
 
   // Parse + sanity-check the loopback target for DISPLAY (the server is the
-  // real authority — it re-validates the allowlist on mint).
+  // real authority, it re-validates the allowlist on mint).
   let target: URL | null = null;
   try {
     target = new URL(redirectUri);
   } catch {
-    /* invalid — handled below */
+    /* invalid, handled below */
   }
   const loopbackOk =
     target !== null &&
@@ -54,10 +54,10 @@ export default function CliAuth() {
     if (error || !data) {
       setBusy(false);
       // Minting requires a verified email (requireVerifiedSessionUser). Spell
-      // that out instead of a generic failure — the user can act on it.
+      // that out instead of a generic failure, the user can act on it.
       if (apiErrorCode(error) === "email_not_verified") {
         return setError(
-          "Verify your email before authorizing a device — check your inbox, then try again.",
+          "Verify your email before authorizing a device, check your inbox, then try again.",
         );
       }
       return setError(apiErrorMessage(error, "Could not authorize the CLI."));

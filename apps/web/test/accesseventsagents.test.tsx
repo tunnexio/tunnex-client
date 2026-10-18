@@ -18,7 +18,7 @@ vi.mock("../src/lib/api", () => ({ api: { GET: vi.fn(async (path: string, reques
   return { data: [] };
 }) }, apiErrorMessage: () => "error" }));
 vi.mock("../src/components/ui", () => ({
-  // Mocked to an h1 so the route's heading stays assertable — spreading `title` onto a DOM node would
+  // Mocked to an h1 so the route's heading stays assertable, spreading `title` onto a DOM node would
   // drop the text out of the tree entirely.
   PageHeader: ({ title, subtitle }: { title: string; subtitle?: ReactNode }) =>
     createElement("header", null, createElement("h1", null, title), subtitle ?? null),

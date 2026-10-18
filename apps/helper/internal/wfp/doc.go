@@ -1,5 +1,5 @@
 // Package wfp is a PINNED VENDORED copy of golang.zx2c4.com/wireguard/windows/tunnel/firewall
-// (v1.0.1, MIT — headers preserved). The diff vs upstream is confined to THREE deltas for the
+// (v1.0.1, MIT, headers preserved). The diff vs upstream is confined to THREE deltas for the
 // S6.7 Windows kill-switch persistence: (1) a NON-dynamic WFP session (so the block survives
 // process death), (2) FIXED provider+sublayer GUIDs (the durable key cleanup enumerates by;
 // upstream generates random GUIDs per arm, which is why a crashed block was unfindable), and

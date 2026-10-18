@@ -1,11 +1,11 @@
-// THE EDITION SEAM — enumerated from the spec, not from memory.
+// THE EDITION SEAM, enumerated from the spec, not from memory.
 //
 // ⛔ THE DEFECT THIS CLOSES, TWICE OVER. `403 edition_required` is a SUCCESSFUL REFUSAL: the server answered,
 // correctly, that the capability does not exist for this edition. Read through `loadOne` alone it becomes
 // `failed`, and the open edition renders a red "could not load" for a feature it was never sold.
 //
 // It was fixed once, at ONE call site (the Pending-approvals card), and the SAME defect was still live two
-// cards over on Access Rules — because a fix at a call site does not reach the call sites beside it. That is
+// cards over on Access Rules, because a fix at a call site does not reach the call sites beside it. That is
 // the missing-primitive law's shape: only an ENUMERATION finds the rest.
 //
 // SO THE SET IS DATA, DERIVED FROM `openapi.yaml`, AND A TEST HOLDS IT TO THE SPEC. A new enterprise card
@@ -47,7 +47,7 @@ export function isEnterprisePath(path: string): boolean {
 }
 
 /**
- * The edition, as a THREE-state answer — because "we have not asked yet" is not "open".
+ * The edition, as a THREE-state answer, because "we have not asked yet" is not "open".
  *
  * `unknown` behaves as NOT enterprise on purpose: a slow `/meta` must never flash an enterprise surface at an
  * org that does not have it. Absent-until-known, the same rule the nav counts follow.
@@ -75,7 +75,7 @@ export type Gated<T> =
  * Decide what a gated surface shows, BEFORE any fetch.
  *
  * Returning `absent` without calling the endpoint is deliberate: it is faster, it produces no 403 noise in the
- * server log, and — the real reason — it makes the edition decision a RENDER decision taken at the seam rather
+ * server log, and, the real reason, it makes the edition decision a RENDER decision taken at the seam rather
  * than an error interpreted at the call site. The interpretation is what drifted.
  */
 export function gate<T>(

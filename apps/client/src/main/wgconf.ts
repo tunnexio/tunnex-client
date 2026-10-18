@@ -1,7 +1,7 @@
 import type { TunnelConfig } from "./helperclient";
 
 // parseWgConf turns a WireGuard `.conf` (the one-time text the server returns at
-// device creation — D2) into the helper's STRUCTURED TunnelConfig. Parsing happens
+// device creation, D2) into the helper's STRUCTURED TunnelConfig. Parsing happens
 // in MAIN; the resulting private key never leaves main (→ safeStorage → helper).
 //
 // It is strict: unknown/malformed input throws rather than producing a partial

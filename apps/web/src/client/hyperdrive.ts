@@ -1,8 +1,8 @@
-// The hyperdrive canvas — TRANSCRIBED from the handoff's own draw loop.
+// The hyperdrive canvas, TRANSCRIBED from the handoff's own draw loop.
 //
 // ⛔ I MADE THE AUTH-HERO MISTAKE TWICE. There, I re-derived a picture from a screenshot instead of
-// transcribing the SVG that shipped in the handoff. Here I read the block's TEXT extraction — which
-// strips markup — saw four labels and a stats list, and built a card layout. **The block contains
+// transcribing the SVG that shipped in the handoff. Here I read the block's TEXT extraction, which
+// strips markup, saw four labels and a stats list, and built a card layout. **The block contains
 // TWO CANVASES and a full draw loop**, and the window is literally called `tunnex · hyperdrive`
 // after the first of them.
 //
@@ -12,7 +12,7 @@
 //
 // ⛔ RESTORED AFTER BEING CUT, AND THE CUT WAS MINE READING THE INSTRUCTION TOO WIDELY. "Remove that
 // hyperdrive thing" was one sentence covering a NAME, a fabricated plot and a mesh animation; I took
-// all three. Only two deserved it — the section's naming and the invented samples. **The motion was
+// all three. Only two deserved it, the section's naming and the invented samples. **The motion was
 // never the problem: the dishonest numbers beside it were.**
 //
 // So the mesh is back, unchanged, and its GRAPH half is not: that moved to throughput.ts and now
@@ -43,7 +43,7 @@ export type HyperState = {
 const NP = 7;
 
 /**
- * ⛔ SEEDED, NOT RANDOM — a deliberate departure, and the only one.
+ * ⛔ SEEDED, NOT RANDOM, a deliberate departure, and the only one.
  *
  * The handoff seeds `tw` and `sp` with `Math.random()`. That is fine for a prototype and wrong for
  * us: it makes the animation unsnapshottable and every visual diff noisy forever. A fixed sequence
@@ -53,7 +53,7 @@ const NP = 7;
 export function createHyperState(seed = 1): HyperState {
   let s = seed;
   const rnd = () => {
-    // xorshift — deterministic, and only used for phase offsets.
+    // xorshift, deterministic, and only used for phase offsets.
     s ^= s << 13;
     s ^= s >>> 17;
     s ^= s << 5;
@@ -124,7 +124,7 @@ export function drawHyper(
     }
   }
 
-  // The ring between nodes appears late — only once the mesh is most of the way up.
+  // The ring between nodes appears late, only once the mesh is most of the way up.
   if (L > 0.6) {
     const ra = (L - 0.6) / 0.4;
     ctx.strokeStyle = `rgba(255,255,255,${(ra * 0.14).toFixed(3)})`;
@@ -175,7 +175,7 @@ export function drawHyper(
   ctx.arc(cx, cy, coreR * 0.55, 0, Math.PI * 2);
   ctx.fill();
 
-  // An expanding ring, only while genuinely connected — the "it is alive" tell.
+  // An expanding ring, only while genuinely connected, the "it is alive" tell.
   if (st.mode === "connected") {
     const pt = (now % 2600) / 2600;
     ctx.strokeStyle = `rgba(232,232,228,${((1 - pt) * 0.4).toFixed(3)})`;

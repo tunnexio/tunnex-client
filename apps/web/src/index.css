@@ -14,9 +14,9 @@ body,
 
 body {
   @apply text-ink-body antialiased font-sans;
-  /* S14.4 — THE GLASS NEEDS SOMETHING TO REFRACT. A translucent card on a FLAT field is indistinguishable
+  /* S14.4, THE GLASS NEEDS SOMETHING TO REFRACT. A translucent card on a FLAT field is indistinguishable
      from an opaque one: the effect lives in the CONTRAST BEHIND it, not in the blur. The design layers two
-     backdrops — an ambient body glow and a radial page field — and both are tokens. */
+     backdrops, an ambient body glow and a radial page field, and both are tokens. */
   background: var(--tnx-bg-glow);
   background-attachment: fixed;
 }
@@ -26,19 +26,19 @@ body {
   background: var(--tnx-bg-page);
 }
 
-/* ⛔ THE FLOWING LINK — the handoff's `.tnx-edge`, verbatim geometry (dc.html L64).
+/* ⛔ THE FLOWING LINK, the handoff's `.tnx-edge`, verbatim geometry (dc.html L64).
  *
  * A short dash pattern crawling along a LINKED edge. It is the design's one piece of continuous motion and
  * it earns its place: on a static diagram "linked" and "drawn but dead" look identical, and the crawl is the
  * cheapest honest signal that the tunnel is current.
  *
- * ⚠ IT ENCODES *LINKED*, NOT THROUGHPUT — and the distinction has to be stated because the rendering does
+ * ⚠ IT ENCODES *LINKED*, NOT THROUGHPUT, and the distinction has to be stated because the rendering does
  * not carry it. A crawling dash reads as TRAFFIC to most people, and a linked-but-idle tunnel has none. The
  * fact behind it is a FRESH HANDSHAKE, nothing more. The map's footnote says so in words; the animation
  * alone must never be read as bytes moving.
  *
  * MOTION GATE: killed outright under `prefers-reduced-motion`. Per lib/motion.ts this is a GATE, not a
- * courtesy — and it is done in CSS rather than JS because the platform already answers the question here,
+ * courtesy, and it is done in CSS rather than JS because the platform already answers the question here,
  * with no matchMedia call and no chance of failing open on a typo'd query string.
  */
 @keyframes tnxFlow {
@@ -57,7 +57,7 @@ body {
   }
 }
 
-/* ⛔ TRAVELLING PACKETS — the handoff's `.tnx-pkt`, converging on the hub.
+/* ⛔ TRAVELLING PACKETS, the handoff's `.tnx-pkt`, converging on the hub.
  *
  * The design drives these with GSAP's MotionPathPlugin:
  *
@@ -66,10 +66,10 @@ body {
  *
  * ⚠ SAME MOTION, NO DEPENDENCY. GSAP + MotionPathPlugin is ~70 kB minified for decoration on one panel.
  * This repo already refused a charting library on exactly that reasoning (see viz.tsx: ten chart types, a
- * library covers three), and the motion here is a point moving along a STRAIGHT LINE — CSS `offset-path`
+ * library covers three), and the motion here is a point moving along a STRAIGHT LINE, CSS `offset-path`
  * expresses it in four declarations. The timings below are the design's numbers, not approximations.
  *
- * GSAP still earns its place on the surfaces that need real path work — the auth mesh's curved spokes, the
+ * GSAP still earns its place on the surfaces that need real path work, the auth mesh's curved spokes, the
  * Routed Ranges plot, the Gateways bubbles. This is not an argument against it there.
  *
  * MOTION GATE: hidden outright under `prefers-reduced-motion`, exactly as `buildAuthMesh` returns early.
@@ -93,18 +93,18 @@ body {
   }
 }
 
-/* ⛔ ENTRY ANIMATION FOR EVERY GRAPH — founder-ruled 2026-08-02. Keyframes and timings verbatim from the
+/* ⛔ ENTRY ANIMATION FOR EVERY GRAPH, founder-ruled 2026-08-02. Keyframes and timings verbatim from the
  * handoff (dc.html), not invented:
  *
  *     @keyframes tnxFlowReveal { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 0 0 0) } }
 
 /* ⛔ THE ENTRY ANIMATION MUST NOT USE `stroke-dasharray`, BECAUSE THAT PROPERTY CARRIES MEANING HERE.
-   The first version animated `stroke-dashoffset` with `stroke-dasharray: 1600` — and a CSS declaration beats
+   The first version animated `stroke-dashoffset` with `stroke-dasharray: 1600`, and a CSS declaration beats
    an SVG PRESENTATION ATTRIBUTE, so it silently overrode `strokeDasharray="5 6"` on temporary grants and
    every dashed edge rendered SOLID. The legend said "- - - temporary" while the panel drew none.
 
      AN ANIMATION AND A SEMANTIC ENCODING MUST NOT SHARE A PROPERTY. Whichever the cascade favours wins, and
-     the loser fails SILENTLY — the edge still draws, just with the wrong meaning.
+     the loser fails SILENTLY, the edge still draws, just with the wrong meaning.
 
    The reveal now uses `clip-path`, which nothing else on this panel encodes, so dash stays free to mean
    "temporary". Applied to the GROUP so the whole flow wipes in once, left to right. */

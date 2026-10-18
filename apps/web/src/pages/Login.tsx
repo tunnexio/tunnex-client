@@ -6,7 +6,7 @@ import { AuthLayout } from "../components/AuthLayout";
 import { recoveryCountLabel, recoveryWarning } from "../lib/authhero";
 import { ErrorText, Field, Input } from "../components/ui";
 
-// Human-readable text for SSO callback reject codes (watch-item d) — the server
+// Human-readable text for SSO callback reject codes (watch-item d), the server
 // redirects failures to /login?sso_error=<code> instead of a raw error body.
 const SSO_ERRORS: Record<string, string> = {
   unverified_local_exists:
@@ -25,7 +25,7 @@ function ssoErrorText(code: string): string {
 export default function Login() {
   // ⛔ THE DESKTOP ARM IS GONE (S14.20 step 4). This page is the BROWSER login and nothing else:
   // the desktop client loads `client.html`, which mounts no router and never reaches this file.
-  // The browser-based sign-in it used to trigger still exists — it lives in the client's own
+  // The browser-based sign-in it used to trigger still exists, it lives in the client's own
   // surface now, behind `auth.login()`, which is where the "never an in-app password field" rule
   // is actually enforced.
   return <BrowserLogin />;
@@ -42,10 +42,10 @@ function BrowserLogin() {
   );
   const [busy, setBusy] = useState(false);
   const [meta, setMeta] = useState<Meta | null>(null);
-  // S7.5.5: an MFA-pending login carries a challenge token (NOT a session) — the code step
+  // S7.5.5: an MFA-pending login carries a challenge token (NOT a session), the code step
   // completes at /auth/mfa/verify. (Slice 3 polishes this UI; slice 1 keeps the flow working.)
   const [challenge, setChallenge] = useState<string | null>(null);
-  // Cardinality only, and only if the server sent it — undefined means "not told", which must not
+  // Cardinality only, and only if the server sent it, undefined means "not told", which must not
   // render as a number. Populated from the login response's challenge payload where present.
   const [remaining, setRemaining] = useState<number | undefined>(undefined);
   const [code, setCode] = useState("");
@@ -60,7 +60,7 @@ function BrowserLogin() {
         if (!cancelled) setMeta(data ?? null);
       })
       .catch(() => {
-        /* meta unavailable — SSO section simply stays hidden */
+        /* meta unavailable, SSO section simply stays hidden */
       });
     return () => {
       cancelled = true;
@@ -129,7 +129,7 @@ function BrowserLogin() {
       setError(
         apiErrorMessage(
           error,
-          "That code is not valid — check your authenticator app or use a recovery code.",
+          "That code is not valid, check your authenticator app or use a recovery code.",
         ),
       );
       return;
@@ -145,7 +145,7 @@ function BrowserLogin() {
           Two-factor authentication
         </h1>
         <p className="mt-1.5 text-sm text-slate-400 text-center">
-          Password accepted — no session yet. Enter the 6-digit code from your
+          Password accepted, no session yet. Enter the 6-digit code from your
           authenticator app, or a recovery code.
         </p>
         <form onSubmit={verify} className="mt-6 space-y-4">
@@ -284,24 +284,24 @@ function SsoSection({
   onError: (m: string) => void;
 }) {
   // ⛔ THE ORGANIZATION FIELD IS GONE FROM THE DEFAULT PATH, AND NOT BECAUSE IT WAS TIDIED AWAY.
-  // Nobody signing in knows their tenant SLUG — they know their email and which button their
+  // Nobody signing in knows their tenant SLUG, they know their email and which button their
   // company uses. The slug is OPTIONAL on the start endpoint now and the server derives the sole
   // org configured for the provider, failing closed on zero or two-plus (see soleSSOOrg).
   //
   // ⚠ IT COMES BACK FOR EXACTLY ONE ERROR, because the server's own remedy for `sso_org_ambiguous`
-  // is "specify your organization" — and a page that prints that with no field to type it in is a
+  // is "specify your organization", and a page that prints that with no field to type it in is a
   // dead end. Every other failure (`sso_not_configured`, a network blip) is NOT the person's to
   // fix, so it stays a message and never grows an input that implies they typed something wrong.
   const [showOrgInput, setShowOrgInput] = useState(false);
   const [org, setOrg] = useState("");
-  // Which button produced the ambiguity — so Enter in the field retries THAT provider instead of
+  // Which button produced the ambiguity, so Enter in the field retries THAT provider instead of
   // making someone re-aim at a button they already pressed.
   const [pending, setPending] = useState<"google" | "microsoft" | null>(null);
 
   async function start(provider: "google" | "microsoft") {
     const slug = org.trim();
     const { data, error } = await api.GET("/api/v1/auth/sso/{provider}/start", {
-      // Omitted entirely when blank — an empty string is a slug the server would try to look up.
+      // Omitted entirely when blank, an empty string is a slug the server would try to look up.
       params: { path: { provider }, query: slug ? { org: slug } : undefined },
     });
     if (error || !data) {
@@ -346,7 +346,7 @@ function SsoSection({
           remedy reads "specify your organization to continue", and the first version of this put a
           bare input under it: Enter did nothing, and nothing said to press the provider button a
           SECOND time. Enter now retries the provider that produced the ambiguity, and the hint says
-          so — an escape hatch nobody can operate is not an escape hatch. */}
+          so, an escape hatch nobody can operate is not an escape hatch. */}
       {showOrgInput && (
         <div className="space-y-1.5 pt-1">
           <input
@@ -408,7 +408,7 @@ function EyeIcon({ open }: { open: boolean }) {
   );
 }
 
-/* Provider marks, inline so the login page makes no third-party request before authentication —
+/* Provider marks, inline so the login page makes no third-party request before authentication ,
    a logo fetched from a CDN would tell that CDN who is looking at our login page. */
 function GoogleMark() {
   return (

@@ -15,7 +15,7 @@ import type {
   SelectHTMLAttributes,
 } from "react";
 
-// A small, deliberate set of primitives — enough to compose the app's pages
+// A small, deliberate set of primitives, enough to compose the app's pages
 // consistently without a heavyweight component library. Colors come only from the
 // theme tokens (accent/ink/slate), so a palette swap restyles everything.
 
@@ -23,14 +23,14 @@ import type {
  * ⛔ THE GLASS RECIPE, IN ONE PLACE. Every surface in the product composes from this constant.
  *
  * It was previously spelled out on `Stat` and NOT on `Panel`, so the stat row rendered as glass and every
- * panel below it rendered as flat plastic — in the same screenshot. A material defined per-component is a
+ * panel below it rendered as flat plastic, in the same screenshot. A material defined per-component is a
  * material that WILL be half-applied, and the half that is missing reads as a rendering bug rather than a
  * missing class.
  *
  * `bg-surface` is TRANSLUCENT (`rgba(31,31,31,.72)`), and the blur needs the page's radial field behind it to
  * refract (index.css). Opaque fill or flat backdrop and the effect disappears entirely.
  *
- * NO INSET WHITE HIGHLIGHT LINE — the designer removed it explicitly. Do not reintroduce
+ * NO INSET WHITE HIGHLIGHT LINE, the designer removed it explicitly. Do not reintroduce
  * `inset 0 1px 0 rgba(255,255,255,…)`.
  */
 export const GLASS =
@@ -47,7 +47,7 @@ export function Button({
    * `sm` for a button that lives INSIDE A TABLE ROW.
    *
    * ⛔ A REAL PROP RATHER THAN AN OVERRIDE CLASS, and the reason is Tailwind: `px-4 py-2` is baked into `base`,
-   * so a caller passing `px-2.5 py-1` gets whichever rule the generated stylesheet happens to order last —
+   * so a caller passing `px-2.5 py-1` gets whichever rule the generated stylesheet happens to order last ,
    * which is not the attribute order, so the "fix" works or does not depending on the build. Swapping the
    * classes here means one of them exists, not both.
    *
@@ -60,7 +60,7 @@ export function Button({
   const base = `inline-flex items-center justify-center rounded-md ${pad} font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-400`;
   // ⛔ THE PRIMARY BUTTON WAS UNREADABLE, PRODUCT-WIDE, AND THE PALETTE SWAP IS WHY.
   //
-  // It was `bg-accent-500 text-white`. In the mono palette `--tnx-accent` is **#C9C9C4** — a LIGHT GREY — so
+  // It was `bg-accent-500 text-white`. In the mono palette `--tnx-accent` is **#C9C9C4**, a LIGHT GREY, so
   // every primary button in the app rendered WHITE TEXT ON LIGHT GREY. It was legible under the old violet
   // accent (#7C5CFC) and stopped being legible the moment the palette was re-pointed at the handoff's mono
   // set, because the class names did not change and nothing asserts contrast.
@@ -71,11 +71,11 @@ export function Button({
   // THE FIX IS THE DESIGN'S OWN RECIPE (dc.html L449, the `+ Add site` button):
   //   background rgba(255,255,255,.16) · border rgba(255,255,255,.4) · blur(10px)
   //   shadow 0 4px 16px rgba(0,0,0,.4) · color #F5F5F5
-  // A 16%-white wash over a near-black page lands around #2F2F2F, so #F5F5F5 sits at roughly 12:1 — and it
+  // A 16%-white wash over a near-black page lands around #2F2F2F, so #F5F5F5 sits at roughly 12:1, and it
   // stays legible on the glass panels too, which is why the design uses a translucent fill rather than a
   // solid one.
   //
-  // ⚠ `backdrop-blur` makes an element a containing block for `position: fixed` descendants — the trap that
+  // ⚠ `backdrop-blur` makes an element a containing block for `position: fixed` descendants, the trap that
   // clipped five modals inside `Card`. Safe here: a button has no fixed descendants. Do not lift this recipe
   // onto a container without re-reading that law.
   const variants = {
@@ -111,7 +111,7 @@ export function Field({
 }) {
   // Explicit id/htmlFor association (not just implicit wrapping) so the label
   // stays linked to the control even once helper/error text is added, and the
-  // accessible name is exactly the label — not the concatenated subtree text.
+  // accessible name is exactly the label, not the concatenated subtree text.
   const id = useId();
   const control = isValidElement(children)
     ? cloneElement(children as ReactElement<{ id?: string }>, { id })
@@ -161,7 +161,7 @@ export function Select({
   /**
    * `auto` for a control that should be as wide as its options, not as wide as its container.
    *
-   * ⛔ A REAL PROP, NOT AN OVERRIDE CLASS — the same Tailwind trap `Button.size` documents, and it had
+   * ⛔ A REAL PROP, NOT AN OVERRIDE CLASS, the same Tailwind trap `Button.size` documents, and it had
    * already bitten here. `w-full` is baked into the base, so a caller passing `className="w-32"` gets
    * whichever rule the generated stylesheet happens to order LAST, which is not attribute order. The two
    * posture selects were written `w-32` and rendered full width: an Off/Warn/Require control stretched
@@ -182,7 +182,7 @@ export function Select({
 }
 
 // Modal: the one generic overlay+dismiss shell (S7.4a), extracted from the
-// OneTimeSecretModal structure but content-agnostic — reused for every create/edit
+// OneTimeSecretModal structure but content-agnostic, reused for every create/edit
 // form and the two confirm dialogs. Deliberately NOT a live "switch": consequential,
 // confirm-gated actions must not wear switch clothing. Esc + backdrop-click dismiss;
 // `danger` tints the title for the strong (zero-rules lockout) gate.
@@ -204,7 +204,7 @@ export function Modal({
    *
    * ⚠ A PROP RATHER THAN AN OVERRIDE CLASS, for the same Tailwind reason `Button.size` is one: `max-w-md` is
    * baked into the shell, so a caller passing `max-w-2xl` gets whichever rule the generated stylesheet
-   * happens to order last — which is not attribute order, so the "fix" works or does not depending on the
+   * happens to order last, which is not attribute order, so the "fix" works or does not depending on the
    * build.
    */
   size?: "default" | "wide";
@@ -216,14 +216,14 @@ export function Modal({
   //
   // ⛔ PORTALLED TO <body>, AND THIS IS NOT COSMETIC.
   //
-  // `position: fixed` is relative to the VIEWPORT — unless an ancestor has `filter`, `transform`,
+  // `position: fixed` is relative to the VIEWPORT, unless an ancestor has `filter`, `transform`,
   // `perspective`, `will-change` or `backdrop-filter`, any of which makes that ancestor the containing block.
-  // S14.4 gave `Card` the glass recipe, which includes `backdrop-filter` — and FIVE modals across FOUR screens
+  // S14.4 gave `Card` the glass recipe, which includes `backdrop-filter`, and FIVE modals across FOUR screens
   // render inside a Card. Every one of them silently stopped being viewport-positioned: the overlay was
   // clipped to the card, and the card's own body sat on top of the modal's buttons, so clicks never landed.
   //
   // It surfaced as ONE Playwright click timing out with a Card listed as the intercepting element. It did not
-  // surface in the component tier at all — jsdom has no layout engine, so a containing-block change is
+  // surface in the component tier at all, jsdom has no layout engine, so a containing-block change is
   // invisible there, and a click-through of all twelve screens reported "nothing broken" because nothing
   // crashed and no content was lost.
   //
@@ -254,12 +254,12 @@ export function Modal({
   );
 }
 
-// ── S14.3 SLICE A — STRUCTURAL PRIMITIVES, SEMANTIC BY CONSTRUCTION ─────────────────────────────────────────
+// ── S14.3 SLICE A, STRUCTURAL PRIMITIVES, SEMANTIC BY CONSTRUCTION ─────────────────────────────────────────
 //
 // ⚠ THE MEASUREMENT THAT MADE THIS A DEFECT RATHER THAN A POLISH ITEM: this app contained ZERO `<table>`
 // elements. Thirty-seven `.map()` calls rendered `<div>` rows.
 //
-// The cost was not cosmetic and it was not confined to the UI. Query rule 1 says query by ROLE — and
+// The cost was not cosmetic and it was not confined to the UI. Query rule 1 says query by ROLE, and
 // `role="table"` / `row` / `cell` DID NOT EXIST ANYWHERE TO QUERY, so every wiring test in the component tier
 // worked around the gap by MATCHING TEXT. Text matching is the most brittle query there is and the first thing
 // a redesign breaks. A missing semantic primitive degrades the UI once and the TESTS OF THAT UI a second time,
@@ -284,7 +284,7 @@ export function Panel({
   const id = useId();
   return (
     // README: card padding 16, internal gap 10, title 600 13.5px. `flex-col` with the body in a `flex-1`
-    // wrapper keeps every panel in a row the same height WITHOUT centring its content — the row stretches,
+    // wrapper keeps every panel in a row the same height WITHOUT centring its content, the row stretches,
     // the content stays top-aligned. Centred content in a stretched panel is what makes a bento look
     // "overlapped": each panel floats its text at a different vertical position.
     <section
@@ -305,7 +305,7 @@ export function Panel({
 /**
  * A titled group that IS page structure, rather than a pane sitting on it.
  *
- * ⛔ DELIBERATELY NOT `GLASS`. `Panel` is a surface — a thing floating on the page. A settings group is
+ * ⛔ DELIBERATELY NOT `GLASS`. `Panel` is a surface, a thing floating on the page. A settings group is
  * the page's own skeleton, and giving it a border + shadow + blur says "object" about what is really an
  * outline. Eleven bordered boxes down one column is eleven times the chrome and zero times the meaning.
  *
@@ -335,7 +335,7 @@ export function Section({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           {/* ⛔ A GROUP HEADING MUST OUTRANK WHAT IT CONTAINS. At `text-title` (13.5px) this sat BELOW the
-              `text-sm` titles of the cards inside it — the section read as a caption on its own contents.
+              `text-sm` titles of the cards inside it, the section read as a caption on its own contents.
               15px is the smallest step that reads as the parent; the scale has no token between `title`
               13.5 and `stat` 26, which is the same gap PageHeader documents. */}
           <h2
@@ -363,7 +363,7 @@ export function Section({
  * One setting: what it is on the left, the control that changes it on the right.
  *
  * ⛔ THIS IS THE PRIMITIVE WHOSE ABSENCE CAUSED THE SETTINGS PAGE. With only `Card` available every single
- * setting became a card, ~15 cards then needed a packing strategy, and three were tried in turn — fixed
+ * setting became a card, ~15 cards then needed a packing strategy, and three were tried in turn, fixed
  * `grid-cols-3` (too wide), auto-fill grid (holes under short cards), multi-column masonry (column-major
  * reading order, and no full-width child possible). All three accept the premise that these are cards of
  * varying height. They are ROWS of uniform height: stacked in one column there is nothing to pack.
@@ -384,7 +384,7 @@ export function SettingRow({
    * ⚠ A SLOT RATHER THAN THE CALLER WRAPPING ITS OWN DIV, and that is not tidiness. Label-lending clones
    * the DIRECT child; a caller who wraps its control to sit an error beside it gets the label attached to
    * the WRAPPER, and the switch renders with no accessible name at all. Every one of the first three
-   * conversions hit exactly that, and it is invisible on screen — the row still reads correctly to a
+   * conversions hit exactly that, and it is invisible on screen, the row still reads correctly to a
    * sighted user while announcing nothing to a screen reader.
    */
   error?: string | null;
@@ -396,7 +396,7 @@ export function SettingRow({
 }) {
   const labelId = useId();
   // The same association idea as `Field`, one level up. The ROW owns the visible label, so the control
-  // must borrow it rather than restate it — a switch whose accessible name is "Enabled" tells a screen
+  // must borrow it rather than restate it, a switch whose accessible name is "Enabled" tells a screen
   // reader that something is enabled without ever saying what.
   const control =
     isValidElement(children) &&
@@ -435,13 +435,13 @@ export function SettingRow({
  * The current value shown on the right of a settings row.
  *
  * ⛔ `live` USES THE `ok` COLOUR AND THAT IS A RESERVATION CALL, NOT A STYLE CHOICE. `RESERVATIONS.ok` reads
- * "LIVENESS ONLY — alive right now (online peer, healthy check)", and the tokens test scans every `text-ok`
+ * "LIVENESS ONLY, alive right now (online peer, healthy check)", and the tokens test scans every `text-ok`
  * use-site. "Connected" for a directory-sync link IS liveness. "On" for a setting is a CONFIGURATION fact,
- * which the reservation as written does not cover — the automated scan will not catch it, because it only
+ * which the reservation as written does not cover, the automated scan will not catch it, because it only
  * looks for success wording. Recorded here rather than quietly broadened: if `live` is ruled wrong for
  * configured-state, this is the one line that changes.
  *
- * `muted` is the default: a count, a tier, a name — facts with no health dimension at all.
+ * `muted` is the default: a count, a tier, a name, facts with no health dimension at all.
  */
 export function SettingValue({
   tone = "muted",
@@ -464,7 +464,7 @@ export function SettingValue({
 /**
  * A card holding one section's worth of settings rows.
  *
- * ⚠ THE CARD IS BACK, AND ITS MEANING IS THE OPPOSITE OF WHAT IT WAS. Before, a card wrapped ONE setting —
+ * ⚠ THE CARD IS BACK, AND ITS MEANING IS THE OPPOSITE OF WHAT IT WAS. Before, a card wrapped ONE setting ,
  * eleven borders for eleven rows, so the border said nothing. Here it wraps a GROUP, which is exactly what
  * a card is for: the boundary marks where "Authentication" ends and "Features" begins. `Section` remains
  * for chrome-less grouping; this is the framed variant the settings page uses.
@@ -483,7 +483,7 @@ export function SettingGroup({
   /**
    * Marks this group as the panel of a `tab` that controls it.
    *
-   * ⚠ AN OPT-IN, BECAUSE A `tablist` WITHOUT `tabpanel`s IS A HALF-STATED PATTERN — a screen reader is told
+   * ⚠ AN OPT-IN, BECAUSE A `tablist` WITHOUT `tabpanel`s IS A HALF-STATED PATTERN, a screen reader is told
    * these buttons control something and then finds nothing claiming to be controlled. It stays off for the
    * plain grouping use, where the role would be a lie.
    */
@@ -519,7 +519,7 @@ export function SettingGroup({
  *
  * ⛔ COLLAPSED BY DEFAULT IS THE WHOLE POINT. A settings page that renders every form inline is a page where
  * the reader must skim past five text inputs they are not here to change in order to find the one they are.
- * The row shows the current value — which is what most visits come to read — and the form appears only when
+ * The row shows the current value, which is what most visits come to read, and the form appears only when
  * asked for.
  *
  * `children` and `actions` are render props taking `close`, so a save can dismiss the dialog itself. The
@@ -542,7 +542,7 @@ export function SettingDialogRow({
   /** What the setting is set to right now, shown on the row. */
   value?: ReactNode;
   actionLabel?: string;
-  /** Defaults to the row's label — the dialog should be named the thing it edits. */
+  /** Defaults to the row's label, the dialog should be named the thing it edits. */
   dialogTitle?: string;
   disabled?: boolean;
   error?: string | null;
@@ -583,7 +583,7 @@ export function SettingDialogRow({
 /**
  * An on/off state the operator owns.
  *
- * ⛔ A SWITCH, NOT A BUTTON, AND NOT A CHECKBOX — because the product currently uses BOTH for the same
+ * ⛔ A SWITCH, NOT A BUTTON, AND NOT A CHECKBOX, because the product currently uses BOTH for the same
  * idea. SSO providers render `☑ Enabled`; OpenVPN and the agent toggles render a BUTTON reading "Enable
  * OpenVPN". A button promises an action is about to happen; a checkbox belongs to a form you submit.
  * These are neither: they are org-level opt-ins (unlock-then-opt-in, default OFF) that take effect on
@@ -611,7 +611,7 @@ export function Switch({
       role="switch"
       aria-checked={checked}
       // An EXPLICIT `label` wins over a borrowed one. `SettingRow` cannot see through this component's
-      // props API — it looks for `aria-label`, finds a `label` it does not recognise, and lends its own
+      // props API, it looks for `aria-label`, finds a `label` it does not recognise, and lends its own
       // name over the top. Precedence is decided here, where both are visible, rather than by teaching
       // the row about every control's prop names.
       aria-label={label}
@@ -646,7 +646,7 @@ export function Switch({
  *
  * ⛔ ONE DIALECT, REPLACING THREE. Pages hand-rolled this and drifted: the S14 pages use
  * `text-[22px] text-ink-heading`, the older ones `text-xl text-white`, and `Devices.tsx` an inline style
- * object with a hardcoded `#F5F5F5` and the font `Instrument Sans` — which is not in the token set at all.
+ * object with a hardcoded `#F5F5F5` and the font `Instrument Sans`, which is not in the token set at all.
  *
  * ⚠ `text-[22px]` IS RAW ON PURPOSE. The generated fontSize scale jumps `title` 13.5px → `stat` 26px with
  * nothing between, so every page title in the app is already an arbitrary value. Centralising it here makes
@@ -680,7 +680,7 @@ export function PageHeader({
  * A status badge.
  *
  * ⛔ THE TEXT IS THE STATUS; THE COLOUR IS AN ACCELERANT. A badge that says its state only in colour is
- * unreadable to a colour-blind user, invisible to a screen reader, and unqueryable by the tier — three
+ * unreadable to a colour-blind user, invisible to a screen reader, and unqueryable by the tier, three
  * failures with one cause. `tone` may never be the only carrier of meaning, which is why `children` is
  * required rather than optional.
  *
@@ -743,7 +743,7 @@ export function Loading({ label = "Loading…" }: { label?: string }) {
   );
 }
 
-/** A non-tabular collection. `<ul>/<li>`, so it is a list to the accessibility tree — never a table pretending. */
+/** A non-tabular collection. `<ul>/<li>`, so it is a list to the accessibility tree, never a table pretending. */
 export function List({
   label,
   children,
@@ -777,7 +777,7 @@ export function ListItem({
 }
 
 export interface Column<T> {
-  /** Stable key — React's key and the mutation-visible identity of the column. */
+  /** Stable key, React's key and the mutation-visible identity of the column. */
   key: string;
   /** The column's HEADER TEXT. Required: a `<th>` with no text is a cell the tier cannot name. */
   header: string;
@@ -785,21 +785,21 @@ export interface Column<T> {
    * `ctx` carries the row's expansion state and a toggle, so a cell can BE the disclosure control.
    *
    * ⚠ A SECOND ARGUMENT RATHER THAN A NEW COLUMN TYPE: the trigger belongs on whichever cell reads as the
-   * way in — a member count, a name — not on a chevron in a column of its own that means nothing until you
+   * way in, a member count, a name, not on a chevron in a column of its own that means nothing until you
    * click it.
    */
   cell: (row: T, ctx: { expanded: boolean; toggle: () => void }) => ReactNode;
-  /** Numeric/right-aligned columns. Presentation only — never a reason to drop the header. */
+  /** Numeric/right-aligned columns. Presentation only, never a reason to drop the header. */
   numeric?: boolean;
   /**
-   * The row's value for this column AS TEXT — what sorting orders by and what the filter matches.
+   * The row's value for this column AS TEXT, what sorting orders by and what the filter matches.
    *
    * ⛔ SEPARATE FROM `cell` ON PURPOSE, AND THE REASON IS THE ONE THAT MATTERS: `cell` returns a ReactNode.
    * Deriving a search key from rendered JSX means reaching into element trees, and anything a cell shows as
    * an icon, a badge or a coloured dot contributes NOTHING to it. A row would then be invisible to a search
    * for the very state its badge is announcing.
    *
-   * ⚠ It may also carry text the cell does NOT display — an owner's email, an id — so a search finds rows by
+   * ⚠ It may also carry text the cell does NOT display, an owner's email, an id, so a search finds rows by
    * facts the operator knows even when the column is showing something shorter.
    */
   sortValue?: (row: T) => string | number;
@@ -809,8 +809,8 @@ export interface Column<T> {
  * ONE ACTION, DECLARED ONCE, APPLIED TO A SELECTION.
  *
  * ⛔ THE PROBLEM THIS REPLACES: every row carrying its own Edit / Disable / Delete. On a fifteen-row table
- * that is forty-five buttons, the same three verbs re-drawn fifteen times, and the row's actual CONTENT — who
- * may reach what — is squeezed into whatever space they leave. It also makes acting on five rows five separate
+ * that is forty-five buttons, the same three verbs re-drawn fifteen times, and the row's actual CONTENT, who
+ * may reach what, is squeezed into whatever space they leave. It also makes acting on five rows five separate
  * gestures with five separate confirmations.
  *
  * The verbs move to ONE bar. What makes that safe rather than merely tidier is `unavailable`.
@@ -819,8 +819,8 @@ export interface RowAction<T> {
   key: string;
   label: string;
   /**
-   * `single` — the verb only makes sense on exactly one row (Edit a rule; you cannot edit five at once).
-   * `many` (default) — it applies across the selection.
+   * `single`, the verb only makes sense on exactly one row (Edit a rule; you cannot edit five at once).
+   * `many` (default), it applies across the selection.
    */
   arity?: "single" | "many";
   danger?: boolean;
@@ -828,14 +828,14 @@ export interface RowAction<T> {
    * ⛔ THE FIELD THAT MAKES A BULK VERB HONEST. Return a reason and this row cannot take this action.
    *
    * A selection is almost never uniform: five rules where one is GitOps-managed, or three devices where one
-   * is already revoked. Without this, a bulk action has two bad options — silently skip the ineligible rows,
+   * is already revoked. Without this, a bulk action has two bad options, silently skip the ineligible rows,
    * or silently attempt them. Both leave the operator believing they did something they did not do.
    *
    * > **THE SET AN ACTION APPLIES TO MUST BE STATED BEFORE IT RUNS, NOT DISCOVERED AFTERWARDS.** The bar
    * > says "3 of 5 selected" and names the reason for the other two.
    */
   unavailable?: (row: T) => string | null;
-  /** Receives ONLY the eligible rows — the same set the bar counted out loud. */
+  /** Receives ONLY the eligible rows, the same set the bar counted out loud. */
   run: (rows: T[]) => void;
 }
 
@@ -843,7 +843,7 @@ export interface RowAction<T> {
  * The page numbers to render, with `null` marking an elided run.
  *
  * ⛔ ALWAYS FIRST AND LAST, ALWAYS THE CURRENT ONE AND ITS NEIGHBOURS. A pager that elides the last page
- * hides how much there is — and "how much is there" is the question a pager exists to answer. Kept as a pure
+ * hides how much there is, and "how much is there" is the question a pager exists to answer. Kept as a pure
  * function so the windowing is testable without rendering a table.
  */
 export function pageWindow(
@@ -888,14 +888,14 @@ function PagerButton({
  * A real table.
  *
  * `<table>` + `<caption>` + `<thead>` + `<th scope="col">` + `<tbody>`, so the tier can ask for
- * `getByRole("table", { name })`, `getAllByRole("row")`, `getByRole("columnheader", { name })` — the queries
+ * `getByRole("table", { name })`, `getAllByRole("row")`, `getByRole("columnheader", { name })`, the queries
  * that were impossible in this app until now.
  *
  * THE CAPTION IS THE TABLE'S ACCESSIBLE NAME and it is REQUIRED. Two unnamed tables on one screen are two
  * `role="table"` matches with no way to tell them apart, which pushes the tier straight back to text matching.
  *
  * `caption` is visually hidden by default (`sr-only`) because the surrounding Panel usually shows the same
- * heading — hidden from sight, PRESENT in the accessibility tree. That is the correct direction of the
+ * heading, hidden from sight, PRESENT in the accessibility tree. That is the correct direction of the
  * invisible-is-not-absent rule: absent to the eye, present to the machine, never the reverse.
  */
 export function DataTable<T>({
@@ -924,19 +924,19 @@ export function DataTable<T>({
   /** What to render when there are GENUINELY zero rows. */
   empty: ReactNode;
   /**
-   * ⛔ REQUIRED, AND REQUIRED ON PURPOSE — did the load that produced `rows` FAIL?
+   * ⛔ REQUIRED, AND REQUIRED ON PURPOSE, did the load that produced `rows` FAIL?
    *
    * An empty array means two different things and the difference is the whole point: "there are none" and
    * "we never found out". Rendering the second as the first is the REASSURING-EMPTY defect the `loadOne` law
-   * exists to prevent, and on a roster or a rule list it is not a neutral emptiness — it is a claim about
+   * exists to prevent, and on a roster or a rule list it is not a neutral emptiness, it is a claim about
    * who has access, made by a screen that never successfully read anything.
    *
    * THIS PROP IS NOT OPTIONAL BECAUSE A DEFAULT WOULD PICK THE DANGEROUS ANSWER SILENTLY. Every call site
-   * must state which case it is in, and forgetting is a COMPILE ERROR rather than a review note — a guard
+   * must state which case it is in, and forgetting is a COMPILE ERROR rather than a review note, a guard
    * enforced by types beats one enforced by discipline (docs/laws.md).
    *
    * FOUND THE HARD WAY, IN THIS SLICE: converting Users to a table dropped the page's `&& !error` guard and
-   * reintroduced exactly this defect — inside the slice whose own EmptyState comment warns against it. The
+   * reintroduced exactly this defect, inside the slice whose own EmptyState comment warns against it. The
    * component tier caught it. That is the third time in this epic that a near miss landed inside the guard
    * written to prevent it, which is why this is a type and not a comment.
    *
@@ -945,7 +945,7 @@ export function DataTable<T>({
    */
   failed: boolean;
   /**
-   * Show the filter box. Defaults ON whenever any column carries `sortValue` — a table you cannot search is
+   * Show the filter box. Defaults ON whenever any column carries `sortValue`, a table you cannot search is
    * the reason people reach for the browser's own find bar, which searches only what is on screen and
    * silently misses everything the page has not rendered.
    */
@@ -957,7 +957,7 @@ export function DataTable<T>({
    *
    * ⛔ PASS `0` TO DISABLE, AND THERE IS EXACTLY ONE REASON TO: THE PAGE ALREADY PAGES SERVER-SIDE. AuditLog
    * and AccessEvents fetch with a keyset cursor behind a "Load more" button. A client pager on top of that
-   * puts TWO paging controls on one screen that disagree — "Load more" appends rows the operator cannot see
+   * puts TWO paging controls on one screen that disagree, "Load more" appends rows the operator cannot see
    * without also advancing a second pager, and the row count then describes neither the fetch nor the view.
    */
   pageSize?: number;
@@ -969,10 +969,10 @@ export function DataTable<T>({
    * explicitly rather than left to convention, and both are resolved the CONSERVATIVE way:
    *
    *  · **The header checkbox selects THIS PAGE, never the whole result set.** "Select all" meaning 500
-   *    invisible rows is how a bulk revoke becomes an outage. Selecting everything is still possible — it is
+   *    invisible rows is how a bulk revoke becomes an outage. Selecting everything is still possible, it is
    *    a separate, labelled control that states the number out loud.
    *  · **Selection SURVIVES paging and filtering, and the footer says when part of it is off-screen.** The
-   *    alternative — silently dropping rows from the selection when they scroll out of view — makes the
+   *    alternative, silently dropping rows from the selection when they scroll out of view, makes the
    *    applied set differ from the counted set, which is worse than an honest warning.
    */
   selectable?: boolean;
@@ -980,24 +980,24 @@ export function DataTable<T>({
    * A HUMAN name for the row, used as the checkbox's accessible name.
    *
    * ⛔ THE KEY IS NOT A NAME. `rowKey` is a uuid or a database id, so without this a screen-reader user hears
-   * "select 019fcda7-7718-77e3" — a control they cannot identify, on the one interaction whose next step is
+   * "select 019fcda7-7718-77e3", a control they cannot identify, on the one interaction whose next step is
    * a bulk action. Defaults to the FIRST column's search value, which is the name column by convention on
    * every table in this app; falls back to the key only when there is nothing better.
    */
   rowLabel?: (row: T) => string;
   /** Called with the selected row keys whenever the selection changes. */
   onSelectionChange?: (keys: string[]) => void;
-  /** Controls that belong beside the filter — a status dropdown, a date range. Rendered right-aligned. */
+  /** Controls that belong beside the filter, a status dropdown, a date range. Rendered right-aligned. */
   toolbar?: ReactNode;
   /** Rendered in the selection footer. Receives the selected keys and a clear callback. */
   bulkActions?: (selected: string[], clear: () => void) => ReactNode;
   /**
-   * Declarative verbs for the selection bar. Supplying these IMPLIES `selectable` — a set of actions with no
+   * Declarative verbs for the selection bar. Supplying these IMPLIES `selectable`, a set of actions with no
    * way to choose what they act on is not a feature.
    */
   rowActions?: Array<RowAction<T>>;
   /**
-   * Data attributes for the `<tr>` — e.g. `{ "data-owned": "yes" }`.
+   * Data attributes for the `<tr>`, e.g. `{ "data-owned": "yes" }`.
    *
    * ⛔ THE ROW IS THE UNIT A TEST SCOPES TO, and without this the state has to be stamped on a span inside
    * some cell instead. That reads as equivalent and is not: `row.textContent` then covers ONE column, so an
@@ -1009,7 +1009,7 @@ export function DataTable<T>({
   /**
    * Content revealed beneath a row, full width. Return `null` for rows that do not expand.
    *
-   * ⛔ RENDERED IN A `<tr>` OF ITS OWN, spanning every column — not inside a cell. A nested panel inside one
+   * ⛔ RENDERED IN A `<tr>` OF ITS OWN, spanning every column, not inside a cell. A nested panel inside one
    * column is constrained to that column's width, so a member roster would render in the space taken by a
    * count. The row below is the only placement that gives it the table's full width.
    */
@@ -1066,7 +1066,7 @@ export function DataTable<T>({
   }, [rows, columns, query, sort]);
 
   // ⛔ THE PAGE INDEX IS CLAMPED AT RENDER, NOT TRUSTED FROM STATE. Rows shrink underneath this component
-  // all the time — a revoke, a filter, a refetch — and a page index that was valid a moment ago then points
+  // all the time, a revoke, a filter, a refetch, and a page index that was valid a moment ago then points
   // past the end. The result is a table that renders ZERO ROWS while the data is right there, which is the
   // reassuring-empty defect arriving by arithmetic instead of by a failed load.
   //
@@ -1092,7 +1092,7 @@ export function DataTable<T>({
 
   // ⛔ THREE EMPTINESSES, NOT ONE, AND THEY ARE DIFFERENT CLAIMS. `failed` (handled above) is "we never found
   // out". `rows.length === 0` is "there are none". A filter matching nothing is "there are some, none match
-  // what you typed" — and rendering that third case as the second tells an operator a resource does not
+  // what you typed", and rendering that third case as the second tells an operator a resource does not
   // exist when it is sitting one keystroke away.
   //
   // > **A FILTER IS A NEW WAY TO MANUFACTURE A REASSURING EMPTY**, on a screen whose whole `failed` prop
@@ -1122,7 +1122,7 @@ export function DataTable<T>({
               onChange={(e) => {
                 setQuery(e.target.value);
                 // ⛔ NARROWING RETURNS TO PAGE ONE. Typing while on page 3 of a list that now has four
-                // matches would show an empty table — the operator's own search reading as "nothing exists".
+                // matches would show an empty table, the operator's own search reading as "nothing exists".
                 setPage(0);
               }}
               placeholder={`Search ${caption.toLowerCase()}…`}
@@ -1135,7 +1135,7 @@ export function DataTable<T>({
           {toolbar}
         </div>
       )}
-      {/* THE SELECTION BAR, ABOVE THE TABLE. Always present when the table is selectable — an empty-state bar that says
+      {/* THE SELECTION BAR, ABOVE THE TABLE. Always present when the table is selectable, an empty-state bar that says
           "0 selected" teaches where the count will appear, and a bar that only materialises on the first
           click moves the layout under the operator's cursor. */}
       {showSelect && (
@@ -1186,7 +1186,7 @@ export function DataTable<T>({
                       ? chosen.length === 1
                       : chosen.length > 0;
                   // ⛔ THE FIRST REASON WINS AND IS SHOWN. A disabled control with no explanation is a
-                  // dead end an operator cannot reason about — they cannot tell "not allowed" from "broken".
+                  // dead end an operator cannot reason about, they cannot tell "not allowed" from "broken".
                   const reason =
                     chosen.map((r) => a.unavailable?.(r)).find(Boolean) ??
                     undefined;
@@ -1239,7 +1239,7 @@ export function DataTable<T>({
                   className="w-8 border-b border-white/10 py-1.5 pl-3 pr-2"
                 >
                   {/* ⛔ THIS BOX SELECTS THE PAGE, AND ITS LABEL SAYS SO. A header checkbox that quietly
-                      means "all 500 matches" is how a bulk revoke becomes an outage — the operator sees ten
+                      means "all 500 matches" is how a bulk revoke becomes an outage, the operator sees ten
                       rows and reasons about ten. Selecting everything is offered separately, by a control
                       that states the number out loud. */}
                   <input
@@ -1247,7 +1247,7 @@ export function DataTable<T>({
                     aria-label={`Select all ${pageRows.length} on this page`}
                     checked={pageAllSelected}
                     ref={(el) => {
-                      // Indeterminate is a DOM property, not an attribute — a partly-selected page must not
+                      // Indeterminate is a DOM property, not an attribute, a partly-selected page must not
                       // render as either fully selected or untouched.
                       if (el)
                         el.indeterminate =
@@ -1280,11 +1280,11 @@ export function DataTable<T>({
                     }
                     // ⚠ A RIGHT-ALIGNED COLUMN NEEDS PADDING ON ITS *LEFT*, not only its right. `pr-4`
                     // alone pushes a numeric column's content to its own right edge, where it lands flush
-                    // against the next column's left edge — "0" and a role select ended up touching, and
+                    // against the next column's left edge, "0" and a role select ended up touching, and
                     // the eye reads two adjacent columns as one field.
                     // ⚠ THE FIRST COLUMN NEEDS LEFT PADDING OR IT TOUCHES THE TABLE'S EDGE. Every cell had
                     // `pr-4` and nothing on the left, so column one sat flush against the container while
-                    // every other column had a gap in front of it — the row read as starting at a hard edge
+                    // every other column had a gap in front of it, the row read as starting at a hard edge
                     // rather than inside a surface. `i === 0` also covers the checkbox column, which is
                     // rendered separately and had the same problem.
                     className={`border-b border-white/10 py-1.5 pr-4 font-medium ${i === 0 && !showSelect ? "pl-3" : ""} ${c.numeric ? "pl-6 text-right" : ""}`}
@@ -1340,7 +1340,7 @@ export function DataTable<T>({
                   <tr
                     {...(rowAttrs?.(r) ?? {})}
                     // Zebra + hover: scanning across a wide row is where the eye loses its line, and this is
-                    // presentation only — never the carrier of a state the row needs to announce in words.
+                    // presentation only, never the carrier of a state the row needs to announce in words.
                     className={`border-b border-white/5 hover:bg-white/[0.06] ${i % 2 ? "bg-white/[0.02]" : ""}`}
                   >
                     {showSelect && (
@@ -1387,7 +1387,7 @@ export function DataTable<T>({
       </div>
       {/* ⛔ THE FOOTER ONLY EXISTS WHEN IT HAS SOMETHING TO SAY, and the first version of this got it wrong
           in exactly the way the pager comment warned against. "No pager when everything fits" hid the page
-          BUTTONS and left the rows-per-page control and the range behind — so a five-row table carried
+          BUTTONS and left the rows-per-page control and the range behind, so a five-row table carried
           "Rows per page [25]   1–5 of 5", a control that can only no-op and a range that restates the
           obvious. Repeated on every table on a screen, that is more chrome than content.
 
@@ -1396,7 +1396,7 @@ export function DataTable<T>({
           On a table that fits and is unfiltered it renders nothing at all. */}
       {paged && (lastPage > 0 || query.trim() !== "") && (
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-2 text-[11px] text-ink-secondary">
-          {/* ⚠ ABSENT WHEN EVERYTHING FITS — changing "rows per page" on a table showing all of them does
+          {/* ⚠ ABSENT WHEN EVERYTHING FITS, changing "rows per page" on a table showing all of them does
               nothing, and a control whose every value produces the same screen teaches that the controls
               here are decorative. */}
           {lastPage > 0 ? (
@@ -1482,7 +1482,7 @@ export function DataTable<T>({
         </div>
       )}
 
-      {/* ⛔ THE THIRD EMPTINESS, SAID IN WORDS. Never the `empty` copy — that one claims none exist. */}
+      {/* ⛔ THE THIRD EMPTINESS, SAID IN WORDS. Never the `empty` copy, that one claims none exist. */}
       {visible.length === 0 && (
         <p className="py-6 text-center text-xs text-ink-secondary">
           No {caption.toLowerCase()} match{" "}

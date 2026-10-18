@@ -6,7 +6,7 @@ import {
   GATEWAY_IMAGE,
 } from "../src/components/Gateways";
 
-// S8.2c D4: the emitted remote-gateway command is the ZERO-TOUCH artifact — pasted verbatim on a clean VM
+// S8.2c D4: the emitted remote-gateway command is the ZERO-TOUCH artifact, pasted verbatim on a clean VM
 // it must reach agent_ready on real WireGuard with NO edits. These reds encode tonight's double
 // paste-failure: it must be a SINGLE `docker run` (no compose, no line breaks) with EVERY piece the demo
 // added by hand baked in.
@@ -19,10 +19,10 @@ function okBase(url: string | undefined, fallback: string) {
   return e;
 }
 
-describe("remoteEnrollCommand — the one true zero-touch docker run", () => {
+describe("remoteEnrollCommand, the one true zero-touch docker run", () => {
   const base = okBase("https://cp.example.com", "https://ignored.example");
 
-  it("is a SINGLE docker run — no compose, no newlines (the paste-mismatch is structurally impossible)", () => {
+  it("is a SINGLE docker run, no compose, no newlines (the paste-mismatch is structurally impossible)", () => {
     const cmd = remoteEnrollCommand({
       token: "TKN",
       name: "gw-aws",
@@ -50,7 +50,7 @@ describe("remoteEnrollCommand — the one true zero-touch docker run", () => {
       "--device /dev/net/tun",
       "-e TUNNEX_WG_BACKEND=wgctrl",
       "-e TUNNEX_JOIN_TOKEN=TKN",
-      // The CP urls are shell-quoted too (re-review #3 — they now come from operator config, not the browser).
+      // The CP urls are shell-quoted too (re-review #3, they now come from operator config, not the browser).
       '-e TUNNEX_API_URL="https://cp.example.com"',
       '-e TUNNEX_AGENT_URL="https://cp.example.com:8443"',
       '-e TUNNEX_AGENT_SERVERNAME="tunnex-control"',
@@ -93,7 +93,7 @@ describe("remoteEnrollCommand — the one true zero-touch docker run", () => {
     ).toContain('-e TUNNEX_NODE_NAME="my gw"');
   });
 
-  it("an endpoint is shell-quoted too (review #3 — a space/metachar can't corrupt the zero-touch command)", () => {
+  it("an endpoint is shell-quoted too (review #3, a space/metachar can't corrupt the zero-touch command)", () => {
     expect(
       remoteEnrollCommand({
         token: "T",
@@ -155,8 +155,8 @@ describe("remoteEnrollCommand — the one true zero-touch docker run", () => {
     expect(cmd).not.toContain(":latest");
   });
 
-  it("cpEndpoints REFUSES an unparseable configured URL (re-review #1 — never a silently-broken command)", () => {
-    // A non-blank configured value the browser can't parse is an operator APP_BASE_URL typo — the caller
+  it("cpEndpoints REFUSES an unparseable configured URL (re-review #1, never a silently-broken command)", () => {
+    // A non-blank configured value the browser can't parse is an operator APP_BASE_URL typo, the caller
     // blocks the one-time-token mint on this, rather than emitting a command with an empty agent URL.
     const bad = cpEndpoints("cp.example.com", "http://40.65.63.141"); // no scheme → new URL() throws
     expect(bad.ok).toBe(false);
@@ -164,7 +164,7 @@ describe("remoteEnrollCommand — the one true zero-touch docker run", () => {
   });
 });
 
-describe("enrollCommand — compose enrollment pins the CP agent image", () => {
+describe("enrollCommand, compose enrollment pins the CP agent image", () => {
   it("passes the exact configured digest to compose instead of using its :latest default", () => {
     const digest = "ghcr.io/tunnexio/tunnex-node-agent@sha256:abc123";
     const cmd = enrollCommand("TKN", "gw-1", digest);

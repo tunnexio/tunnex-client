@@ -4,17 +4,17 @@ import { NAV_DESTINATIONS } from "./AppShell";
 import { motionAllowed } from "../lib/motion";
 import { useMotionPreference } from "./MotionProvider";
 
-// S14.3 SLICE B — THE COMMAND PALETTE. ⌘K / Ctrl-K, plus `g` sequences.
+// S14.3 SLICE B, THE COMMAND PALETTE. ⌘K / Ctrl-K, plus `g` sequences.
 //
 // ⛔ NAVIGATION ONLY IN THIS SLICE, and the reason is this slice's own measurement rather than taste: an
 // ACTION in a palette is a mutation two keystrokes from a typo, and lib/undo.ts measured that MOST OF THIS
-// PRODUCT'S MUTATIONS ARE NOT REVERSIBLE — six state toggles are, deletes and revocations are not. Offering
+// PRODUCT'S MUTATIONS ARE NOT REVERSIBLE, six state toggles are, deletes and revocations are not. Offering
 // "revoke device" behind a fuzzy match, with no undo behind it, is the worst affordance in the product.
 // Actions become a decide-item once the undoable set is shipped and proven.
 //
 // ⛔ AND S14.2's RULE BINDS IT: the palette may RE-ARRANGE AND RANK; it may NEVER BE THE ONLY ROUTE to a
 // destination. A destination reachable only by typing is hidden from everyone who does not already know it
-// exists. Hence it reads NAV_DESTINATIONS — the same source the sidebar renders — rather than a second list.
+// exists. Hence it reads NAV_DESTINATIONS, the same source the sidebar renders, rather than a second list.
 // A palette with its own list would drift, and the drift would be invisible: both surfaces would look fine.
 
 /** `g`-prefixed shortcuts, mapped onto destinations that must ALSO exist in the nav. */

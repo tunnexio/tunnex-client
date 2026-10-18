@@ -3,7 +3,7 @@ import type { DeviceApi, HealthFacts, HealthReportResult } from "./deviceconfig"
 // HealthMonitor (S7.5.3) is the client side of device posture: it periodically
 // collects facts (OS version in main; disk encryption via the privileged helper's
 // read-only posture verb) and self-reports them to the tenant, which evaluates
-// server-side. PERIODIC, not terminal — unlike the Approval/Revocation monitors
+// server-side. PERIODIC, not terminal, unlike the Approval/Revocation monitors
 // there is no fire-once transition; it reports for as long as it runs.
 //
 // Cadence: 10 minutes (the S7.5.2 poll cadence class) + a FIXED per-instance
@@ -13,22 +13,22 @@ import type { DeviceApi, HealthFacts, HealthReportResult } from "./deviceconfig"
 // full interval after every connect.
 //
 // Honesty rule (the taxonomy): a fact the collector cannot determine is reported
-// ABSENT, never guessed — collectFacts omits it; a collector THROW skips the
+// ABSENT, never guessed, collectFacts omits it; a collector THROW skips the
 // whole report (nothing to say beats saying something wrong). The server treats
 // absence as posture_unknown, which never blocks.
 //
 // Poll discipline (inherited from Approval/RevocationMonitor): app-level
 // singleton, self-scheduling recursive setTimeout (no overlap, no wake-from-sleep
 // backlog), throw → inconclusive → keep + capped backoff, origin-lifecycle stop.
-// TERMINAL server answers stop it cleanly: "unsupported" (403 — open edition:
+// TERMINAL server answers stop it cleanly: "unsupported" (403, open edition:
 // reporting is pointless until the org's edition changes; restarts on the next
-// connect) and "gone" (404 — the device teardown paths own that transition).
+// connect) and "gone" (404, the device teardown paths own that transition).
 export const HEALTH_REPORT_BASE_MS = 10 * 60_000;
 export const HEALTH_REPORT_JITTER_MAX_MS = 2 * 60_000;
 export const HEALTH_FIRST_REPORT_MS = 15_000;
 export const HEALTH_BACKOFF_MAX_MS = 30 * 60_000;
 
-// HealthOutcome is what a single cycle decided — surfaced for the unit tests
+// HealthOutcome is what a single cycle decided, surfaced for the unit tests
 // (the decision carries the safety properties, like the sibling monitors).
 export type HealthOutcome = "reported" | "unsupported" | "gone" | "inconclusive" | "skipped";
 
@@ -41,7 +41,7 @@ export class HealthMonitor {
   private backoff = 0;
   // hasReported gates the EARLY phase ([4]): until the FIRST successful report, an
   // inconclusive result retries at the short first-report delay, NOT the 10-min
-  // base — a first-report blip must not leave the device "unknown" for a full
+  // base, a first-report blip must not leave the device "unknown" for a full
   // interval, which is the exact outcome the early first report exists to avoid.
   private hasReported = false;
   private readonly jitter: number;
@@ -101,14 +101,14 @@ export class HealthMonitor {
         facts = await this.collectFacts();
       } catch {
         // Collector failure: nothing honest to send this cycle. Skip (steady
-        // cadence, no backoff — the collector is local, not a server signal).
+        // cadence, no backoff, the collector is local, not a server signal).
         return "skipped";
       }
       if (!facts.os_version) return "skipped"; // nothing useful to report
       const res = await this.api.reportHealth(this.deviceId, this.orgId, facts);
-      if (this.stopped) return "skipped"; // stopped during the await — abandon
+      if (this.stopped) return "skipped"; // stopped during the await, abandon
       if (res === "unsupported" || res === "gone") {
-        // Terminal: stop reporting (edition off / device gone). No error loop —
+        // Terminal: stop reporting (edition off / device gone). No error loop ,
         // the monitor restarts on the next connect if circumstances changed.
         this.terminal = true;
         return res;
@@ -118,7 +118,7 @@ export class HealthMonitor {
       this.onResult?.(res);
       return "reported";
     } catch {
-      // Inconclusive (network blip / 5xx): keep reporting, lengthen the next try —
+      // Inconclusive (network blip / 5xx): keep reporting, lengthen the next try ,
       // EXCEPT in the early phase (no successful report yet), where we retry at the
       // short first-report delay so a first-report blip doesn't drop the device to
       // 10-min "unknown" ([4]).

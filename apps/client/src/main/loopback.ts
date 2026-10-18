@@ -2,7 +2,7 @@ import * as crypto from "node:crypto";
 import * as http from "node:http";
 import { AddressInfo } from "node:net";
 
-// The loopback login flow — the desktop reuse of the S5.1 CLI flow. Same
+// The loopback login flow, the desktop reuse of the S5.1 CLI flow. Same
 // discipline: single-shot listener, STATE CHECKED FIRST (a mismatch never reads
 // the code), explicit success/failure pages, ~2-minute bound. Runs in the
 // Electron MAIN process; the browser is the SYSTEM browser (opened by the
@@ -42,7 +42,7 @@ export function evalCallback(expectedState: string, query: URLSearchParams): { s
       status: 403,
       title: "Sign-in failed",
       body: "The response did not match this sign-in attempt (state mismatch). Close this window and try again.",
-      result: { error: "state mismatch on the loopback callback — no exchange attempted" },
+      result: { error: "state mismatch on the loopback callback, no exchange attempted" },
     };
   }
   const code = query.get("code");
@@ -53,7 +53,7 @@ export function evalCallback(expectedState: string, query: URLSearchParams): { s
 }
 
 function page(title: string, body: string): string {
-  return `<!doctype html><meta charset="utf-8"><title>Tunnex — ${title}</title>
+  return `<!doctype html><meta charset="utf-8"><title>Tunnex, ${title}</title>
 <body style="font-family:system-ui;background:#0b0b12;color:#e2e8f0;display:grid;place-items:center;height:100vh;margin:0">
 <div style="max-width:26rem;text-align:center"><h1 style="font-size:1.2rem">${title}</h1><p style="color:#94a3b8">${body}</p></div>`;
 }

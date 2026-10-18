@@ -343,7 +343,7 @@ export async function openBeamChannel(
   server.on("request", (req, res) => {
     markClaimed();
     if (!authorizedRequest(req, options.binding)) {
-      res.writeHead(403).end("Beam request refused");
+      res.writeHead(403).end("Local Sharing request refused");
       return;
     }
     const size = Number(req.headers["content-length"] ?? 0);
@@ -351,11 +351,11 @@ export async function openBeamChannel(
       // Complete refusal without waiting for the rejected upload to finish.
       res.shouldKeepAlive = false;
       res.setHeader("Connection", "close");
-      res.writeHead(413).end("Beam body limit");
+      res.writeHead(413).end("Local Sharing body limit");
       return;
     }
     let target: BeamTarget;
-    try {target=selectBeamTarget(options.target as BeamTarget,req.url!);} catch {res.writeHead(403).end("Beam request refused");return;}
+    try {target=selectBeamTarget(options.target as BeamTarget,req.url!);} catch {res.writeHead(403).end("Local Sharing request refused");return;}
     const routedOptions = {...options,target};
     const headers = cleanHeaders(req.headers);
     headers.host = options.binding.hostname;
@@ -388,7 +388,7 @@ export async function openBeamChannel(
         );
       } catch {
         response.destroy();
-        res.writeHead(502).end("Beam application response refused");
+        res.writeHead(502).end("Local Sharing application response refused");
         return;
       }
       const body = boundedBody();
@@ -408,7 +408,7 @@ export async function openBeamChannel(
     const body = boundedBody();
     body.once("error", () => {
       request.destroy();
-      if (!res.headersSent) res.writeHead(413).end("Beam body limit");
+      if (!res.headersSent) res.writeHead(413).end("Local Sharing body limit");
       else res.destroy();
     });
     req.pipe(body).pipe(request);

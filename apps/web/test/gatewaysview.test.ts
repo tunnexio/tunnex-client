@@ -16,7 +16,7 @@ const node = (p: Partial<Node> & { id: string; name: string }): Node =>
     ...p,
   }) as Node;
 
-describe("⛔ DEGRADED FIRST — the ACTING surface leads with what is wrong", () => {
+describe("⛔ DEGRADED FIRST, the ACTING surface leads with what is wrong", () => {
   it("orders the groups degraded, healthy, revoked", () => {
     const g = groupGateways([
       node({ id: "a", name: "ok-1" }),
@@ -43,7 +43,7 @@ describe("⛔ OVPN IS A DIFFERENT AXIS FROM POLICY HEALTH", () => {
     expect(g[1]!.rows).toEqual([]);
   });
 
-  it("and a genuinely clean gateway IS healthy — the other side of the same question", () => {
+  it("and a genuinely clean gateway IS healthy, the other side of the same question", () => {
     // Mechanism 9: if the degraded case were the only one observed, the grouping could be a constant.
     const g = groupGateways([node({ id: "a", name: "fine" })]);
     expect(g[0]!.rows).toEqual([]);
@@ -150,7 +150,7 @@ describe("⛔ THE CHIP COUNTS AND THE GROUPING ARE ONE DERIVATION", () => {
     ).toEqual(["ok"]);
     // ⛔ "ALL" MEANS EVERY GROUP THAT HAS ROWS, NOT EVERY GROUP. An empty group under All is a heading and
     // a sentence saying nothing is here, costing a screen of scrolling between the groups that do have
-    // rows — and the CHIP already reports "Healthy (0)". Rendering a card to repeat the count is the answer
+    // rows, and the CHIP already reports "Healthy (0)". Rendering a card to repeat the count is the answer
     // twice, the second time in the space where content should be.
     expect(applyGatewayFilter(g, "all").map((x) => x.key)).toEqual([
       "degraded",
@@ -161,8 +161,8 @@ describe("⛔ THE CHIP COUNTS AND THE GROUPING ARE ONE DERIVATION", () => {
     // even when empty. Its emptiness is the answer to the question the operator just asked, and a chosen
     // filter that produces a blank page is indistinguishable from a page that failed to load.
     //
-    // ⚠ `revoked` is deliberately NOT a value of GatewayFilter — only All / Healthy / Needs attention are
-    // selectable — so the exception is exercised through `healthy` on a fleet with none.
+    // ⚠ `revoked` is deliberately NOT a value of GatewayFilter, only All / Healthy / Needs attention are
+    // selectable, so the exception is exercised through `healthy` on a fleet with none.
     const noneHealthy = groupGateways([
       node({ id: "b", name: "bad", policy_degraded: true }),
     ]);
@@ -199,7 +199,7 @@ describe("⛔ THE NOTES RENDER PER KIND, NOT PER ROW", () => {
     expect(notes[0]).toMatch(/never shown as green/);
   });
 
-  it("a MIXED group returns one note PER KIND — never one note for the group", () => {
+  it("a MIXED group returns one note PER KIND, never one note for the group", () => {
     // Collapsing a mixed group to a single note would attach one kind's explanation to another kind's row.
     const g = groupGateways([
       n("a", "gw1", "site_link_down"),
@@ -208,7 +208,7 @@ describe("⛔ THE NOTES RENDER PER KIND, NOT PER ROW", () => {
     expect(groupNotes(g[0]!.rows)).toHaveLength(2);
   });
 
-  it("a healthy group has NO notes — there is nothing to explain", () => {
+  it("a healthy group has NO notes, there is nothing to explain", () => {
     // Mechanism 9: the empty side observed, so the function is not just "always returns something".
     const g = groupGateways([n("a", "gw1")]);
     expect(groupNotes(g[1]!.rows)).toEqual([]);

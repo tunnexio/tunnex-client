@@ -18,7 +18,7 @@ import {
 import { can } from "../src/lib/rbac";
 
 // ⛔ THE GATE IS THE SERVER'S, NOT THE SCREEN'S. Directory sync lives under Settings but every
-// handler gates on POLICY permissions — PermPolicyManage for the four mutations
+// handler gates on POLICY permissions, PermPolicyManage for the four mutations
 // (idp_sync_handlers.go:31/78/96/125), PermPolicyView for health (:60). An operator with
 // org:update and without policy:manage must not see a control that can only ever 403.
 describe("idpGate", () => {
@@ -59,7 +59,7 @@ describe("idpGate", () => {
   //                                     never renders a UI. It cannot make this gate observable.
   //
   // So no behavioural test can distinguish the two gates today, and writing one against
-  // `operator` would have been a test about a session that cannot exist — the generated `Role`
+  // `operator` would have been a test about a session that cannot exist, the generated `Role`
   // type rejects it for exactly that reason.
   //
   // WHAT IS GUARDED INSTEAD IS THE PREMISE. If the mirror ever grants a human role one
@@ -77,13 +77,13 @@ describe("idpGate", () => {
   });
 });
 
-// ⛔ FOUR ARMS, AND THE FOURTH CAME FROM THE SERVED PAYLOAD — the spec, the handler and the
+// ⛔ FOUR ARMS, AND THE FOURTH CAME FROM THE SERVED PAYLOAD, the spec, the handler and the
 // schema all read as though Google works. The live API answers 400 provider_not_supported
 // ("directory sync currently supports microsoft only", service.go:83).
 describe("idpConfigState", () => {
   const h = { provider: "microsoft", sync_health: "ok", last_sync_ok: true };
 
-  it("⛔ an unsupported provider is NOT 'unknown' — no Retry, no Configure form", () => {
+  it("⛔ an unsupported provider is NOT 'unknown', no Retry, no Configure form", () => {
     // Without this arm Google renders "status unknown" with a Retry that can never succeed,
     // above a Configure form for a credential the server refuses to store.
     expect(
@@ -131,7 +131,7 @@ describe("idpConfigState", () => {
 // 10-minute poll interval = 30 minutes, anchored on the last SUCCESSFUL sync.
 describe("syncTier + tierCopy", () => {
   it("⛔ an unrecognised tier fails toward ESCALATED, never toward ok", () => {
-    // A tier the client does not know must not render as healthy — escalated is the one that
+    // A tier the client does not know must not render as healthy, escalated is the one that
     // asks a human to look. This is the direction that matters, so it is pinned.
     expect(
       syncTier({ provider: "microsoft", sync_health: "", last_sync_ok: false }),
@@ -171,7 +171,7 @@ describe("syncTier + tierCopy", () => {
 
 // There is no endpoint that lists mappings. GET /groups returns origin + idp_provider +
 // idp_group_id (openapi.yaml:2442-2444), and user_groups_origin_shape CHECKs that an idp_sync
-// row carries both idp fields — so the list is derivable and no endpoint is owed.
+// row carries both idp fields, so the list is derivable and no endpoint is owed.
 describe("mappedGroups", () => {
   const gs = [
     { id: "1", name: "Manual", origin: "manual" },
@@ -192,19 +192,19 @@ describe("mappedGroups", () => {
   });
 });
 
-// ⛔ CHECK 7b — the un-map blast radius, one screen over from S14.12's cascade.
+// ⛔ CHECK 7b, the un-map blast radius, one screen over from S14.12's cascade.
 // UnmapGroup (service.go:276) unbinds, DELETES EVERY MEMBER, and pushes org-wide. The group
-// SURVIVES, so rules referencing it are not cascade-deleted — they stay and match nobody.
+// SURVIVES, so rules referencing it are not cascade-deleted, they stay and match nobody.
 describe("UNMAP_CONSEQUENCES", () => {
   it("names every effect the 204 does not mention", () => {
     const all = UNMAP_CONSEQUENCES.join(" ");
     expect(all).toMatch(/every member is removed/i);
-    expect(all).toMatch(/not deleted/i); // the group survives — that is why rules survive
+    expect(all).toMatch(/not deleted/i); // the group survives, that is why rules survive
     expect(all).toMatch(/match nobody/i); // the quietest failure: a rule that still looks enforced
     expect(all).toMatch(/immediately/i); // PushOrgNodes
   });
 
-  it("⛔ names no COUNT — the server serves no preview and the 204 has no body", () => {
+  it("⛔ names no COUNT, the server serves no preview and the 204 has no body", () => {
     // A client-computed member count would be a second source of truth about what the server is
     // about to do (S14.12). Name the risk, omit the number.
     for (const c of UNMAP_CONSEQUENCES) expect(c).not.toMatch(/\d/);
@@ -263,7 +263,7 @@ describe("idpErrorCopy", () => {
 
 // ⛔ S14.12 SHIPPED A SCREEN THAT OFFERED AN ACTION THE SERVER ALWAYS REFUSES.
 //
-// AddGroupMember answers 409 idp_managed_group — "this group is managed by directory sync;
+// AddGroupMember answers 409 idp_managed_group, "this group is managed by directory sync;
 // members cannot be edited manually" (enterprise/policy/service.go:125). The web read `origin`
 // NOWHERE, so Access's GroupRow gated Add/Remove on canManage alone and rendered them on synced
 // groups too. Every use was a guaranteed refusal.

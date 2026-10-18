@@ -52,9 +52,9 @@ func deviceMTU(cfg *TunnelConfig) int {
 }
 
 // allowedIPsUAPI renders a wireguard-go uapi string that LIVE-UPDATES one existing peer's AllowedIPs
-// to exactly `allowedIPs` — no tunnel bounce (S8.5). It carries NEITHER private_key NOR replace_peers NOR
+// to exactly `allowedIPs`, no tunnel bounce (S8.5). It carries NEITHER private_key NOR replace_peers NOR
 // endpoint, so the device's identity, the peer's keys, and the endpoint are all UNTOUCHED (the session +
-// handshake survive). `update_only=true` means an ABSENT peer is NOT created — a typo can never conjure a
+// handshake survive). `update_only=true` means an ABSENT peer is NOT created, a typo can never conjure a
 // phantom peer (the smuggle-class edge). `replace_allowed_ips=true` makes the given set the FULL sweep
 // (removed ranges vanish). An empty set clears the peer's crypto-routing entirely.
 func allowedIPsUAPI(peerPubKeyB64 string, allowedIPs []string) (string, error) {
@@ -77,13 +77,13 @@ func allowedIPsUAPI(peerPubKeyB64 string, allowedIPs []string) (string, error) {
 // its PUBLIC KEY, and the active hub's key differs from the standby's, so the device must drop the old
 // peer and adopt the new one. The uapi does exactly that, ADD-BEFORE-REMOVE so the crypto-routing for
 // `allowedIPs` is never momentarily unowned:
-//  1. add the NEW peer (public_key=new, endpoint=new, keepalive, replace_allowed_ips + the CURRENT set) —
+//  1. add the NEW peer (public_key=new, endpoint=new, keepalive, replace_allowed_ips + the CURRENT set) ,
 //     the same allowed_ips the old peer carried, so routing coverage is preserved across the swap;
-//  2. remove the OLD peer (public_key=old, remove=true) — WG would have stolen its allowed_ips to the new
+//  2. remove the OLD peer (public_key=old, remove=true), WG would have stolen its allowed_ips to the new
 //     peer anyway (a single crypto-routing trie), but we drop it explicitly so no inert peer lingers.
 //
 // It carries NO private_key and NO replace_peers, so the DEVICE IDENTITY (its own key), the interface
-// address, and the kill-switch are ALL untouched — the session survives, no re-enrollment. The OS routes
+// address, and the kill-switch are ALL untouched, the session survives, no re-enrollment. The OS routes
 // point at the INTERFACE, not the peer, so a split-tunnel swap needs no route reconcile (the endpoint
 // host-route + kill-switch re-point that a FULL tunnel needs is the D-WFA-4 carve-out, a separate slice).
 func gatewayPeerSwapUAPI(oldPubB64, newPubB64, endpoint string, keepalive int, allowedIPs []string) (string, error) {
@@ -105,7 +105,7 @@ func gatewayPeerSwapUAPI(oldPubB64, newPubB64, endpoint string, keepalive int, a
 	for _, aip := range allowedIPs {
 		fmt.Fprintf(&sb, "allowed_ip=%s\n", aip)
 	}
-	// Remove the OLD peer only when it actually differs — re-homing back to the same key (or a first
+	// Remove the OLD peer only when it actually differs, re-homing back to the same key (or a first
 	// call where old==new) must not add-then-immediately-remove the peer we just installed.
 	if oldHex != newHex {
 		fmt.Fprintf(&sb, "public_key=%s\n", oldHex)
@@ -131,7 +131,7 @@ func routeSet(allowedIPs []string) map[string]bool {
 // half-routes (0.0.0.0/1 + 128.0.0.0/1 ; ::/1 + 8000::/1): they cover all traffic and
 // are MORE SPECIFIC than the physical default, so they take precedence WITHOUT
 // destroying it. When the tunnel adapter disappears (Down, crash, kill -9), the halves
-// vanish with the interface and the physical default resurfaces automatically — no
+// vanish with the interface and the physical default resurfaces automatically, no
 // capture/restore, no stranded host. Non-default destinations pass through unchanged.
 func routeTargets(allowedIP string) []string {
 	switch allowedIP {

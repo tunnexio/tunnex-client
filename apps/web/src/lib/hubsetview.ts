@@ -1,19 +1,19 @@
 import { relativeAge } from "./format";
 import type { HubSet } from "./api";
 
-// S8.6 Slice 6b — the hub-set (HA) view-model. PURE projection of the served HubSet (S8.6 GET /hub-set)
-// into render-ready rows. Render-floor: it can only claim what a row attests — a member with metrics shows
+// S8.6 Slice 6b, the hub-set (HA) view-model. PURE projection of the served HubSet (S8.6 GET /hub-set)
+// into render-ready rows. Render-floor: it can only claim what a row attests, a member with metrics shows
 // them (rx/tx = 0 is an honest idle link); a NOT-reporting member shows "n/a" (absent, NEVER 0).
 //
-// ⛔ S14.5: THE ABSENT MARKER WAS "—" AND IS NOW "n/a". Two reasons, and the second is the real one.
+// ⛔ S14.5: THE ABSENT MARKER WAS "N/A" AND IS NOW "n/a". Two reasons, and the second is the real one.
 // (1) The em-dash rule bans it as a placeholder glyph outright. (2) An em-dash is not READ as "we have no
 // value" by anyone who has not been told it means that -- it reads as a dash, or as a minus, or as nothing
 // at all to a screen reader. "n/a" says the thing.
 
-// HUB_STALE_MS — a member not handshook within this reads STALE (mirrors GATEWAY_OFFLINE_MS, one clock).
+// HUB_STALE_MS, a member not handshook within this reads STALE (mirrors GATEWAY_OFFLINE_MS, one clock).
 export const HUB_STALE_MS = 90_000;
 
-// formatBytes renders a RAW gauge (display only, never summed as monotonic — S11.1). Absent → the caller
+// formatBytes renders a RAW gauge (display only, never summed as monotonic, S11.1). Absent → the caller
 // substitutes "n/a"; this only formats a real number.
 export function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`;
@@ -44,7 +44,7 @@ export interface HubSetViewModel {
   promotionInEffect: boolean; // the active primary (members[0]) ≠ the configured primary (lowest pin)
 }
 
-// hubSetView projects the served HubSet into rows. null when there is no HA hub set (unpinned org — the
+// hubSetView projects the served HubSet into rows. null when there is no HA hub set (unpinned org, the
 // zero-config case: no HA surface at all). The CONFIGURED order is read from the members' hub_priority (the
 // pins); the ACTIVE order is the served member order. When they diverge, a promotion is in effect and the
 // configured-primary member renders as demoted.

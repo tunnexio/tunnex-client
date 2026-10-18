@@ -4,22 +4,22 @@ import { join } from "node:path";
 import { stripJsComments } from "./support/source";
 
 /**
- * ⛔ A CALLER'S className CANNOT OVERRIDE A CLASS THE COMPONENT ALREADY BAKES IN — it is a coin flip.
+ * ⛔ A CALLER'S className CANNOT OVERRIDE A CLASS THE COMPONENT ALREADY BAKES IN, it is a coin flip.
  *
  * Tailwind emits one rule per utility. When a component's base contains `w-full` and a caller passes
- * `w-32`, BOTH rules exist and the winner is whichever the generated stylesheet orders LAST — which is
+ * `w-32`, BOTH rules exist and the winner is whichever the generated stylesheet orders LAST, which is
  * source order in the stylesheet, not attribute order in the JSX. So the "override" works or does not
  * depending on the build, and nothing in the type system or the test suite can see it.
  *
  * > **IT FAILS SILENTLY AND ASYMMETRICALLY: the same line can be right in one build and wrong in the next.**
  *
- * Found twice before this test existed — `Button.size` was added for it, and then two posture `<Select>`s
+ * Found twice before this test existed, `Button.size` was added for it, and then two posture `<Select>`s
  * shipped `className="w-32"` and rendered FULL WIDTH, turning a three-option choice into something that
  * read as a text field. The fix both times was the same: a real prop that SWAPS the class so only one of
  * them exists.
  *
  * This census is over the class FAMILIES each component bakes in. It is not a general "no className"
- * rule — passing `mt-2` or `text-warn` to a Button is fine, because the base says nothing about either.
+ * rule, passing `mt-2` or `text-warn` to a Button is fine, because the base says nothing about either.
  */
 const SRC = join(__dirname, "..", "src");
 
@@ -38,7 +38,7 @@ function files(dir: string): string[] {
 }
 
 describe("no caller overrides a baked-in utility class", () => {
-  it("⛔ EVERY SUCH OVERRIDE IS A COIN FLIP — use the component's own prop", () => {
+  it("⛔ EVERY SUCH OVERRIDE IS A COIN FLIP, use the component's own prop", () => {
     const bad: string[] = [];
     for (const f of files(SRC)) {
       // ⚠ ui.tsx DEFINES the bases, so its own occurrences are the subject, not violations.

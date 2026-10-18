@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// peerAuthKind — Windows uses the real GetNamedPipeClientProcessId resolver.
+// peerAuthKind, Windows uses the real GetNamedPipeClientProcessId resolver.
 const peerAuthKind = "native"
 
 // NewPeerResolver (Windows) authenticates the caller via GetNamedPipeClientProcessId
@@ -51,7 +51,7 @@ func NewPeerResolver() PeerResolver {
 // pipeServerHandle extracts the OS pipe handle from a go-winio pipe connection, which
 // hides it in the unexported win32File.handle field. Reflection + unsafe is the
 // established way to reach it (go-winio exposes no accessor and no syscall.Conn). Fails
-// closed (false) if the field can't be found — so a go-winio change degrades to "refuse
+// closed (false) if the field can't be found, so a go-winio change degrades to "refuse
 // the caller", never to "trust an unidentified caller".
 func pipeServerHandle(c net.Conn) (windows.Handle, bool) {
 	rv := reflect.ValueOf(c)
@@ -64,7 +64,7 @@ func pipeServerHandle(c net.Conn) (windows.Handle, bool) {
 // searchHandle walks an addressable struct (bounded depth) for the go-winio pipe's
 // server handle: a `handle` field of uintptr kind INSIDE a struct named `win32File`.
 // Requiring the enclosing type to be win32File avoids grabbing some other struct's
-// unrelated `handle` field and resolving the WRONG process (review #6) — if go-winio's
+// unrelated `handle` field and resolving the WRONG process (review #6), if go-winio's
 // layout ever changes, this returns false → the caller FAILS CLOSED (refuses).
 func searchHandle(v reflect.Value, depth int) (windows.Handle, bool) {
 	if depth > 4 || !v.IsValid() || v.Kind() != reflect.Struct || !v.CanAddr() {

@@ -13,7 +13,7 @@ import { CommandPalette } from "../src/components/CommandPalette";
 import { NAV_DESTINATIONS } from "../src/components/AppShell";
 import { MotionProvider } from "../src/components/MotionProvider";
 
-// S14.3 SLICE B — the palette. NAVIGATION ONLY, and reading the SAME source the sidebar renders.
+// S14.3 SLICE B, the palette. NAVIGATION ONLY, and reading the SAME source the sidebar renders.
 
 afterEach(cleanup);
 
@@ -42,7 +42,7 @@ describe("the palette is a named dialog with a combobox and a listbox", () => {
     expect(screen.getByRole("listbox", { name: "Destinations" })).toBeTruthy();
   });
 
-  it("is CLOSED until asked for — it must not be in the DOM unprompted", () => {
+  it("is CLOSED until asked for, it must not be in the DOM unprompted", () => {
     render(
       <MemoryRouter>
         <OrgProvider>
@@ -58,7 +58,7 @@ describe("the palette is a named dialog with a combobox and a listbox", () => {
   });
 });
 
-describe("⛔ THE PALETTE MAY RANK AND FILTER — IT MAY NEVER BE THE ONLY ROUTE", () => {
+describe("⛔ THE PALETTE MAY RANK AND FILTER, IT MAY NEVER BE THE ONLY ROUTE", () => {
   it("its unfiltered destination set is EXACTLY the nav's", () => {
     // S14.2's rule, applied one surface over. A destination reachable only by typing is hidden from everyone
     // who does not already know it exists. Reading NAV_DESTINATIONS rather than a second list is what makes
@@ -71,13 +71,13 @@ describe("⛔ THE PALETTE MAY RANK AND FILTER — IT MAY NEVER BE THE ONLY ROUTE
     expect(labels.sort()).toEqual(NAV_DESTINATIONS.map((d) => d.label).sort());
   });
 
-  it("the set is non-trivial — parity over an empty list would hold vacuously", () => {
+  it("the set is non-trivial, parity over an empty list would hold vacuously", () => {
     expect(NAV_DESTINATIONS.length).toBeGreaterThanOrEqual(8);
   });
 });
 
 describe("it offers NO ACTIONS in this slice, and that is the measured ruling", () => {
-  it("every option is a navigation destination — nothing that mutates", () => {
+  it("every option is a navigation destination, nothing that mutates", () => {
     // An action in a palette is a mutation two keystrokes from a typo, and lib/undo.ts measured that MOST of
     // this product's mutations are NOT reversible. "Revoke device" behind a fuzzy match with no undo behind it
     // would be the worst affordance in the product.

@@ -32,10 +32,10 @@ export interface TunnelConfig {
   persistent_keepalive?: number;
   // dns_forwards (S8.4): domain-scoped resolvers to install for this device's
   // cross-site name resolution. Absent/empty until S8.5's device-routes slice
-  // populates them — the client is inert-safe when there are none.
+  // populates them, the client is inert-safe when there are none.
   dns_forwards?: ResolverForward[];
   // control_plane_endpoint (WF-A / D-WFA-4): the tenant API host:port. Sent for a FULL tunnel so the
-  // helper's kill-switch carves ONE pass to the CP — the control channel then survives the tunnel going
+  // helper's kill-switch carves ONE pass to the CP, the control channel then survives the tunnel going
   // down, so the device can poll a re-home during a hard hub death. Omitted for split (no kill-switch).
   control_plane_endpoint?: string;
 }
@@ -50,15 +50,15 @@ export interface HelperRequest {
   config?: TunnelConfig;
   // resolvers rides ONLY on set_resolvers (the full desired set). Mirrors apps/helper.
   resolvers?: ResolverForward[];
-  // allowed_ips rides ONLY on set_allowed_ips — the full desired peer AllowedIPs set (baked-stable ∪
+  // allowed_ips rides ONLY on set_allowed_ips, the full desired peer AllowedIPs set (baked-stable ∪
   // declared-ranges), live-applied without a bounce. S8.5. Mirrors apps/helper.
   allowed_ips?: string[];
-  // gateway_peer rides ONLY on set_gateway_peer — the new active-hub peer to re-home onto (WF-A). The
+  // gateway_peer rides ONLY on set_gateway_peer, the new active-hub peer to re-home onto (WF-A). The
   // helper preserves the current peer's allowed_ips; device identity is untouched. Mirrors apps/helper.
   gateway_peer?: GatewayPeer;
 }
 
-// GatewayPeer mirrors apps/helper GatewayPeer (WF-A): the re-home target's public routing facts —
+// GatewayPeer mirrors apps/helper GatewayPeer (WF-A): the re-home target's public routing facts ,
 // its WireGuard public key and host:port endpoint. NEVER the device's own key.
 export interface GatewayPeer {
   peer_public_key: string;
@@ -75,12 +75,12 @@ export interface TunnelStatus {
   rx_bytes?: number;
   tx_bytes?: number;
   // The device's assigned tunnel address (from the loaded config, e.g.
-  // "10.99.0.2/32"). MAIN attaches it — it's config, not a helper runtime stat.
+  // "10.99.0.2/32"). MAIN attaches it, it's config, not a helper runtime stat.
   address?: string;
 }
 
 // PostureStatus mirrors apps/helper PostureStatus (S7.5.3): read-only local
-// posture facts. null/undefined = the helper could not determine the fact —
+// posture facts. null/undefined = the helper could not determine the fact ,
 // reported ABSENT upstream, never guessed.
 export interface PostureStatus {
   disk_encrypted?: boolean | null;
@@ -97,7 +97,7 @@ export interface HelperResponse {
 }
 
 // encodeFrame length-prefixes a JSON value. Throws if it would exceed the cap
-// (the helper rejects oversize frames too — fail before writing).
+// (the helper rejects oversize frames too, fail before writing).
 export function encodeFrame(value: unknown): Buffer {
   const body = Buffer.from(JSON.stringify(value), "utf8");
   if (body.length > MAX_MESSAGE_BYTES) throw new Error("message exceeds MAX_MESSAGE_BYTES");
@@ -133,7 +133,7 @@ export class FrameDecoder {
 // owning connection dropping as app-death and fails the tunnel closed. Responses
 // are matched to requests FIFO (the helper answers one request per connection in
 // order). An UNEXPECTED close (helper died) invokes onLost so the UI can surface
-// it. The token/key are never involved here — only the typed tunnel protocol.
+// it. The token/key are never involved here, only the typed tunnel protocol.
 export class HelperConnection {
   private sock: net.Socket | null = null;
   private connecting: {

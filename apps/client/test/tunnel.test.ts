@@ -40,7 +40,7 @@ test("encodeFrame writes a 4-byte big-endian length prefix", () => {
 test("FrameDecoder reassembles a message split across chunks", () => {
   const frame = encodeFrame({ version: PROTOCOL_VERSION, verb: "status" });
   const dec = new FrameDecoder();
-  // Feed it one byte at a time — nothing yields until the full frame arrives.
+  // Feed it one byte at a time, nothing yields until the full frame arrives.
   for (let i = 0; i < frame.length - 1; i++) {
     assert.equal(dec.push(frame.subarray(i, i + 1)).length, 0);
   }
@@ -70,7 +70,7 @@ test("helperSocketPath is platform-specific", () => {
 });
 
 // The helper reports runtime stats but NOT the tunnel address (it's config), so
-// MAIN attaches it — this is what lets the UI show "Your IP". Guard the plumb.
+// MAIN attaches it, this is what lets the UI show "Your IP". Guard the plumb.
 test("TunnelController attaches the config's tunnel address to forwarded status", async () => {
   const sockPath = testEndpoint("addr");
   try { fs.unlinkSync(sockPath); } catch { /* fresh */ }
@@ -729,7 +729,7 @@ function recordingHelper(): { server: net.Server; verbs: string[]; requests: Arr
 }
 
 // INERT RED (S8.4): a device with NO dns_forwards makes ZERO set_resolvers calls on
-// up AND on down — zero files, zero behavior delta against every existing install.
+// up AND on down, zero files, zero behavior delta against every existing install.
 test("TunnelController with no dns_forwards never calls set_resolvers", async () => {
   const sockPath = testEndpoint("dnsinert");
   try { fs.unlinkSync(sockPath); } catch { /* fresh */ }
@@ -911,7 +911,7 @@ test("TunnelController still runs authoritative tunnel_down when the resolver pr
   }
 });
 
-// R3 RED (S8.4 fold): an old/Windows helper that REFUSES set_resolvers (ok:false — resolvers_unsupported /
+// R3 RED (S8.4 fold): an old/Windows helper that REFUSES set_resolvers (ok:false, resolvers_unsupported /
 // unknown_verb) must NOT latch resolversActive true; otherwise every future down() emits a redundant empty
 // sweep forever. After a refused install, down() sends NO set_resolvers.
 test("TunnelController does not redundant-sweep after a refused set_resolvers", async () => {

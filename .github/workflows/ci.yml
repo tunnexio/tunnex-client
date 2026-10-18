@@ -107,6 +107,15 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: node --test scripts/nat0-aws-run.test.cjs
 
+      - name: NAT proof — compile and unprivileged tests (not a live walk)
+        if: matrix.os == 'macos-latest'
+        working-directory: apps/helper
+        run: go test -mod=readonly -tags natproof ./...
+
+      - name: NAT AWS runner — offline transport selection regression
+        if: matrix.os == 'macos-latest'
+        run: node --test scripts/nat0-aws-run.test.cjs
+
       - name: Install (electron binary skipped — CI never launches it)
         run: |
           corepack enable

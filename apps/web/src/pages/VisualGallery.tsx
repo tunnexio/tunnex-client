@@ -23,7 +23,7 @@ import { AreaChart, Donut, Histogram, NodeLink } from "../components/viz";
 import { OneTimeSecretModal } from "../components/OneTimeSecret";
 import { Icon, ICON_PATHS, type IconName } from "../components/Icon";
 
-// ⛔ THE VISUAL GALLERY — THE SUBJECT OF THE VIEWPORT LEG.
+// ⛔ THE VISUAL GALLERY, THE SUBJECT OF THE VIEWPORT LEG.
 //
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════
 // THIS GALLERY EXISTS TO HOLD STATES THAT ONLY OCCUR IN COMBINATION.
@@ -33,7 +33,7 @@ import { Icon, ICON_PATHS, type IconName } from "../components/Icon";
 // ⛔ SO IF YOU ARE EXTENDING THIS FILE: ADD COMBINATIONS, NOT MORE COMPONENTS.
 //
 // THE INSTANCE THAT EARNED THE RULE. `Card` gained `backdrop-filter` (the glass recipe). That makes an
-// element the containing block for `position: fixed` descendants — so all five modals rendered inside a Card
+// element the containing block for `position: fixed` descendants, so all five modals rendered inside a Card
 // stopped being viewport-positioned, were clipped to the card, and had the card's own body sitting over their
 // buttons. Clicks stopped landing.
 //
@@ -51,13 +51,13 @@ import { Icon, ICON_PATHS, type IconName } from "../components/Icon";
 // twenty more components rendered alone.
 //
 // ── why a gallery rather than per-screen snapshots ──────────────────────────────────────────────────────
-// All three visual defects of 2026-08-01 originated in SHARED CODE — a spacing config, a shared scale, a
+// All three visual defects of 2026-08-01 originated in SHARED CODE, a spacing config, a shared scale, a
 // shared primitive. NONE originated in a screen. A screen-shaped suite pays per-screen maintenance to catch
 // defects that are not screen-shaped, and needs re-baselining every time a screen is redesigned.
 //
 // ── shipping ───────────────────────────────────────────────────────────────────────────────────────────
 // Behind `VITE_VISUAL_GALLERY`, unset in every production build, so this route is tree-shaken out. A test
-// asserts the production bundle does not contain it — an unshipped surface must be PROVEN unshipped, not
+// asserts the production bundle does not contain it, an unshipped surface must be PROVEN unshipped, not
 // assumed (see apps/web/test/visualgallery.test.ts).
 
 function GalleryGroup({
@@ -94,13 +94,13 @@ const COLS = [
 export default function VisualGallery() {
   // Open by default: the snapshot must contain the overlay, not a button that would reveal it.
   //
-  // ⛔ BUT IT MUST BE CLOSEABLE, and it was not — `onDismiss` was a no-op, so the overlay was permanent.
+  // ⛔ BUT IT MUST BE CLOSEABLE, and it was not, `onDismiss` was a no-op, so the overlay was permanent.
   // That mattered the moment a SECOND screenshot wanted a different section: the overlay is `fixed inset-0`,
   // so it sits over every element shot on the page. The first attempt to work around it masked
-  // `[role="dialog"]` — which IS the full-viewport overlay — and produced a baseline that was ENTIRELY
+  // `[role="dialog"]`, which IS the full-viewport overlay, and produced a baseline that was ENTIRELY
   // magenta. A solid rectangle would have passed forever with no subject inside it.
   const [showModal, setShowModal] = useState(true);
-  // Live so the gallery shows a switch that actually moves — a static one hides the state it exists to show.
+  // Live so the gallery shows a switch that actually moves, a static one hides the state it exists to show.
   const [galleryOvpn, setGalleryOvpn] = useState(false);
 
   return (
@@ -146,7 +146,7 @@ export default function VisualGallery() {
 
       {/* ⛔ COMBINATION 1: a table in ALL THREE of its states, side by side. The failed and empty renderings
           are the ones that historically diverge, and they are only comparable when adjacent. */}
-      <GalleryGroup title="DataTable — populated / empty / failed">
+      <GalleryGroup title="DataTable, populated / empty / failed">
         <div className="w-80">
           <Panel title="Populated">
             <DataTable
@@ -206,7 +206,7 @@ export default function VisualGallery() {
         </div>
       </GalleryGroup>
 
-      {/* ⛔ COMBINATION 2: a donut INSIDE a panel INSIDE the page grid — the nesting where the 24px-vs-96px
+      {/* ⛔ COMBINATION 2: a donut INSIDE a panel INSIDE the page grid, the nesting where the 24px-vs-96px
           sizing defect actually lived. A donut rendered alone would have looked fine at any size. */}
       <GalleryGroup title="Visualisations in situ">
         <div className="w-80">
@@ -255,12 +255,12 @@ export default function VisualGallery() {
         </div>
         {/* ⛔ COMBINATION 4 (S14.5): ALL THREE LINK TONES AT ONCE, WITH A NODE SELECTED.
             `Link` was `healthy: boolean` under a three-entry legend. The tones only diverge visually when
-            they are adjacent, and `degraded` is the one that had nowhere to live — a two-state type forces
+            they are adjacent, and `degraded` is the one that had nowhere to live, a two-state type forces
             it to collapse into a neighbour, and collapsing it into `linked` is the silent-blackhole
             direction. Selection is rendered ON, because dimming is a RELATIVE effect: an unselected diagram
             proves nothing about what selection does to the other links. */}
         <div className="w-80">
-          <Panel title="Node link — three tones, one selected">
+          <Panel title="Node link, three tones, one selected">
             <NodeLink
               label="Topology"
               source={{ endpoint: "/x" }}
@@ -308,7 +308,7 @@ export default function VisualGallery() {
           </Panel>
         </div>
         <div className="w-80">
-          <Panel title="Node link — inert (no onSelect)">
+          <Panel title="Node link, inert (no onSelect)">
             <NodeLink
               label="Topology"
               source={{ endpoint: "/x" }}
@@ -324,7 +324,7 @@ export default function VisualGallery() {
         </div>
       </GalleryGroup>
 
-      {/* ⛔ COMBINATION 3 — THE ONE THAT EARNED THIS FILE.
+      {/* ⛔ COMBINATION 3, THE ONE THAT EARNED THIS FILE.
           A MODAL RENDERED OPEN, FROM INSIDE A CARD. `Card` carries `backdrop-filter`, which makes it the
           containing block for `position: fixed` descendants. Before the portal fix this arrangement clipped
           the overlay to the card and put the card's body over the modal's buttons.
@@ -347,17 +347,17 @@ export default function VisualGallery() {
         </Card>
       </GalleryGroup>
 
-      {/* ⛔ FULL COLUMN WIDTH — THE HARNESS IS PART OF THE SPECIMEN.
+      {/* ⛔ FULL COLUMN WIDTH, THE HARNESS IS PART OF THE SPECIMEN.
           ════════════════════════════════════════════════════════════════════════════════════════════════
           EVERY SPECIMEN ABOVE RENDERS INSIDE `w-80`. That is a real context and it is not the only one.
           `NodeLink` has a viewBox and `w-full`, so its HEIGHT DERIVES FROM ITS WIDTH: 192px at 320, and
-          ~750px in an 8fr column at 1440 — where it shipped, with two enormous discs floating in it.
+          ~750px in an 8fr column at 1440, where it shipped, with two enormous discs floating in it.
           THE GALLERY COULD NOT SEE IT, because the gallery had pinned the only input to the function.
           A HARNESS THAT CONSTRAINS ITS SPECIMENS TESTS THE HARNESS.
-          BOTH WIDTHS STAY. Neither alone is the component — that is the finding, not a compromise. */}
+          BOTH WIDTHS STAY. Neither alone is the component, that is the finding, not a compromise. */}
       <section className="flex flex-col gap-2" data-wide-specimens>
         <h2 className="font-mono text-micro font-semibold uppercase tracking-[.16em] text-ink-secondary">
-          At full column width — the width-sensitive class
+          At full column width, the width-sensitive class
         </h2>
         <Panel title="Node link at column width">
           <NodeLink
@@ -431,9 +431,9 @@ export default function VisualGallery() {
           />
         </Panel>
         {/* ⛔ THE TIME-SERIES PRIMITIVE, WITH FIXTURES, SO ITS DESIGN CAN BE JUDGED BEFORE ITS DATA EXISTS.
-            On Overview this same component renders `roadmap`, which draws NOTHING — correct there, useless
+            On Overview this same component renders `roadmap`, which draws NOTHING, correct there, useless
             for review. The gallery is where a component gets to be looked at without an endpoint. */}
-        <Panel title="Area chart — site-link throughput (fixture data)">
+        <Panel title="Area chart, site-link throughput (fixture data)">
           <AreaChart
             label="Site-link throughput"
             source={{ endpoint: "/x" }}
@@ -481,7 +481,7 @@ export default function VisualGallery() {
       </section>
 
       {/* The settings vocabulary: a chrome-less group of rows, each lending its label to its control.
-          Shown beside Panel above so the difference is visible — Panel is a surface, Section is structure. */}
+          Shown beside Panel above so the difference is visible, Panel is a surface, Section is structure. */}
       <GalleryGroup title="Settings vocabulary">
         <div className="w-full max-w-[46rem]">
           <PageHeader title="Settings" subtitle="Demo Organization" />

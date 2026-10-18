@@ -42,7 +42,7 @@ test("revocation: a present device is kept (no teardown)", async () => {
   assert.equal(teardowns, 0);
 });
 
-test("revocation: a throw is inconclusive — never tears down, backs off", async () => {
+test("revocation: a throw is inconclusive, never tears down, backs off", async () => {
   const api = fakeApi(() => new Error("network"));
   let teardowns = 0;
   // Small base so the backoff math is easy to assert.
@@ -154,13 +154,13 @@ test("revocation: start() is idempotent even mid-probe (no second concurrent loo
   m.start();
   assert.equal(scheduled, 1); // first schedule armed
   // A second start() while the first probe is in flight (timer transiently null) must
-  // NOT arm a second loop — the running-flag guard, not a timer-presence check.
+  // NOT arm a second loop, the running-flag guard, not a timer-presence check.
   const cb = pending.shift()!; // simulate the timer firing → loop() nulls timer, awaits probe
   cb();
   m.start(); // re-entrant start during the in-flight probe
   await Promise.resolve();
   await Promise.resolve();
-  // Only the loop's own reschedule should have armed a new timer — not a second start.
+  // Only the loop's own reschedule should have armed a new timer, not a second start.
   assert.equal(scheduled, 2);
   m.stop();
 });
@@ -173,11 +173,11 @@ test("revocation: exported cadence constants are the documented values", () => {
 // backoffOf reads the private backoff for assertion only (0 = steady cadence). Kept
 // in the test, not the class, so production carries no test-only surface.
 function backoffOf(m: RevocationMonitor): number {
-  // @ts-expect-error — private field read for the test.
+  // @ts-expect-error, private field read for the test.
   return m.backoff as number;
 }
 
 // THE REGRESSION RED (S7.3 fold #4/#6 → #1/#2): a LEGACY config (blank orgId, from a
 // pre-orgId build) must still detect a revocation. The monitor passes "" through; device
-// (deviceStatus) falls back to the all-orgs scan, so a gone device fires teardown — instead
+// (deviceStatus) falls back to the all-orgs scan, so a gone device fires teardown, instead
 // of the malformed-URL throw that would have made revocation SILENTLY never fire.

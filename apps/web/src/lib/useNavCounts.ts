@@ -18,10 +18,10 @@ import {
   type NavCounts,
 } from "./navcounts";
 
-// S14.4 — the shell's ONE data dependency, owned in ONE place.
+// S14.4, the shell's ONE data dependency, owned in ONE place.
 //
 // AppShell owned no data before this. Giving it some is a real cost, so it is confined: one hook, one set of
-// counts, four sources, and every source resolves INDEPENDENTLY. A failure in one never blanks another —
+// counts, four sources, and every source resolves INDEPENDENTLY. A failure in one never blanks another ,
 // which is the same reasoning that kept the six stat cards off an aggregated endpoint.
 //
 // Each source goes through `loadOne`, so a failed fetch produces FAILED rather than an empty array whose
@@ -30,7 +30,7 @@ import {
 const isOnline = (n: Node) => {
   if (!n.last_seen_at) return false;
   // Same recency window the Overview's `online` count uses (S3.6). Derived from LAST HANDSHAKE, not a session
-  // — which is why the label everywhere says "seen recently", never "online".
+  //, which is why the label everywhere says "seen recently", never "online".
   return Date.now() - new Date(n.last_seen_at).getTime() < 3 * 60 * 1000;
 };
 
@@ -42,7 +42,7 @@ export function useNavCounts(): NavCounts {
   const refresh = useCallback(async () => {
     // ⭐ The org-list fetch is gone (S12.5); the seam supplies it.
     if (!currentOrg) {
-      // No org, or the org list failed: every count is UNKNOWN. Not zero — we did not learn that there are
+      // No org, or the org list failed: every count is UNKNOWN. Not zero, we did not learn that there are
       // none, we failed to learn anything.
       setCounts({
         gatewaysOnline: FAILED,
@@ -71,7 +71,7 @@ export function useNavCounts(): NavCounts {
           params: { path: { orgId } },
         }),
       ) as Promise<Loaded<Device[]>>,
-      // ⚠ DEPLOYMENT-SCOPED, so it takes no orgId — the licence belongs to the box, not the tenant.
+      // ⚠ DEPLOYMENT-SCOPED, so it takes no orgId, the licence belongs to the box, not the tenant.
       loadOne(() => api.GET("/api/v1/license")) as Promise<
         Loaded<{ gateway_ceiling?: number | null; gateways_in_use?: number }>
       >,
@@ -87,7 +87,7 @@ export function useNavCounts(): NavCounts {
       gatewaysTotal: gatewayTotalFrom(nodes),
       gatewaysOnline: countFrom(nodes, (n) => n.filter(isOnline).length),
       // ⚠ THE CEILING IS DEPLOYMENT-WIDE AND COMES FROM THE LICENCE, not from anything org-scoped. A null
-      // ceiling is UNLIMITED — a real answer — and must not be confused with a read that failed.
+      // ceiling is UNLIMITED, a real answer, and must not be confused with a read that failed.
       gatewayCeiling: lic.ok
         ? lic.data.gateway_ceiling == null
           ? null
@@ -96,11 +96,11 @@ export function useNavCounts(): NavCounts {
       sites: countFrom(sites, (r) => r.length),
       devices: countFrom(devices, (r) => r.length),
     });
-    // ⚠ currentOrg IS A DEPENDENCY — the sidebar counts belong to ONE organization, and a switch that left
+    // ⚠ currentOrg IS A DEPENDENCY, the sidebar counts belong to ONE organization, and a switch that left
     // them stale would put another tenant's numbers beside this tenant's name.
   }, [currentOrg]);
 
-  // Refresh on ROUTE CHANGE — the case that actually matters, because the user just did something and moved.
+  // Refresh on ROUTE CHANGE, the case that actually matters, because the user just did something and moved.
   useEffect(() => {
     void refresh();
   }, [refresh, location.pathname]);

@@ -10,14 +10,14 @@ import { useAuth } from "../lib/auth";
  * ChangePassword is the forced first-login password change.
  *
  * ⛔ THE SERVER WALL EXISTED BEFORE THIS SCREEN DID, AND THAT COMBINATION IS ITS OWN DEFECT. Every route
- * returned `403 password_change_required` and the client had nowhere to send anyone — so the operator
+ * returned `403 password_change_required` and the client had nowhere to send anyone, so the operator
  * signed in with the credential the logs printed, landed on the create-org form, and read a red error under
  * a button that could never work. Correct refusal, no route: the same dead-end shape as a ceiling with no
  * upgrade path.
  *
  * ⭐ A WALL IS ONLY HONEST IF IT HAS A DOOR IN IT.
  *
- * ⚠ THE BOOTSTRAP CREDENTIAL IS PRINTED TO `docker compose logs` — shipped, aggregated, searchable — so it
+ * ⚠ THE BOOTSTRAP CREDENTIAL IS PRINTED TO `docker compose logs`, shipped, aggregated, searchable, so it
  * is treated as compromised from the moment it works. This screen is how it stops being.
  */
 export function ChangePassword() {
@@ -46,7 +46,7 @@ export function ChangePassword() {
         setError(apiErrorMessage(err, "Could not change the password."));
         return;
       }
-      // ⛔ THE FLAG IS CLEARED LOCALLY TOO, or the guard that routed us here routes us here again — a loop
+      // ⛔ THE FLAG IS CLEARED LOCALLY TOO, or the guard that routed us here routes us here again, a loop
       // whose only exit is closing the tab, which this product has already shipped once.
       if (state.status === "authed") {
         setUser({ ...state.user, must_change_password: false });

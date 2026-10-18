@@ -16,12 +16,12 @@ func DefaultSocketPath() string { return `\\.\pipe\tunnex-helper` }
 //
 // ENGLISH INTENT: SYSTEM (SY) and the local Administrators group (BA) get full
 // control (GenericAll); any Authenticated User (AU) may CONNECT and read/write
-// (GenericRead+GenericWrite) so the UNPRIVILEGED desktop app — running as the
-// logged-in user, not admin — can reach the pipe at all. The DACL is Protected
+// (GenericRead+GenericWrite) so the UNPRIVILEGED desktop app, running as the
+// logged-in user, not admin, can reach the pipe at all. The DACL is Protected
 // (P) so it does NOT inherit looser parent ACEs. Access alone is NOT authorization:
 // which PROCESS may drive the helper is decided by the caller-path check
 // (GetNamedPipeClientProcessId → image inside the install dir). So a non-Tunnex
-// authenticated process CAN open the pipe but is refused with caller_untrusted —
+// authenticated process CAN open the pipe but is refused with caller_untrusted ,
 // see the refused-client smoke step (PLAN "S6.3 Windows pipe SDDL").
 const pipeSDDL = "D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GRGW;;;AU)"
 

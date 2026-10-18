@@ -11,7 +11,7 @@ import {
 // ⛔ THE SWEEP, MADE STRUCTURAL.
 //
 // The edition-vs-failure conflation was fixed once, at one call site, and was STILL LIVE two cards over. A fix
-// at a call site does not reach the call sites beside it — only an enumeration finds the rest, and only a
+// at a call site does not reach the call sites beside it, only an enumeration finds the rest, and only a
 // census keeps the enumeration true.
 
 // The standalone desktop renderer consumes a pinned core API contract snapshot.
@@ -47,13 +47,13 @@ function specEnterprisePaths(): Set<string> {
 describe("ENTERPRISE_PATHS is held to the SPEC, not to memory", () => {
   const fromSpec = specEnterprisePaths();
 
-  it("the spec parse is non-trivial — a census over zero paths cannot fail", () => {
+  it("the spec parse is non-trivial, a census over zero paths cannot fail", () => {
     expect(fromSpec.size).toBeGreaterThanOrEqual(20);
   });
 
   it("EVERY enterprise path in the spec is registered here", () => {
     // ⛔ THIS IS THE STRUCTURAL HALF. Add an enterprise endpoint to the spec and this goes red until it is
-    // registered — so a new enterprise card cannot reach a screen without passing through the seam.
+    // registered, so a new enterprise card cannot reach a screen without passing through the seam.
     const missing = [...fromSpec].filter((p) => !isEnterprisePath(p));
     expect(
       missing,
@@ -61,7 +61,7 @@ describe("ENTERPRISE_PATHS is held to the SPEC, not to memory", () => {
     ).toEqual([]);
   });
 
-  it("nothing is registered that the spec does not gate — the set must not drift wider either", () => {
+  it("nothing is registered that the spec does not gate, the set must not drift wider either", () => {
     // A set that over-claims is its own defect: it would render an OPEN capability as absent for open-edition
     // orgs, which is the same lie pointing the other way.
     const extra = ENTERPRISE_PATHS.filter((p) => !fromSpec.has(p));
@@ -72,7 +72,7 @@ describe("ENTERPRISE_PATHS is held to the SPEC, not to memory", () => {
   });
 });
 
-describe("gate() — the render decision, taken at the seam", () => {
+describe("gate(), the render decision, taken at the seam", () => {
   const ENT = "/api/v1/organizations/{orgId}/policies";
   const OPEN = "/api/v1/organizations/{orgId}/nodes";
 
@@ -102,7 +102,7 @@ describe("gate() — the render decision, taken at the seam", () => {
     expect(gate("open", ENT, { state: "failed" })).toEqual({ state: "absent" });
   });
 
-  it("UNKNOWN edition is treated as not-enterprise — no flash before /meta answers", () => {
+  it("UNKNOWN edition is treated as not-enterprise, no flash before /meta answers", () => {
     expect(gate("unknown", ENT, null)).toEqual({ state: "absent" });
   });
 

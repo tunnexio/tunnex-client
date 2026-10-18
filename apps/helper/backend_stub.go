@@ -2,8 +2,8 @@ package helper
 
 // StubBackend satisfies Backend without touching the network. It lets the helper
 // binary build + serve the full protocol (auth, framing, fail-closed state) on any
-// platform while the real wireguard-go (macOS) / wireguard-nt (Windows) backends —
-// and their pre-arranged pf/WFP kill-switch — are implemented in build-tagged
+// platform while the real wireguard-go (macOS) / wireguard-nt (Windows) backends ,
+// and their pre-arranged pf/WFP kill-switch, are implemented in build-tagged
 // files. Every tunnel op reports not_implemented so nothing silently "succeeds".
 type StubBackend struct{}
 

@@ -36,11 +36,11 @@ const (
 // unloads itself. Armed ONLY for the packaged single-dir install of OUR bundle.
 func startUninstallWatchdog(installDir string, sup *helper.Supervisor) {
 	if installDir == "" || containsPathListSep(installDir) {
-		return // dev / multi-dir install — no watchdog
+		return // dev / multi-dir install, no watchdog
 	}
 	// installDir = …/Tunnex.app/Contents/MacOS → app bundle = up two levels.
 	app := filepath.Dir(filepath.Dir(installDir))
-	// Only watch OUR bundle by name — never self-uninstall because some unrelated .app
+	// Only watch OUR bundle by name, never self-uninstall because some unrelated .app
 	// was moved/removed (review #4).
 	if filepath.Base(app) != appBundle {
 		return
@@ -75,30 +75,30 @@ func containsPathListSep(s string) bool {
 // selfUninstall tears the helper down after its owning app was removed. Ordering:
 // release the kill-switch, surgically remove the pf anchor, remove installed files,
 // THEN unload the daemon by LABEL (bootout-by-label needs no plist file, so removing
-// the plist first is safe — review #3). bootout SIGTERMs us, so file removal happens
+// the plist first is safe, review #3). bootout SIGTERMs us, so file removal happens
 // before it; os.Exit is a fallback if bootout doesn't take.
 func selfUninstall(app string, sup *helper.Supervisor) {
-	log.Printf("tunnex-helper: owning app %q removed — self-uninstalling", app)
+	log.Printf("tunnex-helper: owning app %q removed, self-uninstalling", app)
 
 	// 1. Release any armed kill-switch (pf anchor rules) so networking is restored.
 	if err := sup.SelfHeal(); err != nil {
 		log.Printf("tunnex-helper: self-uninstall self-heal: %v", err)
 	}
 	// 2. Remove ONLY the tunnex anchor line from /etc/pf.conf (never clobber the user's
-	//    file — review #2) + flush the anchor.
+	//    file, review #2) + flush the anchor.
 	removePfAnchor()
 	// 3. Remove installed files (before bootout, which terminates this process).
 	_ = os.Remove(daemonPlist)
 	_ = os.RemoveAll(installDest)
 	_ = os.RemoveAll(runtimeDir)
-	// 4. Unload self by LABEL (no plist file needed) — this terminates the process.
+	// 4. Unload self by LABEL (no plist file needed), this terminates the process.
 	_ = exec.Command("launchctl", "bootout", "system/"+daemonLabel).Run()
 	os.Exit(0)
 }
 
 // removePfAnchor deletes the single `anchor "tunnex"` line from /etc/pf.conf and
-// reloads pf — a surgical edit that preserves any rules the user or another tool added
-// after install (the whole-file restore this replaces destroyed them — review #2).
+// reloads pf, a surgical edit that preserves any rules the user or another tool added
+// after install (the whole-file restore this replaces destroyed them, review #2).
 func removePfAnchor() {
 	if data, err := os.ReadFile(pfConfPath); err == nil {
 		lines := strings.Split(string(data), "\n")

@@ -30,11 +30,11 @@ import type { AgentRow } from "../lib/agentview";
 const PAGE = 100;
 
 /**
- * Access events — the Zero Trust flow log.
+ * Access events, the Zero Trust flow log.
  *
  * ⛔ FOURTH UNREACHABLE-SURFACE INSTANCE. `/access-events` and `/access-log/health` shipped in
  * S7.5.1 and nothing in `apps/web` read either. Found only by censusing the DESIGN rather than the
- * codebase — a census of what exists cannot find what was never built.
+ * codebase, a census of what exists cannot find what was never built.
  */
 export default function AccessEvents() {
   // ⛔ THE ORG COMES FROM THE SEAM (S12.5).
@@ -107,7 +107,7 @@ export default function AccessEvents() {
         return setError(apiErrorMessage(err, "Could not load access events."));
       const page = (data as AccessEvent[] | undefined) ?? [];
       setRows(reset ? page : [...(rows ?? []), ...page]);
-      // The API documents that a short page IS the last page — so stop asking.
+      // The API documents that a short page IS the last page, so stop asking.
       setDone(isLastPage(page, PAGE));
     },
     [org, rows, deniesOnly, agentId],
@@ -197,7 +197,7 @@ export default function AccessEvents() {
       <div className="mt-4">
         {/* ⛔ TWO PAGERS, AND THEY ARE NOT RIVALS ONCE THEY ARE NAMED. This page pages SERVER-SIDE with a
                 keyset cursor; the table pages the rows already FETCHED. I first disabled the client pager to
-                avoid the collision, which meant this screen dumped everything loaded at once — the one thing
+                avoid the collision, which meant this screen dumped everything loaded at once, the one thing
                 the pager exists to stop, and the founder saw it immediately.
 
                 They compose as long as each says which set it is talking about: the table's count reads
@@ -297,7 +297,7 @@ export default function AccessEvents() {
         </Card>
       )}
 
-      {/* ⛔ KEYSET, NOT PAGE NUMBERS — the cursor is (created_at, id), the INGEST clock. Paginating
+      {/* ⛔ KEYSET, NOT PAGE NUMBERS, the cursor is (created_at, id), the INGEST clock. Paginating
           on occurred_at would skew: an agent with a slow clock inserts rows that sort before ones
           already shown, and a page boundary could skip them forever. */}
       <div className="mt-3 flex items-center gap-3">
@@ -316,7 +316,7 @@ export default function AccessEvents() {
         <ul className="mt-2 space-y-1.5">
           {FLOW_LOG_CUTS.map((c) => (
             <li key={c.what} className="text-xs text-slate-500">
-              <span className="text-slate-400">{c.what}</span> — {c.why}
+              <span className="text-slate-400">{c.what}</span>, {c.why}
             </li>
           ))}
         </ul>

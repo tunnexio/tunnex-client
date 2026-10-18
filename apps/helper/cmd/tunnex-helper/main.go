@@ -36,11 +36,11 @@ func main() {
 	}
 
 	// Under the Windows SCM the process must speak the service control protocol
-	// (svc.Run), not just run as a console program — else `sc start` times out (1053).
+	// (svc.Run), not just run as a console program, else `sc start` times out (1053).
 	// isWindowsService is false on macOS (LaunchDaemon runs the plain executable) and
 	// false when the helper is run from a console, so both fall through to serveHelper.
 	if isWindowsService() {
-		runService() // service_windows.go — wraps serveHelper in the SCM dispatcher
+		runService() // service_windows.go, wraps serveHelper in the SCM dispatcher
 		return
 	}
 	if err := serveHelper(nil); err != nil {
@@ -88,7 +88,7 @@ func serveHelper(stop <-chan struct{}) error {
 	// and off macOS.
 	startUninstallWatchdog(installDir, sup)
 
-	// S8.5 Slice 1 — the crash/owner-loss resolver sweep. Wired BEFORE the dead-man goroutine (the
+	// S8.5 Slice 1, the crash/owner-loss resolver sweep. Wired BEFORE the dead-man goroutine (the
 	// happens-before makes the field read race-free); fires OUTSIDE s.mu from the dead-man release path
 	// only. On a crash/force-quit (no graceful down), when the dead-man drops the block, this also sweeps
 	// the owned /etc/resolver files so a stale resolver can't outlive the dead tunnel. Graceful down is
@@ -110,7 +110,7 @@ func serveHelper(stop <-chan struct{}) error {
 		defer t.Stop()
 		for range t.C {
 			if sup.CheckDeadMan() {
-				log.Printf("tunnex-helper: dead-man fired — kill-switch auto-released (owner gone)")
+				log.Printf("tunnex-helper: dead-man fired, kill-switch auto-released (owner gone)")
 			}
 		}
 	}()

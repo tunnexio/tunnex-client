@@ -14,10 +14,10 @@ import { ClientApp } from "../src/client/ClientApp";
 // WHERE IT COULD ONLY THROW.
 //
 // `ClientApp` asked `tunnel.status()` and never `auth.status()`. A device with no credential
-// therefore rendered "Disconnected" — a healthy idle state — with a Connect button. Pressing it
+// therefore rendered "Disconnected", a healthy idle state, with a Connect button. Pressing it
 // threw `not_authenticated` out of the main process into a terminal log; the window did not move.
 //
-// > **THE BUTTON WAS NOT BROKEN. IT WAS OFFERED IN A STATE WHERE IT CANNOT WORK** — the same defect
+// > **THE BUTTON WAS NOT BROKEN. IT WAS OFFERED IN A STATE WHERE IT CANNOT WORK**, the same defect
 // > as a revoked device being shown "Connect", which the state model already refuses by returning a
 // > null action. The model was right; nothing was asking it the right question.
 //
@@ -114,7 +114,7 @@ beforeEach(() => {
 
 afterEach(() => {
   // ⚠ EXPLICIT. Auto-cleanup only runs with vitest globals; without it every render STACKS and the
-  // queries find two headings — which reads as a component bug and is a harness bug.
+  // queries find two headings, which reads as a component bug and is a harness bug.
   cleanup();
   delete window.tunnex;
   vi.restoreAllMocks();
@@ -134,7 +134,7 @@ describe("the client asks the SESSION, not only the tunnel", () => {
     await screen.findByRole("heading",{name:"Not signed in"});
     expect(screen.queryByRole("region",{name:"Notifications"})).toBeNull();
   });
-  it("⛔ no credential renders Not signed in — never a Connect button that can only throw", async () => {
+  it("⛔ no credential renders Not signed in, never a Connect button that can only throw", async () => {
     window.tunnex = fakeBridge({ loggedIn: false });
     render(<ClientApp />);
     await waitFor(() =>
@@ -204,7 +204,7 @@ describe("the client asks the SESSION, not only the tunnel", () => {
     },
   );
 
-  it("⛔ a not_authenticated rejection becomes a STATE — the exact error that reached the log", async () => {
+  it("⛔ a not_authenticated rejection becomes a STATE, the exact error that reached the log", async () => {
     // Reproduces the founder's terminal output:
     //   Error occurred in handler for 'tunnel:up': Error: not_authenticated
     // Before the fix this rejection was unhandled and the surface stayed on "Disconnected".
@@ -238,14 +238,14 @@ describe("the client asks the SESSION, not only the tunnel", () => {
     );
   });
 
-  it("⛔ sign-out is REACHABLE — the step-3 flip left it only in the web dashboard", async () => {
+  it("⛔ sign-out is REACHABLE, the step-3 flip left it only in the web dashboard", async () => {
     // DesktopSettings (sign out / change server) lives in the SPA the client no longer loads, so
     // the capability existed with no call site. Without a reset there is no way to re-authenticate.
     const b = fakeBridge({ loggedIn: true });
     window.tunnex = b;
     render(<ClientApp />);
     // ⛔ REACHED THROUGH THE NAV, NOT ASSUMED PRESENT. The control moved to its own pane, so the
-    // test now proves the PATH to it as well as the control — which is what "reachable" means.
+    // test now proves the PATH to it as well as the control, which is what "reachable" means.
     await openDrawerPage("Settings");
     const out = await screen.findByRole("button", { name: /sign out/i });
     fireEvent.click(out);
@@ -761,7 +761,7 @@ describe("managed organization selection", () => {
 });
 
 describe("the numbers are measured and the verb is one word", () => {
-  it("⛔ real rx/tx render as NUMBERS — the fields were hard-wired to n/a forever", async () => {
+  it("⛔ real rx/tx render as NUMBERS, the fields were hard-wired to n/a forever", async () => {
     // They were `useState({rx: null, tx: null, ...})` with a comment saying they would arrive "in
     // step 3". Step 3 came and went. Meanwhile the plot beside them drew invented samples.
     const b = fakeBridge({ loggedIn: true });
@@ -780,12 +780,12 @@ describe("the numbers are measured and the verb is one word", () => {
     expect(screen.getByText(/Last handshake/)).toBeTruthy();
     expect(screen.queryByText(/PACKET RECEIVED/)).toBeNull();
     // ⛔ THE TUNNEL IP WAS ALREADY ON THE WIRE AND NOTHING SHOWED IT. TunnelController.withAddress
-    // decorates every status with it precisely so the client can answer "what is my IP" — and the
+    // decorates every status with it precisely so the client can answer "what is my IP", and the
     // preload TYPE omitted the field, so TypeScript denied the existence of data already arriving.
     expect(screen.getByText(/Tunnel IP/)).toBeTruthy();
   });
 
-  it("⛔ the centre control has a concise accessible verb — no verbose disconnect suffix", async () => {
+  it("⛔ the centre control has a concise accessible verb, no verbose disconnect suffix", async () => {
     const b = fakeBridge({ loggedIn: true });
     b.tunnel.status = vi.fn().mockResolvedValue({ state: "up", last_handshake_sec: Math.floor(Date.now() / 1000) });
     window.tunnex = b;
@@ -812,18 +812,26 @@ describe("the numbers are measured and the verb is one word", () => {
     expect(container.querySelectorAll("[data-action] .tnx-connect-ripple")).toHaveLength(2);
     expect(container.querySelectorAll("[data-action] .tnx-connect-orbit-segment")).toHaveLength(3);
     expect(screen.getByRole("button", { name: "Connect" }).textContent).toBe("Connect");
+    expect(screen.getByText("Connect")).toBeTruthy();
+    const statsToggle = screen.getByRole("button", { name: /Connection stats/i });
+    expect(statsToggle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(statsToggle);
+    expect(statsToggle.getAttribute("aria-expanded")).toBe("true");
+    expect(container.querySelector("#tnx-stats-content")?.hasAttribute("hidden")).toBe(false);
+    fireEvent.click(statsToggle);
+    expect(container.querySelector("#tnx-stats-content")?.hasAttribute("hidden")).toBe(true);
     // The connected state adds peak/rate values, but must not move the stats surface.
     // Reserve that row while disconnected instead of conditionally mounting it.
     expect(container.querySelector("[data-connection-rate-summary]")).not.toBeNull();
     expect(screen.queryByText("n/a")).toBeNull();
-    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("No data yet").length).toBeGreaterThan(0);
   });
 });
 
 describe("routing mode and the server, both reachable and both unambiguous", () => {
   it("⛔ NO checkbox whose label is the OPPOSITE of what it sets", async () => {
     // The control was `<input type="checkbox" checked={fullTunnel}>` labelled "Split tunnel".
-    // Unchecked read as "split is off" — i.e. everything is tunnelled — while actually meaning
+    // Unchecked read as "split is off", i.e. everything is tunnelled, while actually meaning
     // fullTunnel === false, which is SPLIT. The safe-looking state was the leaking one.
     window.tunnex = fakeBridge({ loggedIn: true });
     const { container } = render(<ClientApp />);
@@ -848,7 +856,7 @@ describe("routing mode and the server, both reachable and both unambiguous", () 
     expect(screen.getByText(/Only routes published by your admin use Tunnex/i)).toBeTruthy();
   });
 
-  it("⛔ CHANGE SERVER is reachable — setServerUrl had no caller after the step-3 flip", async () => {
+  it("⛔ CHANGE SERVER is reachable, setServerUrl had no caller after the step-3 flip", async () => {
     // The verb has been on the preload allowlist since S6.2. Once the client stopped loading the
     // web dashboard, nothing called it: changing control plane meant deleting the app-data
     // directory by hand. A documented capability with no way to reach it.
@@ -958,13 +966,13 @@ describe("routing mode and the server, both reachable and both unambiguous", () 
 });
 
 describe("troubleshooting is reachable from the client", () => {
-  it("⛔ a Logs control exists — the file had 30 lines of updater noise and none of the failures", async () => {
+  it("⛔ a Logs control exists, the file had 30 lines of updater noise and none of the failures", async () => {
     // ~/Library/Logs/@tunnex/client/main.log existed, rotated, and was writable. electron-log was
     // imported by updater.ts ALONE, so the only code that logged had nothing to say, and the one
-    // error anybody hit — not_authenticated on tunnel:up — appears in it zero times.
+    // error anybody hit, not_authenticated on tunnel:up, appears in it zero times.
     //
     // > **A LOG FILE THAT EXISTS IS NOT LOGGING.** "Check the logs" reads as a real instruction,
-    // > the file opens, it has content and timestamps, and the incident is simply absent — which
+    // > the file opens, it has content and timestamps, and the incident is simply absent, which
     // > looks like nothing went wrong rather than nothing was recorded.
     const b = fakeBridge({ loggedIn: true });
     window.tunnex = b;
@@ -976,7 +984,7 @@ describe("troubleshooting is reachable from the client", () => {
 });
 
 describe("the home pane stays one screen", () => {
-  it("⛔ settings are NOT on the connection screen — it was growing a section per request", async () => {
+  it("⛔ settings are NOT on the connection screen, it was growing a section per request", async () => {
     // Routing mode, then a server form, then a row of footer buttons. Each defensible alone;
     // together a column you scroll to find anything in. A surface that only ever gains sections is
     // not a design, it is an accumulation.
@@ -1007,7 +1015,7 @@ describe("the home pane stays one screen", () => {
 });
 
 describe("the log is visible IN the client, and export tells the truth", () => {
-  it("⛔ shows the file's contents — 'reveal in Finder' is not troubleshooting", async () => {
+  it("⛔ shows the file's contents, 'reveal in Finder' is not troubleshooting", async () => {
     // A log a user cannot see is a log they will not read, and revealing a file is useless on a
     // machine where the problem is that the app will not start.
     const b = fakeBridge({ loggedIn: true });
@@ -1026,7 +1034,7 @@ describe("the log is visible IN the client, and export tells the truth", () => {
 
   it("⛔ a CANCELLED export does not claim the file was saved", async () => {
     // exportLog resolves null when the save dialog is dismissed. Reporting success there is the
-    // UI claiming an action it did not perform — the rule this repo already holds elsewhere.
+    // UI claiming an action it did not perform, the rule this repo already holds elsewhere.
     const b = fakeBridge({ loggedIn: true });
     b.diag.exportLog = vi.fn().mockResolvedValue(null);
     window.tunnex = b;
@@ -1064,7 +1072,7 @@ describe("the log is visible IN the client, and export tells the truth", () => {
 });
 
 describe("version, updates and the tagline", () => {
-  it("⛔ the client can state its own version — the first thing support asks for", async () => {
+  it("⛔ the client can state its own version, the first thing support asks for", async () => {
     window.tunnex = fakeBridge({ loggedIn: true });
     render(<ClientApp />);
     await openDrawerPage("Settings");
@@ -1080,7 +1088,7 @@ describe("version, updates and the tagline", () => {
     render(<ClientApp />);
     await openDrawerPage("Settings");
     await waitFor(() =>
-      expect(screen.getByText(/Automatic updates are off/i)).toBeTruthy(),
+      expect(screen.getByText(/Updates are installed manually/i)).toBeTruthy(),
     );
     expect(
       screen.getByRole("button", { name: /check for updates/i }),
@@ -1102,7 +1110,7 @@ describe("version, updates and the tagline", () => {
     );
   });
 
-  it("⛔ the header shows no raw tray-appearance word — that was a debug readout", async () => {
+  it("⛔ the header shows no raw tray-appearance word, that was a debug readout", async () => {
     // It printed "grey" / "solid" beside the dot: internal vocabulary for how the MENU-BAR ICON is
     // drawn, shown three lines above a status word that already says "Connected". The dot stays and
     // carries the state in its label instead.
@@ -1142,7 +1150,7 @@ describe("version, updates and the tagline", () => {
 });
 
 describe("an imported .conf connects, and says what it gives up", () => {
-  it("⛔ import is reachable — a .conf from the control plane had no way in", async () => {
+  it("⛔ import is reachable, a .conf from the control plane had no way in", async () => {
     const b = fakeBridge({ loggedIn: true });
     window.tunnex = b;
     render(<ClientApp />);
@@ -1166,7 +1174,7 @@ describe("an imported .conf connects, and says what it gives up", () => {
     await openDrawerPage("Profiles");
     await waitFor(() =>
       expect(
-        screen.getByText(/do not report posture or monitor revocation in this app/i),
+        screen.getByText(/do not report device health or monitor access revocation/i),
       ).toBeTruthy(),
     );
   });
@@ -1182,7 +1190,7 @@ describe("an imported .conf connects, and says what it gives up", () => {
     );
     await waitFor(() => expect(b.tunnel.importConfig).toHaveBeenCalled());
     // ⚠ ASSERT WHAT STAYS TRUE, NOT WHAT STAYS ABSENT. The first version of this test only checked
-    // that the warning banner was missing — which it is either way, so the mutation "treat cancel
+    // that the warning banner was missing, which it is either way, so the mutation "treat cancel
     // as an import" passed it. The state that actually distinguishes the two is the section still
     // offering to import, and no error being claimed for a cancel.
     expect(screen.getByRole("button", { name: /import \.conf/i })).toBeTruthy();
@@ -1370,7 +1378,7 @@ describe("an imported .conf connects, and says what it gives up", () => {
     await waitFor(() => expect(b.tunnel.forgetImported).toHaveBeenCalledTimes(2));
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.queryByText("Gateway A")).toBeNull();
-    expect(screen.getByText("No imported profiles yet.")).toBeTruthy();
+    expect(screen.getByText("No imported profiles")).toBeTruthy();
     await openDrawerPage("Home");
     expect(screen.getByRole("heading", { name: "Disconnected" })).toBeTruthy();
   });
@@ -1419,11 +1427,11 @@ describe("connected preview data", () => {
   });
 });
 
-describe("the window IS the card — one surface, not a card inside a frame", () => {
+describe("the window IS the card, one surface, not a card inside a frame", () => {
   it("⛔ no inner card chrome: no max-width, no radius, no outer margin", async () => {
     // This test asserted the OPPOSITE one revision ago, and both versions were right in turn.
     //
-    // The design draws the client as a 440px card with `margin:0 auto` — which is how it MUST be
+    // The design draws the client as a 440px card with `margin:0 auto`, which is how it MUST be
     // drawn in a wireframe, because a wireframe is a web page and the card needs a page to sit on.
     // Transcribed literally into a fixed-width window it produced a card floating inside a window
     // frame: two chromes, one of them meaningless.
@@ -1436,7 +1444,7 @@ describe("the window IS the card — one surface, not a card inside a frame", ()
     expect(root.className).not.toMatch(/max-w-/);
     expect(root.className).not.toMatch(/rounded-/);
     expect(root.className).not.toMatch(/\bp-4\b/);
-    // It fills the viewport instead — the OS window draws the frame.
+    // It fills the viewport instead, the OS window draws the frame.
     expect(root.className).toContain("h-dvh");
     // And there is exactly ONE root: no wrapper-inside-a-wrapper.
     expect(container.children).toHaveLength(1);

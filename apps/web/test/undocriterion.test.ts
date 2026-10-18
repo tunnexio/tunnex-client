@@ -6,10 +6,10 @@ import {
   inverseOf,
 } from "../src/lib/undo";
 
-// S14.3 SLICE B — THE UNDO CRITERION, ASSERTED RATHER THAN REMEMBERED.
+// S14.3 SLICE B, THE UNDO CRITERION, ASSERTED RATHER THAN REMEMBERED.
 //
 // THE DECIDE-ITEM: "an undo on a destructive verb that the server already committed is a lie." The answer was
-// MEASURED, not argued — 16 DELETE paths, 51 audit actions at call sites, 9 inverse-verb pairs — and reduced
+// MEASURED, not argued, 16 DELETE paths, 51 audit actions at call sites, 9 inverse-verb pairs, and reduced
 // to a criterion with two conditions:
 //
 //   1. an inverse operation exists in the API, AND
@@ -20,7 +20,7 @@ import {
 
 describe("the criterion: an inverse verb is NOT sufficient", () => {
   it("every undoable action is a STATE TOGGLE, never a create/delete pair", () => {
-    // `policy.rule_created` ↔ `policy.rule_deleted` IS an inverse pair in the audit vocabulary — and
+    // `policy.rule_created` ↔ `policy.rule_deleted` IS an inverse pair in the audit vocabulary, and
     // re-creating a deleted rule produces a NEW rule id. A different object, audited as a creation. On an
     // access-control surface, "a new grant that looks like the old one" is not "the old one back".
     for (const a of UNDOABLE_ACTIONS) {
@@ -31,7 +31,7 @@ describe("the criterion: an inverse verb is NOT sufficient", () => {
     }
   });
 
-  it("every undoable action records WHY identity is preserved — a claim a reader can check", () => {
+  it("every undoable action records WHY identity is preserved, a claim a reader can check", () => {
     for (const a of UNDOABLE_ACTIONS) {
       expect(a.sameIdentity.length, a.action).toBeGreaterThan(20);
     }
@@ -42,7 +42,7 @@ describe("the criterion: an inverse verb is NOT sufficient", () => {
       expect(inverseOf(a.action)).toBe(a.inverse);
   });
 
-  it("no action is BOTH undoable and excluded — the two lists cannot contradict each other", () => {
+  it("no action is BOTH undoable and excluded, the two lists cannot contradict each other", () => {
     const un = new Set(UNDOABLE_ACTIONS.map((a) => a.action));
     const overlap = NOT_UNDOABLE.filter((n) => un.has(n.action)).map(
       (n) => n.action,
@@ -78,7 +78,7 @@ describe("the EXCLUSIONS, asserted so the criterion cannot be quietly widened", 
 
   it("the IdP-sync exclusion is recorded in the terms that make it different from the others", () => {
     // The sharper half of the ruling, and a DIFFERENT reason from all the rest: membership in a synced group
-    // CAN be restored — the identity survives. It is excluded because the fail-static reconciler is
+    // CAN be restored, the identity survives. It is excluded because the fail-static reconciler is
     // AUTHORITATIVE and would revert it. AN UNDO THE SYSTEM WILL FIGHT IS WORSE THAN NO UNDO: the user sees a
     // success, watches it disappear, and learns the interface cannot be trusted about what it just confirmed.
     const m = NOT_UNDOABLE.find((n) => n.action === "group.member_added")!;
@@ -93,7 +93,7 @@ describe("isUndoable is the gate, and it is not empty", () => {
     expect(isUndoable("org.zero_trust_disabled")).toBe(true);
   });
 
-  it("refuses an action it has never heard of — the default is NO", () => {
+  it("refuses an action it has never heard of, the default is NO", () => {
     expect(isUndoable("something.invented")).toBe(false);
   });
 

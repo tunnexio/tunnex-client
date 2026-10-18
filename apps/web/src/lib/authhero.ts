@@ -1,7 +1,7 @@
-// Auth screens — the hero panel, and the claims it is allowed to make.
+// Auth screens, the hero panel, and the claims it is allowed to make.
 //
 // ⛔ THE WIREFRAME'S TRUST BADGES ASSERT TWO THINGS WE DO NOT HAVE, ON THE MOST-VIEWED PAGE IN THE
-// PRODUCT. Read the block, cut what has no backing, and say why — the section protocol applied to
+// PRODUCT. Read the block, cut what has no backing, and say why, the section protocol applied to
 // a claim rather than to an endpoint.
 //
 //   "SOC 2 Type II certified"      ⛔ CUT. MEASURED: zero mentions of SOC 2 anywhere in this
@@ -13,7 +13,7 @@
 //
 //   "SSO + SCIM enterprise ready"  ⛔ CUT AS WRITTEN. SSO ships. SCIM is explicitly OUT of v1 and
 //                                  deferred to S7.5.2b (D4, S7.5.2-decisions.md:131). The badge is
-//                                  half true, and the false half is the SPECIFIC STANDARD NAMED —
+//                                  half true, and the false half is the SPECIFIC STANDARD NAMED ,
 //                                  which is the half a buyer checks. Replaced with the true claim.
 //
 //   "WireGuard® kernel-fast tunnels"  ✅ KEPT. The data plane is wgctrl over the kernel module.
@@ -23,7 +23,7 @@
 // > "world's first" headline, applied to a badge the design supplied.
 
 /**
- * ⛔ THE DESIGN'S STAT BLOCK IS TWO LINES, NOT ONE. "WireGuard®" over "kernel-fast tunnels" — a
+ * ⛔ THE DESIGN'S STAT BLOCK IS TWO LINES, NOT ONE. "WireGuard®" over "kernel-fast tunnels", a
  * headline and a qualifier. The first build flattened it to a bulleted string, which is why it read
  * as a feature list rather than as the design's three columns.
  */
@@ -73,7 +73,7 @@ export const FORBIDDEN_CLAIMS: readonly string[] = [
   "PCI",
 ] as const;
 
-/** The mesh nodes, verbatim from the block — these are the six the design names. */
+/** The mesh nodes, verbatim from the block, these are the six the design names. */
 export const MESH_NODES: readonly string[] = [
   "AWS VPC",
   "Azure",
@@ -85,20 +85,20 @@ export const MESH_NODES: readonly string[] = [
 
 export const HERO_HEADLINE = "Connect everything. Trust nothing.";
 export const HERO_SUBHEAD =
-  "Every cloud, VPC, site and device — joined into one encrypted mesh.";
+  "Every cloud, VPC, site and device, joined into one encrypted mesh.";
 
 /**
  * ⛔ THE GENERIC-202 NOTE, AND IT IS A SECURITY PROPERTY RATHER THAN REASSURANCE.
  *
  * Signup and reset answer the same 202 whether or not the address exists, so neither confirms nor
  * denies an account. Saying so on the page is what stops a user reading "check your email" as
- * evidence that the address was recognised — and it is the same no-oracle rule the 401s follow.
+ * evidence that the address was recognised, and it is the same no-oracle rule the 401s follow.
  */
 export const GENERIC_202_NOTE =
-  "Sign-up and password reset always answer the same way, whether or not an account exists — so neither confirms nor denies an address.";
+  "Sign-up and password reset always answer the same way, whether or not an account exists, so neither confirms nor denies an address.";
 
 /**
- * ⛔ THE RECOVERY-CODE COUNT IS CARDINALITY ONLY — and the server says so in the schema.
+ * ⛔ THE RECOVERY-CODE COUNT IS CARDINALITY ONLY, and the server says so in the schema.
  *
  * `recovery_codes_remaining` (openapi.yaml:3572) is documented "CARDINALITY ONLY, never the codes
  * (nothing recoverable)". So the count is renderable and the codes never are. The warning tiers
@@ -116,7 +116,7 @@ export function recoveryWarning(remaining: number): {
   }
   if (remaining === 1) {
     return {
-      text: "1 recovery code left — this is the last one. Generate a new set after signing in.",
+      text: "1 recovery code left, this is the last one. Generate a new set after signing in.",
       loud: true,
     };
   }
@@ -130,7 +130,7 @@ export function recoveryWarning(remaining: number): {
   return null;
 }
 
-/** The count line itself — always says the codes are not re-shown, because that surprises people. */
+/** The count line itself, always says the codes are not re-shown, because that surprises people. */
 export function recoveryCountLabel(remaining: number): string {
-  return `${remaining} recovery code${remaining === 1 ? "" : "s"} remaining — count only, codes are never re-shown.`;
+  return `${remaining} recovery code${remaining === 1 ? "" : "s"} remaining, count only, codes are never re-shown.`;
 }

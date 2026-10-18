@@ -10,7 +10,7 @@ import { PollMonitor } from "./pollmonitor";
 export const REVOKE_POLL_MS = 30_000;
 export const REVOKE_BACKOFF_MAX_MS = 5 * 60_000;
 
-// ProbeOutcome is what a single check decided — surfaced for the unit tests (the
+// ProbeOutcome is what a single check decided, surfaced for the unit tests (the
 // scheduler around checkOnce is thin; the DECISION is what carries the safety
 // properties, so that is what the tests drive directly, like the S6.3 supervisor).
 export type ProbeOutcome = "torn-down" | "kept" | "inconclusive" | "skipped";
@@ -18,11 +18,11 @@ export type ProbeOutcome = "torn-down" | "kept" | "inconclusive" | "skipped";
 // RevocationMonitor is the CLIENT-side proactive revocation detector (S6.4). It is
 // the counterpart to the helper's kernel-side dead-man: while the tunnel is up it
 // polls the tenant and, on a DEFINITIVE "device gone", tears the tunnel down + clears
-// the dead config + notifies loudly — instead of the user staring at a stuck
+// the dead config + notifies loudly, instead of the user staring at a stuck
 // "Connecting…" until the helper's 90s dead-man eventually fires.
 //
-// Poll discipline (S6.4 watch-item #1 — the poll must not become its own bug):
-//   * runs ONLY between start() and stop() — i.e. only while a tunnel is up. A
+// Poll discipline (S6.4 watch-item #1, the poll must not become its own bug):
+//   * runs ONLY between start() and stop(), i.e. only while a tunnel is up. A
 //     disconnected client polls nothing.
 //   * SELF-SCHEDULING (recursive setTimeout, not setInterval): the next probe is
 //     armed only after the current one resolves, so probes can NEVER overlap and a
@@ -39,7 +39,7 @@ export class RevocationMonitor extends PollMonitor {
 
   constructor(
     private readonly deviceId: string,
-    private readonly orgId: string, // the device's own org — queried directly (S7.3 #4)
+    private readonly orgId: string, // the device's own org, queried directly (S7.3 #4)
     private readonly api: Pick<DeviceApi, "deviceExists">,
     private readonly onRevoked: () => void | Promise<void>,
     baseMs: number = REVOKE_POLL_MS,
@@ -63,7 +63,7 @@ export class RevocationMonitor extends PollMonitor {
     this.inFlight = true;
     try {
       const exists = await this.api.deviceExists(this.deviceId, this.orgId);
-      // A stop() during the await means the user is already disconnecting — abandon
+      // A stop() during the await means the user is already disconnecting, abandon
       // the result rather than tearing down (or resetting backoff) behind their back.
       if (this.stopped) return "skipped";
       if (exists) {

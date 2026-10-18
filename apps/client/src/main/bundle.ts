@@ -28,7 +28,7 @@ export function resolveBundlePath(bundleDir: string, requestPath: string): strin
 
 // looksLikeAsset reports whether a request path targets a concrete file (has a
 // file extension) vs an extension-less document/navigation path. Only the latter
-// should fall back to index.html — an ASSET 404 must stay a 404, never be masked
+// should fall back to index.html, an ASSET 404 must stay a 404, never be masked
 // by HTML (which the browser would try to execute as a script).
 export function looksLikeAsset(requestPath: string): boolean {
   const last = requestPath.split("?")[0].split("#")[0].split("/").pop() ?? "";
@@ -37,7 +37,7 @@ export function looksLikeAsset(requestPath: string): boolean {
 
 // contained reports whether `file` (after symlink resolution) is still inside
 // `root`. fs.readFile follows symlinks, so a lexical check alone can be escaped
-// by a symlink planted in the bundle — resolve the real path and re-check.
+// by a symlink planted in the bundle, resolve the real path and re-check.
 export function contained(root: string, file: string): boolean {
   const r = path.resolve(root);
   const f = path.resolve(file);

@@ -17,7 +17,7 @@ const node = (over: Partial<Node>): Node =>
 
 describe("device-target selection (S13.1 Slice 3)", () => {
   // THE DEFECT, as a red. Device creation used `nodes[0].id` over a list that includes revoked rows ordered by
-  // created_at — so on any deployment whose OLDEST gateway had been revoked, every new device was homed on a dead
+  // created_at, so on any deployment whose OLDEST gateway had been revoked, every new device was homed on a dead
   // gateway. The EPIC 11 walk's fleet was in exactly that state: `aws-gw-1` was revoked and had the earliest
   // created_at, so it WAS nodes[0].
   it("never picks a revoked gateway, even when it is first", () => {

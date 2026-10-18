@@ -29,8 +29,8 @@ const ev = (over: Partial<AccessEvent> = {}): AccessEvent => ({
 // ⛔ `gap` IS A FIRST-CLASS VERDICT AND THE DESIGN'S CHIP LIST DOES NOT MENTION IT.
 //
 // `seq` is a per-org monotonic sequence for tamper-evidence; a `gap` marker means events are
-// MISSING. Rendering it as an ordinary row — or dropping it because the wireframe lists only four
-// verdicts — would present an INCOMPLETE security log as a complete one.
+// MISSING. Rendering it as an ordinary row, or dropping it because the wireframe lists only four
+// verdicts, would present an INCOMPLETE security log as a complete one.
 describe("decision handling", () => {
   it("labels and tones every decision the SCHEMA has, not just the four the design draws", () => {
     for (const d of [
@@ -46,7 +46,7 @@ describe("decision handling", () => {
     expect(decisionLabel("gap")).toBe("GAP");
   });
 
-  it("⛔ gives `gap` its OWN tone — never the same as an ordinary allow", () => {
+  it("⛔ gives `gap` its OWN tone, never the same as an ordinary allow", () => {
     expect(decisionTone("gap")).not.toBe(decisionTone("allow"));
     expect(decisionTone("gap")).toBe("gap");
   });
@@ -71,17 +71,17 @@ describe("causeFor", () => {
     );
   });
 
-  it("⛔ says DEFAULT-DENY in words — the most common deny reason", () => {
+  it("⛔ says DEFAULT-DENY in words, the most common deny reason", () => {
     expect(causeFor(ev({ decision: "deny" }), () => null)).toBe(
       "no matching grant",
     );
   });
 
-  it("⛔ uses n/a, never an em-dash — a dash reads as short data, n/a reads as an answer", () => {
+  it("⛔ uses n/a, never an em-dash, a dash reads as short data, n/a reads as an answer", () => {
     // Caught by placeholderglyph.test.ts on this file's first run.
     const c = causeFor(ev({ decision: "allow" }), () => null);
     expect(c).toBe("n/a");
-    expect(c).not.toContain("—");
+    expect(c).not.toContain("N/A");
   });
 
   it("reports an aggregate's count", () => {
@@ -129,7 +129,7 @@ describe("destinationFor", () => {
 });
 
 // ⛔ THE CURSOR IS THE INGEST CLOCK. `occurred_at` is the agent's clock and the schema says in so
-// many words that it is NOT the pagination clock — an agent with a slow clock would insert rows
+// many words that it is NOT the pagination clock, an agent with a slow clock would insert rows
 // that sort before ones already shown, and a page boundary could skip them forever.
 describe("nextCursor", () => {
   it("takes created_at + id from the LAST row", () => {
@@ -154,7 +154,7 @@ describe("nextCursor", () => {
     expect(nextCursor(page)?.cursor_ts).toBe("2026-08-03T12:00:00Z");
   });
 
-  it("is null on an empty page — there is nothing to page from", () => {
+  it("is null on an empty page, there is nothing to page from", () => {
     expect(nextCursor([])).toBeNull();
   });
 });

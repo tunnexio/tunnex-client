@@ -61,7 +61,7 @@ function mkF(base: string[], fwdSeq: Array<ResolverForward[] | Error>, failForwa
 
 const FWD = (domain: string, ip: string): ResolverForward => ({ domain, resolver_ip: ip });
 
-test("canonRanges dedups + sorts (order-free compare — the peersEqual lesson)", () => {
+test("canonRanges dedups + sorts (order-free compare, the peersEqual lesson)", () => {
   assert.deepEqual(canonRanges(["10.2.0.0/16", "10.1.0.0/16", "10.2.0.0/16", ""]), ["10.1.0.0/16", "10.2.0.0/16"]);
 });
 
@@ -169,7 +169,7 @@ test("forwards tier: empty forwards = unchanged, ZERO resolver calls (lastForwar
   assert.equal(fwdApplied.length, 0, "an org with no reachable forwards must not emit a set_resolvers call");
 });
 
-test("forwards tier fail-static is INDEPENDENT: a resolver-write throw keeps last, retries — routes untouched", async () => {
+test("forwards tier fail-static is INDEPENDENT: a resolver-write throw keeps last, retries, routes untouched", async () => {
   // First apply throws (failForwards) → inconclusive, lastForwards NOT advanced; next poll (same set) retries.
   const { m, fwdApplied } = mkF(["10.99.0.0/24"], [[FWD("corp.local", "10.20.0.53")], [FWD("corp.local", "10.20.0.53")]], true);
   assert.equal(await m.checkOnce(), "inconclusive"); // resolver write threw → keep, no advance
@@ -264,7 +264,7 @@ test("dial tier no-churn: first poll returning the SEEDED (minted) hub = unchang
   const { m, rehomed } = mkD(seed, [seed, seed, seed]);
   assert.equal(await m.checkOnce(), "unchanged");
   assert.equal(await m.checkOnce(), "unchanged");
-  assert.equal(rehomed.length, 0, "the device already dials the active hub — a re-home would be a pointless privileged call");
+  assert.equal(rehomed.length, 0, "the device already dials the active hub, a re-home would be a pointless privileged call");
 });
 
 test("dial tier re-homes on active-hub move: applies set_gateway_peer(new), then no-churn on repeat", async () => {
@@ -281,10 +281,10 @@ test("dial tier: a NULL dial keeps the current peer (single-gateway / server bli
   const seed = DIAL("gw-a:51820", "KA");
   const { m, rehomed } = mkD(seed, [null, null]);
   assert.equal(await m.checkOnce(), "unchanged");
-  assert.equal(rehomed.length, 0, "a null dial must NEVER tear down the peer to nothing — keep the current hub");
+  assert.equal(rehomed.length, 0, "a null dial must NEVER tear down the peer to nothing, keep the current hub");
 });
 
-test("dial tier fail-static is INDEPENDENT: a re-home throw keeps lastDial, retries — routes/forwards untouched", async () => {
+test("dial tier fail-static is INDEPENDENT: a re-home throw keeps lastDial, retries, routes/forwards untouched", async () => {
   const seed = DIAL("gw-a:51820", "KA");
   const newHub = DIAL("gw-b:51820", "KB");
   const { m, rehomed } = mkD(seed, [newHub, newHub], { failDial: true });
@@ -305,7 +305,7 @@ test("dial tier flag mechanic: dialEnabled=false skips the tier entirely (no set
 });
 
 test("dial tier drives full-tunnel too (D-WFA-4): dialEnabled=true re-homes on a hub move; helper owns any refusal", async () => {
-  // The full-tunnel base shape no longer gates the dial tier at the client — the carve-out makes the
+  // The full-tunnel base shape no longer gates the dial tier at the client, the carve-out makes the
   // control path independent, so the client drives the re-home and the HELPER refuses (fail-static) only
   // where its carve-out is absent (Windows). Here the apply succeeds → applied.
   const seed = DIAL("gw-a:51820", "KA");

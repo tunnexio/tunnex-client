@@ -13,11 +13,11 @@ import {
   Panel,
 } from "../src/components/ui";
 
-// S14.3 SLICE A — THE PRIMITIVE CENSUS.
+// S14.3 SLICE A, THE PRIMITIVE CENSUS.
 //
 // ⛔ A PRIMITIVE THAT IS NOT QUERYABLE BY ROLE IS NOT DONE, and that is a mechanism here rather than a review
 // note. Query rule 1 binds the whole tier to role + accessible name; a primitive that renders an anonymous
-// <div> forces every screen built from it back onto text matching — which is what the previous absence of a
+// <div> forces every screen built from it back onto text matching, which is what the previous absence of a
 // <table> did to all eight wiring slices.
 //
 // Each case names the ROLE the primitive must expose and the NAME it must carry. Removing an accessible name
@@ -26,7 +26,7 @@ import {
 afterEach(cleanup); // no globals/setup file, so auto-cleanup never registers (docs/laws.md)
 
 describe("every structural primitive is queryable by ROLE and NAME", () => {
-  it("Panel is a named region — an unnamed section cannot be told from any other section", () => {
+  it("Panel is a named region, an unnamed section cannot be told from any other section", () => {
     render(<Panel title="Rules">body</Panel>);
     expect(screen.getByRole("region", { name: "Rules" })).toBeTruthy();
   });
@@ -41,7 +41,7 @@ describe("every structural primitive is queryable by ROLE and NAME", () => {
     expect(within(list).getAllByRole("listitem")).toHaveLength(1);
   });
 
-  it("Loading is ANNOUNCED, not merely drawn — a spinner nothing announces is invisible to a screen reader", () => {
+  it("Loading is ANNOUNCED, not merely drawn, a spinner nothing announces is invisible to a screen reader", () => {
     render(<Loading />);
     expect(screen.getByRole("status")).toBeTruthy();
   });
@@ -53,7 +53,7 @@ describe("every structural primitive is queryable by ROLE and NAME", () => {
       </Field>,
     );
     // getByLabelText resolves through the for/id association. If the association broke, the control would
-    // still render and still look correct — and would have no name at all.
+    // still render and still look correct, and would have no name at all.
     expect(screen.getByLabelText("Device name")).toBeTruthy();
   });
 
@@ -66,12 +66,12 @@ describe("every structural primitive is queryable by ROLE and NAME", () => {
     expect(screen.getByRole("dialog", { name: "Revoke device" })).toBeTruthy();
   });
 
-  it("EmptyState says what is empty — and is DISTINCT from a failure, which must never reach it", () => {
+  it("EmptyState says what is empty, and is DISTINCT from a failure, which must never reach it", () => {
     render(<EmptyState>No devices yet.</EmptyState>);
     expect(screen.getByText("No devices yet.")).toBeTruthy();
   });
 
-  it("Badge carries its status as TEXT — colour is an accelerant, never the carrier", () => {
+  it("Badge carries its status as TEXT, colour is an accelerant, never the carrier", () => {
     // Three failures with one cause if this regresses: unreadable to a colour-blind user, invisible to a
     // screen reader, unqueryable by the tier. Which is why `children` is required rather than optional.
     render(<Badge tone="danger">revoked</Badge>);
@@ -79,7 +79,7 @@ describe("every structural primitive is queryable by ROLE and NAME", () => {
   });
 });
 
-describe("DataTable — the primitive the app did not have", () => {
+describe("DataTable, the primitive the app did not have", () => {
   const rows = [
     { id: "a", name: "alpha", ip: "10.0.0.1" },
     { id: "b", name: "beta", ip: "10.0.0.2" },
@@ -102,7 +102,7 @@ describe("DataTable — the primitive the app did not have", () => {
     />
   );
 
-  it("is a table with an accessible NAME — two unnamed tables on a screen are indistinguishable", () => {
+  it("is a table with an accessible NAME, two unnamed tables on a screen are indistinguishable", () => {
     render(table());
     expect(screen.getByRole("table", { name: "Things" })).toBeTruthy();
   });
@@ -113,7 +113,7 @@ describe("DataTable — the primitive the app did not have", () => {
     expect(screen.getByRole("columnheader", { name: "Address" })).toBeTruthy();
   });
 
-  it("exposes rows and cells — header row plus one row per record", () => {
+  it("exposes rows and cells, header row plus one row per record", () => {
     render(table());
     const t = screen.getByRole("table", { name: "Things" });
     expect(within(t).getAllByRole("row")).toHaveLength(3); // 1 header + 2 records
@@ -129,8 +129,8 @@ describe("DataTable — the primitive the app did not have", () => {
   });
 
   it("⛔ A FAILED LOAD RENDERS NEITHER THE TABLE NOR THE EMPTY MESSAGE", () => {
-    // The defect this slice introduced and the tier caught. An empty array means two different things —
-    // "there are none" and "we never found out" — and rendering the second as the first is the
+    // The defect this slice introduced and the tier caught. An empty array means two different things ,
+    // "there are none" and "we never found out", and rendering the second as the first is the
     // reassuring-empty defect. On a roster it is a claim about who can administer the org, made by a screen
     // that never successfully read anything.
     render(table({ rows: [], failed: true }));
@@ -138,7 +138,7 @@ describe("DataTable — the primitive the app did not have", () => {
     expect(screen.queryByRole("table", { name: "Things" })).toBeNull();
   });
 
-  it("a failed load with rows ALREADY IN HAND still renders nothing — stale rows are not a successful read", () => {
+  it("a failed load with rows ALREADY IN HAND still renders nothing, stale rows are not a successful read", () => {
     // The subtler half. If a refresh fails, the previous page's rows are still in state; showing them under a
     // failed load presents old data as current, which is the same lie one step quieter.
     render(table({ failed: true }));

@@ -4,7 +4,7 @@ import { StatusDot } from "./ui";
 
 // A small control-plane health indicator. It also keeps the /healthz correlation
 // chain (request-id plumbing, an EPIC-0 cross-cutting guard) exercised from the
-// SPA on load — the e2e asserts the SPA issues GET /healthz and shows a status.
+// SPA on load, the e2e asserts the SPA issues GET /healthz and shows a status.
 type State = "checking" | "up" | "down";
 
 export function HealthStatus() {

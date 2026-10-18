@@ -57,19 +57,19 @@ import {
 } from "../lib/overviewview";
 
 export default function Dashboard() {
-  // ⛔ THE ORG COMES FROM THE SEAM (S12.5) — the page no longer picks index zero out of a list it
+  // ⛔ THE ORG COMES FROM THE SEAM (S12.5), the page no longer picks index zero out of a list it
   // fetched itself, which is what made a second organization unreachable.
   const { org: currentOrg, loading: orgLoading, failed: orgFailed } = useOrg();
   const [orgName, setOrgName] = useState("");
   const [data, setData] = useState<OrgOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
   // WF-2 (Deck D Leg 10): bump to refetch the overview. The CP count is correct the moment a device is
-  // revoked (CountActiveDevicesByOrg excludes it) — the stale number was THIS view's mount-once fetch.
+  // revoked (CountActiveDevicesByOrg excludes it), the stale number was THIS view's mount-once fetch.
   // S14.4: the six stat cards come from THREE endpoints and RESOLVE INDEPENDENTLY.
   //
   // `/overview` supplies four (members, devices, nodes, online). Sites and Pending approvals are not in that
   // response. An aggregate field was REFUSED deliberately: an API change driven by a layout converts three
-  // independent failures into one blast radius — one failure would blank six cards instead of two. Screens
+  // independent failures into one blast radius, one failure would blank six cards instead of two. Screens
   // compose endpoints; endpoints do not compose themselves for screens.
   const [sitesRes, setSitesRes] = useState<Loaded<Site[]> | null>(null);
   const [pendingRes, setPendingRes] = useState<Loaded<Device[]> | null>(null);
@@ -82,7 +82,7 @@ export default function Dashboard() {
   const [hubSetRes, setHubSetRes] = useState<Loaded<HubSet> | null>(null);
   // The motion preference is read ONCE at the app edge and passed down; no component asks matchMedia itself.
   const reducedMotion = useMotionPreference();
-  // `null` = not resolved yet; `{ok:false}` = the read FAILED. Neither is "there are none" — the card says which.
+  // `null` = not resolved yet; `{ok:false}` = the read FAILED. Neither is "there are none", the card says which.
   const [k8sClustersRes, setK8sClustersRes] = useState<Loaded<
     K8sCluster[]
   > | null>(null);
@@ -91,7 +91,7 @@ export default function Dashboard() {
   > | null>(null);
   const [ztRes, setZtRes] = useState<Loaded<ZeroTrustMode> | null>(null);
   // THE ONE GATING SEAM. `/meta`'s edition is the same value that decides whether every other enterprise
-  // surface exists — read here, never re-derived from an error.
+  // surface exists, read here, never re-derived from an error.
   const [edition, setEdition] = useState<Edition>("unknown");
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function Dashboard() {
           );
         // ⛔ LOADING IS NOT ABSENCE (S12.5). The provider resolves the org list asynchronously, so this
         // effect runs once with currentOrg === null before the answer exists. Treating that as "you have no
-        // organization" renders a confident, false statement — and because the second pass only sets the
+        // organization" renders a confident, false statement, and because the second pass only sets the
         // data, the stale error stayed on screen BESIDE the correct org name.
         //
         // ⚠ THREE STATES, NOT TWO: still loading (say nothing), the read failed (say THAT), genuinely no
@@ -139,7 +139,7 @@ export default function Dashboard() {
 
         // ⛔ THE SEAM, AND IT DECIDES BEFORE IT FETCHES. Edition first; gated endpoints are called ONLY when
         // the edition has them. An open-edition org therefore never issues a request that can 403, so there
-        // is no failure to mis-interpret — the render decision is taken at the seam rather than recovered
+        // is no failure to mis-interpret, the render decision is taken at the seam rather than recovered
         // from an error at the call site. The interpretation is what drifted, twice.
         const metaRes = (await loadOne(() =>
           api.GET("/api/v1/meta"),
@@ -180,7 +180,7 @@ export default function Dashboard() {
             params: { path: { orgId: org.id } },
           }),
         ).then((r) => !cancelled && setNodesRes(r as Loaded<Node[]>));
-        // ⛔ ENTERPRISE, AND A 403 IS A SUCCESSFUL REFUSAL — NOT AN ERROR. On the open edition the
+        // ⛔ ENTERPRISE, AND A 403 IS A SUCCESSFUL REFUSAL, NOT AN ERROR. On the open edition the
         // endpoint correctly answers edition_required; the card must then be ABSENT, not "unavailable".
         // Folding a correct refusal into a failure is the defect this repo has already paid for.
         void api
@@ -192,7 +192,7 @@ export default function Dashboard() {
             setAgentsRes({ ok: true, data: data as AgentRow[] });
           })
           .catch(() => {});
-        // Both OPEN endpoints — no gate needed, and the audit that cut them was wrong about the data.
+        // Both OPEN endpoints, no gate needed, and the audit that cut them was wrong about the data.
         void loadOne(() =>
           api.GET("/api/v1/organizations/{orgId}/devices", {
             params: { path: { orgId: org.id } },
@@ -231,19 +231,19 @@ export default function Dashboard() {
     // ⛔ THE `refresh` COUNTER WENT WITH THE DESKTOP EFFECT. Its only writer was WF-2's revocation
     // subscription; with that gone it was a state variable that could never change, and a dependency
     // array naming a constant is a dependency array that says nothing. Removed rather than left as a
-    // permanent 0 — an inert knob reads as a live one to the next person.
+    // permanent 0, an inert knob reads as a live one to the next person.
     // ⛔ currentOrg IS A DEPENDENCY, AND ITS ABSENCE WAS A REAL BUG THE TESTS CAUGHT (S12.5).
     //
     // The provider resolves the org list ASYNCHRONOUSLY, so on this effect's first run `currentOrg` is still
     // null. With `[]` deps the effect never ran again: the page rendered "You are not a member of any
-    // organization yet" — a confident, wrong statement — and stayed there forever, for every user.
+    // organization yet", a confident, wrong statement, and stayed there forever, for every user.
     //
     // ⚠ THE SAME DEPENDENCY ALSO MAKES THE SWITCHER WORK. One line, two properties: without it the page
     // either never loads at all, or loads once and then lies about which tenant it is showing.
   }, [currentOrg]);
 
   // ⛔ WF-2's DESKTOP REFETCH IS GONE (S14.20 step 4). It re-pulled the overview when the client's
-  // RevocationMonitor saw this device revoked — a subscription that only existed because the client
+  // RevocationMonitor saw this device revoked, a subscription that only existed because the client
   // used to mount this dashboard. It never mounts it now, so the effect could not fire.
   //
   // ⚠ WF-2's CLAIM IS NOT ABANDONED, it moved: the client shows revocation on its OWN surface
@@ -252,11 +252,11 @@ export default function Dashboard() {
 
   return (
     // ⛔ THE PAGE ROOT CARRIES THE RHYTHM. This was a bare `<div>`, and every section inside it stacked with
-    // ZERO spacing — the stat row touched Get started, which touched the panel row.
+    // ZERO spacing, the stat row touched Get started, which touched the panel row.
     //
     // The shell's `<main>` already sets `flex flex-col gap-3.5` (the README's page-body rhythm), but a flex gap
     // reaches only DIRECT children, and the whole page is a single child of main. The gap was correct and
-    // applied to exactly one element. Every screen root must therefore repeat this — see docs/S14.4.
+    // applied to exactly one element. Every screen root must therefore repeat this, see docs/S14.4.
     <div className="flex flex-col gap-3.5">
       {/* README: PAGE HEADER = title + subtitle, its own block above the body. */}
       <PageHeader title="Overview" subtitle={orgName || "…"} />
@@ -290,18 +290,18 @@ export default function Dashboard() {
             // FOUR core cards, plus Access Rules and Pending approvals on enterprise, plus AI Agents when
             // its read succeeded. ONE definition, read by both the gating below and the grid's column count.
             // ⚠ THE AGENT TERM IS THE CONDITION ITSELF, not `enterprise`: the card renders on `ok` alone, so
-            // counting it on edition would re-span the row for a card that is not there — the two-column
+            // counting it on edition would re-span the row for a card that is not there, the two-column
             // hole the re-span was ruled to prevent.
             const STAT_CARDS = (enterprise ? 6 : 4) + (agentsRes?.ok ? 1 : 0);
 
-            // NEEDS ATTENTION is COMPOSED, not fetched — every item names the source that produced it, and an
+            // NEEDS ATTENTION is COMPOSED, not fetched, every item names the source that produced it, and an
             // item appears only when its source has been READ. A source still loading contributes nothing;
             // a source that FAILED contributes nothing either, because "nothing needs attention" and "we could
             // not check" must not render identically. The panel says "loading" until every source has answered.
             // ⛔ WAIT ONLY ON SOURCES THAT WILL ACTUALLY ARRIVE.
             //
             // `pendingRes` is enterprise-gated and is NEVER FETCHED on the open edition, so it stays `null`
-            // forever — and `null` was the "still loading" signal. The panel hung on "Loading…" permanently,
+            // forever, and `null` was the "still loading" signal. The panel hung on "Loading…" permanently,
             // waiting for a request that was deliberately never made.
             //
 
@@ -309,13 +309,13 @@ export default function Dashboard() {
             // is never filler: an unqualified number is a smaller claim than a wrongly-qualified one.
             // ⛔ SAME RE-SOURCING, AND THIS IS THE ONE THE TYPE CANNOT PROTECT. A raw field read bypasses
             // any function; the widened signature ENABLES this call and cannot FORCE it. The class stays
-            // open by construction — `policy_degraded` remains readable — so this line is a decision, not
+            // open by construction, `policy_degraded` remains readable, so this line is a decision, not
             // a guarantee.
             const degraded = nodesRes?.ok
               ? nodesRes.data.filter((n) => policyHealthBadge(n) !== null)
                   .length
               : null;
-            const pendingInvites = null; // no endpoint for pending invites — the slot stays empty, not invented
+            const pendingInvites = null; // no endpoint for pending invites, the slot stays empty, not invented
             const siteSub = sitesRes?.ok
               ? sitesRes.data.length === 0
                 ? "none configured"
@@ -330,7 +330,7 @@ export default function Dashboard() {
             // the unattributable count, and a count with the gap dropped is a smaller claim than it looks:
             // "3 agents" reads as three accounted-for agents. The qualification moves into the sub-line
             // rather than being lost with the card that used to carry it.
-            // ⚠ Still named ONLY when non-zero (agentSummary's rule) — a permanent "0 unattributable"
+            // ⚠ Still named ONLY when non-zero (agentSummary's rule), a permanent "0 unattributable"
             // trains the reader to stop seeing the line that matters when it is not zero.
             const agentSum = agentsRes?.ok
               ? agentSummary(agentsRes.data)
@@ -344,22 +344,22 @@ export default function Dashboard() {
               // The same reason, one level down: these three sections are siblings and need the page rhythm
               // between them, not zero.
               <div className="flex flex-col gap-3.5">
-                {/* README: the Overview stat row is `repeat(12,1fr)` gap 12 — SIX cards at span 2.
+                {/* README: the Overview stat row is `repeat(12,1fr)` gap 12, SIX cards at span 2.
                     Settled from the SOURCE prototype, not from the README's generic "4-up" sentence (which
                     describes the other screens) and not from the screenshot alone. */}
                 {/* ⛔ THE ROW RE-SPANS TO FILL 12. RULED, and the argument matters more than the choice:
                     a fixed six-slot row leaves the open edition with five cards and a two-column hole, which
-                    is the SAME ragged-row defect already fixed for the panels — and worse here, because a gap
+                    is the SAME ragged-row defect already fixed for the panels, and worse here, because a gap
                     in a stat row reads as a card that failed to render rather than as a capability the org
                     does not have. Absence should be invisible when the thing absent was never offered.
                     Six cards -> span 2 each. Five -> the row is a 5-column grid. Either way it fills. */}
                 {/* ⛔ THE ROW RE-SPANS TO FILL, AND IT COLLAPSES BEFORE IT OVERFLOWS.
-                    Six (or five) fixed columns at 390px gives ~60px per card and the page scrolls sideways —
+                    Six (or five) fixed columns at 390px gives ~60px per card and the page scrolls sideways ,
                     which the viewport leg caught on its FIRST baseline (390px viewport, 455px capture).
                     The edition-dependent count only applies once there is room for it. */}
                 {/* ⛔ THE COLUMN COUNT IS DERIVED FROM THE CARD COUNT, IN ONE PLACE.
-                    It was hard-coded `lg:grid-cols-6` while SEVEN cards were rendered — enterprise adds both
-                    Access Rules and Pending approvals — so the seventh wrapped to a second row and sat alone
+                    It was hard-coded `lg:grid-cols-6` while SEVEN cards were rendered, enterprise adds both
+                    Access Rules and Pending approvals, so the seventh wrapped to a second row and sat alone
                     beneath five empty columns. It read as a card that failed to render rather than as a row
                     that did not fit.
 
@@ -368,7 +368,7 @@ export default function Dashboard() {
                     same constant the cards are gated on, so adding a card cannot silently orphan it.
 
                     ⚠ THE VARIABLE IS `--stat-cols`, NOT `--tnx-stat-cols`. The first name I used borrowed the
-                    `--tnx-` prefix, which in this codebase means "a GENERATED DESIGN TOKEN" — and the
+                    `--tnx-` prefix, which in this codebase means "a GENERATED DESIGN TOKEN", and the
                     tokenrefs census failed on it within seconds of being written, on its own author. A local
                     layout variable is not a design token and must not wear the namespace that promises it is
                     held to the generated set. */}
@@ -406,10 +406,10 @@ export default function Dashboard() {
                         : `${degraded} reporting degraded kinds`
                     }
                   />
-                  {/* ⛔ ENTERPRISE, AND RENDERED ONLY ON `ok` — NOT ON "enterprise". The agents fetch
+                  {/* ⛔ ENTERPRISE, AND RENDERED ONLY ON `ok`, NOT ON "enterprise". The agents fetch
                       swallows every error, 403 and genuine failure alike, so `agentsRes` stays `null` in
                       both cases. Gating on the EDITION would make a failed read on enterprise render a
-                      permanent "loading" card — which is the exact `pendingRes` defect documented above,
+                      permanent "loading" card, which is the exact `pendingRes` defect documented above,
                       reintroduced from the other direction. `ok` is the only state that means the number
                       is known. */}
                   {agentsRes?.ok && (
@@ -427,7 +427,7 @@ export default function Dashboard() {
                     sub={siteSub}
                   />
                   {/* ⛔ ENTERPRISE. `/policies` and `/zero-trust-mode` are both gated, so on the open edition
-                      this card is ABSENT — not "0", not "could not load" in red. It was the SECOND instance of
+                      this card is ABSENT, not "0", not "could not load" in red. It was the SECOND instance of
                       the same conflation in this slice, still live after the first was fixed at one call
                       site: only an enumeration finds the rest (src/lib/edition.ts). */}
                   {enterprise && (
@@ -438,7 +438,7 @@ export default function Dashboard() {
                       sub={zeroTrust === null ? null : zeroTrust}
                     />
                   )}
-                  {/* Sixth card only where the capability exists. On the open edition the row is five wide —
+                  {/* Sixth card only where the capability exists. On the open edition the row is five wide ,
                       which is the honest layout, not a gap where a broken card used to be. */}
                   {enterprise && (
                     <Stat
@@ -450,10 +450,10 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                {/* Not in a grid — a sibling in the page column, so a `col-span-*` here would be a dead class. */}
+                {/* Not in a grid, a sibling in the page column, so a `col-span-*` here would be a dead class. */}
                 {fresh && (
                   <Panel title="Get started">
-                    {/* The floating "Get started" widget is CUT — it becomes this. Rendered only when we KNOW
+                    {/* The floating "Get started" widget is CUT, it becomes this. Rendered only when we KNOW
                         the org is empty: showing it because a fetch failed would tell a founder with a working
                         fleet that they have nothing. */}
                     <ol className="space-y-1.5 text-explainer leading-[1.55] text-ink-body">
@@ -472,16 +472,16 @@ export default function Dashboard() {
                   </Panel>
                 )}
 
-                {/* ⛔ MULTI-COLUMN FLOW, NOT A GRID — AND THE GRID'S OWN COMMENT IS WHY.
+                {/* ⛔ MULTI-COLUMN FLOW, NOT A GRID, AND THE GRID'S OWN COMMENT IS WHY.
                     It claimed "EVERY ROW SUMS TO 12 … Row 3: Needs Attention 8 · System Health 4". Measured:
                     ALL ELEVEN panels carry `lg:col-span-4`. Nothing spans 8. The bento was documented, then
                     flattened into a uniform 3-across grid, and the comment kept describing the design rather
-                    than the code — so `lg:grid-cols-12` bought a twelve-column system that only ever
+                    than the code, so `lg:grid-cols-12` bought a twelve-column system that only ever
                     expressed thirds.
 
                     ⛔ AND A GRID ALIGNS ROWS, WHICH IS THE DEFECT THE FOUNDER REPORTED: every card in a row
                     is as tall as the TALLEST card in that row. "AI Agents" is three lines and was rendering
-                    the height of a donut plus a four-row legend — a bordered box mostly full of nothing.
+                    the height of a donut plus a four-row legend, a bordered box mostly full of nothing.
                     Panel's own comment called the stretch deliberate ("keeps every panel in a row the same
                     height"); that is the thing being reversed, on the founder's word, and deliberately.
 
@@ -493,7 +493,7 @@ export default function Dashboard() {
                     Called out because it is a real consequence, not a side effect to discover later.
 
                     ⚠ AND EVERY CHILD NEEDS `break-inside-avoid`, or a card splits down the middle across a
-                    column boundary — the one hazard of this layout, and it looks like a rendering bug. The
+                    column boundary, the one hazard of this layout, and it looks like a rendering bug. The
                     wrapper carries it so no panel has to remember, INCLUDING ones added later.
 
                     Panels are conditional (AI Agents needs enterprise + a non-empty list; Kubernetes, HA Hub
@@ -502,7 +502,7 @@ export default function Dashboard() {
                     Packing has to be automatic for that reason alone. */}
                 <div className="columns-1 gap-3 lg:columns-3 [&>*]:mb-3 [&>*]:break-inside-avoid">
                   <Panel title="Peer Connection Status">
-                    {/* ⚠ RE-SOURCED TO DEVICES. This counted GATEWAYS — a different and smaller population
+                    {/* ⚠ RE-SOURCED TO DEVICES. This counted GATEWAYS, a different and smaller population
                         than the one the panel is named for. A chart can be perfectly honest about the wrong
                         denominator, and nothing in the render would look wrong. */}
                     <Donut
@@ -515,7 +515,7 @@ export default function Dashboard() {
                       centreLabel="devices"
                       empty="No devices enrolled yet."
                     />
-                    {/* The design's caption, verbatim — it states the product's rule, not a decoration. */}
+                    {/* The design's caption, verbatim, it states the product's rule, not a decoration. */}
                     <p className="mt-2 text-explainer leading-[1.55] text-ink-tertiary">
                       Status derived from WireGuard handshake liveness. Never
                       green while dead.
@@ -534,11 +534,11 @@ export default function Dashboard() {
                         {sortGateways(
                           nodesRes.data.map((n): GatewayRow => {
                             // ⛔ THE ROW VERDICT IS NOT FORMED HERE (S14.21). This panel used to read
-                            // `b ? b.label : "healthy"` — turning "no badge" into the CLAIM "healthy",
+                            // `b ? b.label : "healthy"`, turning "no badge" into the CLAIM "healthy",
                             // which is what put a green verdict on a revoked gateway. Deciding it here at
                             // all was the defect; gatewayHealthRow owns it now.
                             const v = gatewayHealthRow(n);
-                            // ⛔ A SECOND, INDEPENDENT BADGE — NOT A REPLACEMENT (S15.2, D25(C)). A gateway
+                            // ⛔ A SECOND, INDEPENDENT BADGE, NOT A REPLACEMENT (S15.2, D25(C)). A gateway
                             // can be perfectly healthy AND unattributable, so folding attribution into the
                             // health verdict would force a choice between reporting an enforcement problem
                             // and reporting an accountability one. Both, or neither.
@@ -559,7 +559,7 @@ export default function Dashboard() {
                                 {g.name}
                               </span>
                               <span className="flex shrink-0 items-center gap-1.5">
-                                {/* ⚠ The detail rides a wrapping <span title>, not the Badge — Badge takes
+                                {/* ⚠ The detail rides a wrapping <span title>, not the Badge, Badge takes
                                     only tone+children, and widening a shared primitive to carry one
                                     caller's tooltip is how a design system stops being one. */}
                                 {g.attribution && (
@@ -581,7 +581,7 @@ export default function Dashboard() {
                   {/* ⛔ KUBERNETES ON OVERVIEW, AND ITS COUNTS DO NOT COME FROM `OrgOverview`.
                       Measured: that schema is `members, devices, nodes, online, recent_activity` and carries
                       nothing about clusters. So this reads the two live endpoints directly (both `org:view`,
-                      verified at the handler) as a SECOND-CLASS read — a failure degrades this card alone.
+                      verified at the handler) as a SECOND-CLASS read, a failure degrades this card alone.
 
                       THREE STATES, NOT TWO. `null` = still loading · `{ok:false}` = we could not look ·
                       `[]` = there are genuinely none. A zero standing in for the middle case would claim an
@@ -689,15 +689,15 @@ export default function Dashboard() {
                               centreLabel="devices"
                               empty="No devices enrolled yet."
                             />
-                            {/* ⛔ THE STATE, IN WORDS — not "n/a".
+                            {/* ⛔ THE STATE, IN WORDS, not "n/a".
                                 A big "n/a" is indistinguishable from a failed load at a glance, which is the
                                 exact confusion this screen exists to remove. When nothing has reported there
                                 is no percentage to state (0% would claim total non-compliance, 100% the
-                                opposite, and neither was measured) — so the SENTENCE says what is true. */}
+                                opposite, and neither was measured), so the SENTENCE says what is true. */}
                             <p className="mt-2 text-explainer leading-[1.55] text-ink-tertiary">
                               {ps.percent === null
                                 ? `No device has reported posture yet, so there is no compliance rate to show. Unknown is its own state: absence is not compliance.`
-                                : `${ps.percent}% of the ${ps.compliant + ps.blocked} devices that have reported are compliant. The ${ps.unknown} that have not reported are excluded — absence is not compliance.`}
+                                : `${ps.percent}% of the ${ps.compliant + ps.blocked} devices that have reported are compliant. The ${ps.unknown} that have not reported are excluded, absence is not compliance.`}
                             </p>
                           </>
                         );
@@ -707,7 +707,7 @@ export default function Dashboard() {
 
                   <Panel title="HA Hub Set">
                     {/* ⚠ THIS PANEL WAS CUT ON A WRONG MEASUREMENT. The audit checked the `Site` schema for
-                        hub/generation/pin fields, found none, and declared the data absent — but the hub set
+                        hub/generation/pin fields, found none, and declared the data absent, but the hub set
                         is its OWN endpoint and schema, and `hubsetview.ts` already projects it. An absence
                         found by looking in one place is not an absence (docs/laws.md). */}
                     {hubSetRes === null ? (
@@ -734,7 +734,7 @@ export default function Dashboard() {
                             <List label="Hub set">
                               {hv.members.map((m) => {
                                 // The row carries a nodeId; the NAME lives on /nodes, so the two are joined
-                                // here. An unjoinable id renders as the id rather than as a blank — an
+                                // here. An unjoinable id renders as the id rather than as a blank, an
                                 // unnamed member is still a member, and hiding it would understate the set.
                                 const node = nodesRes?.ok
                                   ? nodesRes.data.find((n) => n.id === m.nodeId)
@@ -782,7 +782,7 @@ export default function Dashboard() {
                   </Panel>
 
                   <Panel title="Network map">
-                    {/* ⚠ ALSO A RETRACTED CUT. Cut as "no SiteLink schema" — true, and beside the point:
+                    {/* ⚠ ALSO A RETRACTED CUT. Cut as "no SiteLink schema", true, and beside the point:
                         `assembleTopology()` already projects sites + their gateways from data this screen
                         fetches. CATEGORY ONE, not category three: the capability exists and has no data yet,
                         so it gets an EMPTY STATE rather than absence (docs/EPIC-14, the three-way test). */}
@@ -799,7 +799,7 @@ export default function Dashboard() {
                         failed={false}
                         {...(() => {
                           // ⛔ THE SAME FUNCTION THE SITES SCREEN USES. This panel built its own node list
-                          // inline with `links={[]}` — so Overview drew rings and NO EDGES while Sites drew
+                          // inline with `links={[]}`, so Overview drew rings and NO EDGES while Sites drew
                           // the mesh, from the same data, and the two screens disagreed about what the
                           // network looks like.
                           //
@@ -834,18 +834,18 @@ export default function Dashboard() {
 }
 
 /**
- * A stat card — the README's composition, exactly:
+ * A stat card, the README's composition, exactly:
  *
  *   [30px icon tile]  LABEL 500 11px
  *   VALUE 700 26px
  *   SUB-LINE 10px
  *
- * ⛔ `value` IS A STATE, NOT A NUMBER. `number` would let a caller write `data?.members ?? 0` — one keystroke,
+ * ⛔ `value` IS A STATE, NOT A NUMBER. `number` would let a caller write `data?.members ?? 0`, one keystroke,
  * typechecks, looks reasonable, and renders a confident zero for an org whose fetch failed. The three states
  * mean different things: loading (not learned yet) · failed (tried, could not learn) · ok (this is the number).
  *
  * ⛔ THE SUB-LINE IS STRUCTURAL, NOT DECORATION. In the design every card carries one and it holds the
- * QUALIFICATION — "seen in last 3 min", "3 awaiting approval". A card with a bare number states more than it
+ * QUALIFICATION, "seen in last 3 min", "3 awaiting approval". A card with a bare number states more than it
  * knows; the sub-line is where the number is told what it means.
  */
 function Stat({
@@ -858,18 +858,18 @@ function Stat({
   label: string;
   icon: IconName;
   value: StatState;
-  /** The qualification. `null` when there is nothing honest to say — never filler. */
+  /** The qualification. `null` when there is nothing honest to say, never filler. */
   sub?: ReactNode;
   tone?: "ok";
 }) {
   const text = statText(value);
   return (
-    // Composes GLASS rather than restating it — the divergence between this card and Panel is exactly what
+    // Composes GLASS rather than restating it, the divergence between this card and Panel is exactly what
     // produced a screenshot with glass stat cards above flat panels.
     // ⛔ role="group" + aria-label MAKES THE CARD ADDRESSABLE BY NAME.
     //
     // The e2e specs read a stat's value with `getByText('Members').locator('xpath=preceding-sibling::div[1]')`
-    // — the value happened to be the div BEFORE the label. The design puts the icon+label row first and the
+    //, the value happened to be the div BEFORE the label. The design puts the icon+label row first and the
     // value second, so that xpath now points at nothing, and three specs failed on a layout change that was
     // asked for.
     //

@@ -4,12 +4,12 @@ import { isCanonicalUuid } from "./uuid";
 
 // A device's config is ORIGIN-KEYED (like the bearer) and NEVER used cross-origin:
 // a stored config belongs to exactly the server it was minted against. The map is
-// encrypted at rest via the OS keychain — the WG private key lives here + in the
+// encrypted at rest via the OS keychain, the WG private key lives here + in the
 // helper only, never in the renderer.
 export interface StoredTunnelConfig {
   origin: string; // the server origin this config/device belongs to
   deviceId: string; // for best-effort revoke (against THIS origin only)
-  orgId: string; // the device's OWN org — the monitors query it directly (S7.3 finding #4)
+  orgId: string; // the device's OWN org, the monitors query it directly (S7.3 finding #4)
   // D14: the authenticated human who owns this managed device. Optional only so
   // encrypted records written by older clients remain readable long enough for
   // the live owner-binding migration. Every newly minted managed record sets it;
@@ -28,14 +28,14 @@ export interface StoredTunnelConfig {
   // ⛔ IMPORTED = A CONFIG THIS CLIENT DID NOT MINT, AND IT IS A DEGRADED MODE ON PURPOSE.
   //
   // Founder-directed: a user who downloaded a `.conf` from the control plane at device creation
-  // must be able to connect with it. It works — the helper only needs keys and routes — but it
+  // must be able to connect with it. It works, the helper only needs keys and routes, but it
   // arrives with NO device identity, and everything the client does to keep a tunnel honest is
   // keyed on one:
   //
   //   · `RevocationMonitor` polls `deviceExists(deviceId, orgId)`. Without them there is no poll,
   //     so an admin revoking this device sees it STAY UP on the client until the peer is dropped
   //     server-side. The tunnel stops working; the app does not know why.
-  //   · `ApprovalMonitor` and `HealthMonitor` are keyed the same way — no posture reporting, no
+  //   · `ApprovalMonitor` and `HealthMonitor` are keyed the same way, no posture reporting, no
   //     pending-approval transition.
   //   · The split↔full re-mint cannot run: an imported profile's AllowedIPs are fixed at whatever
   //     the file says, so the routing toggle has nothing to re-issue.
@@ -128,7 +128,7 @@ function parseConfigMap(json: string): ConfigMap {
 }
 
 // TunnelConfigStore refuses-by-default when there is no keychain (same posture as
-// CredentialStore) — a plaintext WG private key on disk is exactly the mistake D2
+// CredentialStore), a plaintext WG private key on disk is exactly the mistake D2
 // called out about the browser flow.
 export class TunnelConfigStore {
   constructor(

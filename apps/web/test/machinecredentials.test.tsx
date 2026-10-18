@@ -12,7 +12,7 @@ import * as apiMod from "../src/lib/api";
 // ⛔ THE THREE EMPTY STATES ARE THE POINT OF THIS SCREEN, AND THE THIRD IS WHY IT IS HARD.
 //
 // none · all owned · THE LIST FAILED TO LOAD. An unreachable query rendering as an empty list is
-// "migration complete" written by an error path — and this is a MIGRATION screen, so that is precisely the
+// "migration complete" written by an error path, and this is a MIGRATION screen, so that is precisely the
 // reassurance that must be earned rather than defaulted to.
 //
 // The component previously used a raw `api.GET`, which is review-refused on a list whose emptiness is
@@ -31,7 +31,7 @@ function cred(over: Partial<Record<string, unknown>> = {}) {
     owner_user_id: over.owner_user_id ?? null,
     // ⛔ POPULATED BY THE SERVER (D22 ruled). It was documented-and-always-null before, which is what
     // let the first consumer read it and render "unknown" on every owned row. The handler now resolves
-    // it by LEFT JOIN on `users`, so it survives the owner leaving the org — `in`, not `??`, because a
+    // it by LEFT JOIN on `users`, so it survives the owner leaving the org, `in`, not `??`, because a
     // nullable field cannot be overridden to null by a coalescing default.
     owner_email:
       "owner_email" in over
@@ -56,7 +56,7 @@ function stubGet(byPath: Record<string, unknown>) {
 
 beforeEach(() => vi.restoreAllMocks());
 /**
- * ⛔ THE PANEL IS COLLAPSED BY DEFAULT NOW, so every assertion about its CONTENTS has to open it first —
+ * ⛔ THE PANEL IS COLLAPSED BY DEFAULT NOW, so every assertion about its CONTENTS has to open it first ,
  * the same click a person makes. This is not a weakening of these tests: the distinction they exist to
  * protect (none / failed-to-load / all-owned) is also stated on the row itself as "0 credentials" /
  * "unknown" / a count, and the detail lives behind the open.
@@ -75,7 +75,7 @@ const LIST = "/api/v1/organizations/{orgId}/machine-credentials";
 const MEMBERS = "/api/v1/organizations/{orgId}/members";
 
 describe("⛔ the three empty states are distinguishable", () => {
-  it("NONE — no credentials exist, and it says there is nothing to assign", async () => {
+  it("NONE, no credentials exist, and it says there is nothing to assign", async () => {
     stubGet({ [LIST]: [], [MEMBERS]: [] });
     render(<MachineCredentials orgId={ORG} canManage />);
     await open();
@@ -85,7 +85,7 @@ describe("⛔ the three empty states are distinguishable", () => {
     expect(document.querySelector('[data-state="load-failed"]')).toBeNull();
   });
 
-  it("⛔ FAILED TO LOAD is NOT 'none' — the state this screen exists to keep apart", async () => {
+  it("⛔ FAILED TO LOAD is NOT 'none', the state this screen exists to keep apart", async () => {
     stubGet({ [LIST]: "REJECT", [MEMBERS]: [] });
     render(<MachineCredentials orgId={ORG} canManage />);
     await open();
@@ -99,14 +99,14 @@ describe("⛔ the three empty states are distinguishable", () => {
     expect(screen.getByText(/not the same as having none/i)).toBeTruthy();
 
     // ⚠ SHIPPING COPY: the message is concatenated from two sources with different punctuation
-    // conventions — the client's own fallbacks are written as sentences ("Could not reach the API."),
+    // conventions, the client's own fallbacks are written as sentences ("Could not reach the API."),
     // while apiErrorMessage returns the SERVER's message, whose punctuation is not ours to assume.
     // Appending "." unconditionally shipped "Could not reach the API..".
     const failed = document.querySelector('[data-state="load-failed"]')!;
     expect(failed.textContent).not.toMatch(/\.\./);
   });
 
-  it("ALL OWNED — earned, and rendered ABOVE the rows", async () => {
+  it("ALL OWNED, earned, and rendered ABOVE the rows", async () => {
     stubGet({
       [LIST]: [cred({ id: "c1", owner_user_id: "u1" })],
       [MEMBERS]: [],
@@ -120,17 +120,17 @@ describe("⛔ the three empty states are distinguishable", () => {
     );
     // ⚠ ORDER IS THE ASSERTION. A qualifier under a list is read after the list is already believed.
     const banner = document.body.querySelector('[data-state="all-owned"]')!;
-    // ⚠ The panel is a DataTable now, not a <ul>. The claim is unchanged — the refusal banner sits ABOVE
-    // the rows — only the element carrying "the rows" is different.
+    // ⚠ The panel is a DataTable now, not a <ul>. The claim is unchanged, the refusal banner sits ABOVE
+    // the rows, only the element carrying "the rows" is different.
     const list = document.body.querySelector("table")!;
     expect(
       banner.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
 
-    // ⛔ IT IS A CLAIM ABOUT OWNERSHIP, NOT ABOUT HEALTH. It knows one predicate — nothing is refused
+    // ⛔ IT IS A CLAIM ABOUT OWNERSHIP, NOT ABOUT HEALTH. It knows one predicate, nothing is refused
     // for want of an owner. It cannot know the fleet is well: a credential may be revoked, dead at the
     // far end, or owned by someone who has left. The first version said "the migration is complete for
-    // this organization", which reads as "everything is fine" AND is false on its own terms — step 4,
+    // this organization", which reads as "everything is fine" AND is false on its own terms, step 4,
     // the NOT NULL contract, has not run.
     expect(banner.textContent).toMatch(/none is being refused/i);
     for (const overclaim of [
@@ -143,7 +143,7 @@ describe("⛔ the three empty states are distinguishable", () => {
     }
   });
 
-  it("a MIXED fleet is not 'all owned' — the banner must be earned per-row", async () => {
+  it("a MIXED fleet is not 'all owned', the banner must be earned per-row", async () => {
     stubGet({
       [LIST]: [cred({ id: "c1", owner_user_id: "u1" }), cred({ id: "c2" })],
       [MEMBERS]: [],
@@ -158,7 +158,7 @@ describe("⛔ the three empty states are distinguishable", () => {
 });
 
 describe("the row tells the truth about what it knows", () => {
-  it("⛔ BOTH states of ownership — owned carries no picker, unowned does", async () => {
+  it("⛔ BOTH states of ownership, owned carries no picker, unowned does", async () => {
     stubGet({
       [LIST]: [
         cred({ id: "c1", owner_user_id: "u1", name: "owned-one" }),
@@ -191,10 +191,10 @@ describe("the row tells the truth about what it knows", () => {
   });
 
   // ─────────────────────────────────────────────────────────────────────────────────────────────
-  // FOUNDER REVIEW, FIRST PASS — the two findings. Both were invisible to the seven tests above.
+  // FOUNDER REVIEW, FIRST PASS, the two findings. Both were invisible to the seven tests above.
   // ─────────────────────────────────────────────────────────────────────────────────────────────
 
-  it("⛔ AN ASSIGNED ROW SHOWS ITS OWNER — the whole point of the screen, previously invisible", async () => {
+  it("⛔ AN ASSIGNED ROW SHOWS ITS OWNER, the whole point of the screen, previously invisible", async () => {
     stubGet({
       [LIST]: [cred({ id: "c1", owner_user_id: "u1", name: "backup-agent" })],
       [MEMBERS]: [
@@ -213,14 +213,14 @@ describe("the row tells the truth about what it knows", () => {
       expect(li).not.toBeNull();
       return li as HTMLElement;
     });
-    // ON THE ROW, not merely somewhere on the screen — an owner rendered elsewhere is not accountability.
+    // ON THE ROW, not merely somewhere on the screen, an owner rendered elsewhere is not accountability.
     expect(row.textContent).toContain("owner@demo.tunnex.local");
   });
 
-  it("⛔ AN OWNER WHO HAS LEFT THE ORG STILL RENDERS THEIR IDENTITY — the red that makes D22 not a refactor", async () => {
+  it("⛔ AN OWNER WHO HAS LEFT THE ORG STILL RENDERS THEIR IDENTITY, the red that makes D22 not a refactor", async () => {
     // ⛔ THE ROSTER IS EMPTY AND THE OWNER IS STILL NAMED. This is the case a roster-only resolver went
     // blank on: nothing pins a membership, so an owner who leaves keeps the credential and drops off the
-    // roster — and that is precisely the row an accountability screen exists for. The server resolves
+    // roster, and that is precisely the row an accountability screen exists for. The server resolves
     // owner_email from `users`, which survives both leaving and deactivation.
     stubGet({
       [LIST]: [
@@ -241,12 +241,12 @@ describe("the row tells the truth about what it knows", () => {
       return li as HTMLElement;
     });
     expect(row.textContent).toContain("departed@demo.tunnex.local");
-    // Not a blank and not "unknown" — the recorded identity.
+    // Not a blank and not "unknown", the recorded identity.
     expect(row.textContent).not.toMatch(/unknown|not a member/i);
     expect(row.querySelector('[data-badge="refused"]')).toBeNull();
   });
 
-  it("⛔ UNASSIGNED IS AN OUTAGE — the row and the banner both say REFUSED, not 'untidy'", async () => {
+  it("⛔ UNASSIGNED IS AN OUTAGE, the row and the banner both say REFUSED, not 'untidy'", async () => {
     stubGet({
       [LIST]: [
         cred({ id: "c1", name: "gitops-prod" }),
@@ -269,7 +269,7 @@ describe("the row tells the truth about what it knows", () => {
       expect(p).not.toBeNull();
       return p as HTMLElement;
     });
-    // The COUNT is of refused rows, not of all rows — 2 of the 3.
+    // The COUNT is of refused rows, not of all rows, 2 of the 3.
     expect(banner.textContent).toContain(
       "2 machine credentials are being refused",
     );
@@ -308,7 +308,7 @@ describe("the row tells the truth about what it knows", () => {
     expect(document.body.querySelector('[data-badge="refused"]')).toBeNull();
   });
 
-  it("⛔ THE PICKER OFFERS VERIFIED ACCOUNTS ONLY — and still offers the verified ones (D21)", async () => {
+  it("⛔ THE PICKER OFFERS VERIFIED ACCOUNTS ONLY, and still offers the verified ones (D21)", async () => {
     stubGet({
       [LIST]: [cred({ id: "c2", name: "orphan" })],
       [MEMBERS]: [
@@ -339,7 +339,7 @@ describe("the row tells the truth about what it knows", () => {
     expect(offered).not.toContain("unverified@demo.tunnex.local");
   });
 
-  it("⛔ NO SUGGESTED OWNER — the picker starts empty and the copy says the system does not know", async () => {
+  it("⛔ NO SUGGESTED OWNER, the picker starts empty and the copy says the system does not know", async () => {
     stubGet({
       [LIST]: [cred({ id: "c2", name: "orphan" })],
       [MEMBERS]: [

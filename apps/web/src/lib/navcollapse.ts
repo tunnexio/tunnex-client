@@ -5,7 +5,7 @@
 // way. That is the state the design specifies and persists.
 //
 // ⚠ AND THE KEY IS DOCUMENTED, WHICH I PREVIOUSLY SAID IT WAS NOT. It is in the wireframe's own JS,
-// not in our README — which is the only place I grepped:
+// not in our README, which is the only place I grepped:
 //
 //     localStorage.setItem('tnx-nav', c ? 'closed' : 'open')
 //
@@ -29,7 +29,7 @@ export type NavCollapse = "open" | "closed";
  * Read the persisted state.
  *
  * ⛔ DEFAULTS OPEN, AND AN UNREADABLE STORE IS NOT "CLOSED". A user in private mode, or with
- * storage disabled, gets the full sidebar rather than a mystery icon rail they never chose — the
+ * storage disabled, gets the full sidebar rather than a mystery icon rail they never chose, the
  * same absent-until-known rule the nav counts and the edition seam follow.
  */
 export function readNavCollapse(
@@ -67,7 +67,7 @@ export function navToggleTitle(c: NavCollapse): string {
 }
 
 /**
- * ⛔ WHAT COLLAPSING HIDES — and what it must NOT.
+ * ⛔ WHAT COLLAPSING HIDES, and what it must NOT.
  *
  * The wordmark and the SECTION HEADERS go; the destinations and their badges stay. A rail that
  * dropped a destination would make it unreachable rather than compact, and the badges are the

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# S6.3 MINI-SMOKE dev-install (macOS) — scope: validate the kill-switch + data
+# S6.3 MINI-SMOKE dev-install (macOS), scope: validate the kill-switch + data
 # plane ONLY. This is NOT the production installer (SMAppService); it is the
 # minimal path to run the mini-smoke. Requires admin (sudo prompts).
 set -euo pipefail
@@ -48,10 +48,10 @@ sudo chmod 0755 "$DIR" "$DIR/tunnex-helper" "$DIR/tunnelctl"
 # Re-apply an ad-hoc signature IN PLACE. On Apple Silicon the sudo cp above
 # invalidates the Go build-time signature, and the kernel then kills the binary on
 # exec ("Killed: 9"). Sign the installed copies so they can run. (Dev-install only;
-# the production SMAppService installer ships a real Developer ID signature — S6.5b.)
+# the production SMAppService installer ships a real Developer ID signature, S6.5b.)
 sudo codesign --force --sign - "$DIR/tunnex-helper" "$DIR/tunnelctl"
 
-echo ">> [3/6] STEP ZERO — caller-auth indicator MUST print 'native':"
+echo ">> [3/6] STEP ZERO, caller-auth indicator MUST print 'native':"
 "$DIR/tunnex-helper" --version
 
 echo ">> [4/6] reference the pf anchor from /etc/pf.conf (backup first) so it is EVALUATED"

@@ -3,13 +3,13 @@
 // ⛔ RENDERED BY CHROMIUM, BECAUSE NOTHING ELSE ON THE BOX CAN RENDER THIS SVG. There is no
 // rsvg-convert, inkscape, ImageMagick or cairosvg here, and `sips` does not read SVG. The mark uses
 // gradients and a sheen, so a hand-rolled rasteriser would drop exactly the parts that make it look
-// like the brand. Electron is already a dependency and ships the same engine that draws the app —
+// like the brand. Electron is already a dependency and ships the same engine that draws the app ,
 // so the icon is rendered by the renderer, which also means it cannot disagree with what the app
 // shows.
 //
 // ⛔ PADDING AND A PLATE, DELIBERATELY. The asset's glyph runs corner to corner with a baked
 // `#0A0A0A` rectangle behind it, which is why it reads as a cropped tile at small sizes. Here the
-// glyph is drawn at 58% of the canvas, centred, on a rounded square of the same brand black — so
+// glyph is drawn at 58% of the canvas, centred, on a rounded square of the same brand black, so
 // the mark has room on every side and the ROUNDING is ours rather than the OS clipping a square.
 //
 //   macOS draws no mask: whatever the file contains is what appears in the Dock. A square PNG shows
@@ -26,7 +26,7 @@ const SVG = join(here, "..", "..", "web", "src", "assets", "tunnex-logo.svg");
 const OUT = join(here, "..", "build", "icon.png");
 
 const SIZE = 1024;
-const GLYPH = 0.58; // fraction of the canvas the mark occupies — the rest is padding
+const GLYPH = 0.58; // fraction of the canvas the mark occupies, the rest is padding
 const RADIUS = 0.2237; // Apple's Big Sur corner radius, as a fraction of the side
 
 app.disableHardwareAcceleration();
@@ -41,7 +41,7 @@ app.whenReady().then(async () => {
   );
   if (glyph === svg) {
     // Loud, not silent: a changed asset must not quietly produce an icon with a square inside it.
-    console.error("make-icon: the artboard rect was NOT found — the asset changed shape.");
+    console.error("make-icon: the artboard rect was NOT found, the asset changed shape.");
     console.error("Re-check the <rect> in tunnex-logo.svg before shipping this icon.");
     app.exit(1);
     return;
@@ -76,7 +76,7 @@ app.whenReady().then(async () => {
   writeFileSync(OUT, img.toPNG());
   const { width, height } = img.getSize();
   console.log(`make-icon: wrote ${OUT} (${width}x${height})`);
-  // ⚠ ON A RETINA DISPLAY THE CAPTURE COMES BACK AT DEVICE PIXELS — 2048 for a 1024 window. That is
+  // ⚠ ON A RETINA DISPLAY THE CAPTURE COMES BACK AT DEVICE PIXELS, 2048 for a 1024 window. That is
   // MORE detail, not a scaling bug, and electron-builder downsamples happily. What must hold is
   // that it is SQUARE and at least the target: a non-square icon is stretched by every OS that
   // shows it, and an undersized one is blurred by all of them.

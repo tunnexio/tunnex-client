@@ -8,15 +8,15 @@ import { BRAND_WORDMARK_SVG } from "./brandmark";
 // keychain and no opt-in, the user is told login is blocked until they pass
 // --allow-insecure-credential-storage (or use device-code, S6.2).
 //
-// ⛔ RESTYLED TO THE CLIENT, AND THE OLD PALETTE WAS NOT MERELY "OLD" — IT WAS A DIFFERENT THEME.
+// ⛔ RESTYLED TO THE CLIENT, AND THE OLD PALETTE WAS NOT MERELY "OLD", IT WAS A DIFFERENT THEME.
 //
 // It hardcoded `#7c5cff` for the primary button and `#0b0b12` for the page. Neither is the default
 // theme: `--tnx-accent` is **`#C9C9C4`** and `--tnx-bg` is **`#0A0A0A`**. `#7C5CFC` is the accent of
-// the `violet` theme — one the app does not select. So the first screen a user ever sees was
+// the `violet` theme, one the app does not select. So the first screen a user ever sees was
 // painted from a palette the rest of the product never uses, which is why it read as a different
 // application rather than as an older version of this one.
 //
-// > **A SURFACE OUTSIDE THE DESIGN SYSTEM DOES NOT AGE — IT DIVERGES.** This page cannot import
+// > **A SURFACE OUTSIDE THE DESIGN SYSTEM DOES NOT AGE, IT DIVERGES.** This page cannot import
 // > tokens (it is built before any bundle loads), so the values are transcribed with their token
 // > names beside them, and the mark is embedded rather than skipped.
 export function setupPageDataUrl(secureStorage: boolean, allowInsecure: boolean): string {
@@ -31,7 +31,7 @@ export function setupPageDataUrl(secureStorage: boolean, allowInsecure: boolean)
         : "";
   const html = `<!doctype html><html><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
-<title>Tunnex — Setup</title>
+<title>Tunnex, Setup</title>
 <style>
   /* Values are the DEFAULT theme's, token name beside each one. */
   :root{
@@ -58,7 +58,7 @@ export function setupPageDataUrl(secureStorage: boolean, allowInsecure: boolean)
     padding:1.25rem;
   }
   .brand{display:flex;flex-direction:column;gap:.15rem;margin-bottom:1.5rem}
-  .brand svg{width:112px;height:auto;display:block}  /* the wordmark is 792x120 — width-led */
+  .brand svg{width:112px;height:auto;display:block}  /* the wordmark is 792x120, width-led */
   .tagline{font-size:8.5px;line-height:1.6;letter-spacing:.04em;color:var(--secondary)}
   h1{font-size:1.15rem;line-height:1.3;color:var(--heading);margin:0}
   .sub{font-size:.85rem;color:var(--secondary);margin:.35rem 0 0}

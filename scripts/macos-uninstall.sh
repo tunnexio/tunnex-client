@@ -1,5 +1,5 @@
 #!/bin/bash
-# S6.5a — production macOS helper uninstall + residue check. Run with sudo. Removes the
+# S6.5a, production macOS helper uninstall + residue check. Run with sudo. Removes the
 # LaunchDaemon, the installed helper, the runtime dir, and restores /etc/pf.conf from the
 # backup the installer made. The packaged-app residue smoke asserts this leaves nothing.
 set -euo pipefail
@@ -16,7 +16,7 @@ echo ">> remove installed files"
 rm -f "$PLIST"
 rm -rf "$DIR" "$RUN"
 
-echo ">> remove the tunnex anchor line from /etc/pf.conf (surgical — never clobber the user's file)"
+echo ">> remove the tunnex anchor line from /etc/pf.conf (surgical, never clobber the user's file)"
 if grep -q '^[[:space:]]*anchor "tunnex"[[:space:]]*$' /etc/pf.conf 2>/dev/null; then
   # Delete ONLY our anchor reference; leave any rules the user/another tool added intact.
   grep -v '^[[:space:]]*anchor "tunnex"[[:space:]]*$' /etc/pf.conf > /etc/pf.conf.tunnex-tmp && mv /etc/pf.conf.tunnex-tmp /etc/pf.conf

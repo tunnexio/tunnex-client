@@ -71,7 +71,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Start TOTP enrollment (OPEN — all editions)
+         * Start TOTP enrollment (OPEN, all editions)
          * @description S7.5.5. Returns the otpauth:// URI (QR) + base32 manual key ONCE. Verify-before-arm: the secret is unconfirmed until a valid code is submitted to /mfa/enroll/confirm.
          */
         post: operations["mfaEnrollStart"];
@@ -128,7 +128,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Complete a login MFA challenge (public — challenge-token bound)
+         * Complete a login MFA challenge (public, challenge-token bound)
          * @description S7.5.5. Exchanges a login challenge + a TOTP or recovery code for a session cookie. The pending state is a challenge token, never a session (D6).
          */
         post: operations["mfaVerify"];
@@ -171,7 +171,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Admin-reset a member's MFA — disenroll only (enterprise)
+         * Admin-reset a member's MFA, disenroll only (enterprise)
          * @description S7.5.5. Clears the member's TOTP + recovery codes (never authenticates as them); audited + the member is notified.
          */
         post: operations["adminResetMfa"];
@@ -303,7 +303,7 @@ export interface paths {
         put?: never;
         /**
          * Change your own password
-         * @description ⛔ The ONLY way out of a forced password change, and therefore the one authenticated route that is NOT blocked by one. The CP admin's bootstrap credential is printed to the logs, so it is treated as compromised the moment it works — without this endpoint the forced change would be a lockout.
+         * @description ⛔ The ONLY way out of a forced password change, and therefore the one authenticated route that is NOT blocked by one. The CP admin's bootstrap credential is printed to the logs, so it is treated as compromised the moment it works, without this endpoint the forced change would be a lockout.
          */
         post: operations["changePassword"];
         delete?: never;
@@ -323,7 +323,7 @@ export interface paths {
         put?: never;
         /**
          * Revoke the current session
-         * @description Idempotent — clears the cookie and revokes the session if present.
+         * @description Idempotent, clears the cookie and revokes the session if present.
          */
         post: operations["logout"];
         delete?: never;
@@ -376,7 +376,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Read an SSO provider's config (enterprise) — never returns the secret */
+        /** Read an SSO provider's config (enterprise), never returns the secret */
         get: operations["getSsoConfig"];
         /** Configure an SSO provider for an organization (enterprise) */
         put: operations["setSsoConfig"];
@@ -398,7 +398,7 @@ export interface paths {
         put?: never;
         /**
          * Mint a one-time CLI authorization code (browser leg)
-         * @description COOKIE-SESSION ONLY (argued exception to bearer≡cookie): minting a new credential from an existing bearer credential would be self-replication — a stolen token could outlive its expiry by re-minting. The browser session is the human checkpoint. Verified email required. The redirect_uri must be a loopback (http://127.0.0.1:<port>/callback or http://[::1]:<port>/callback, any port, exactly that path — never a hostname). The code is single-use, expires in 60s, and is bound to this exact redirect_uri + PKCE challenge.
+         * @description COOKIE-SESSION ONLY (argued exception to bearer≡cookie): minting a new credential from an existing bearer credential would be self-replication, a stolen token could outlive its expiry by re-minting. The browser session is the human checkpoint. Verified email required. The redirect_uri must be a loopback (http://127.0.0.1:<port>/callback or http://[::1]:<port>/callback, any port, exactly that path, never a hostname). The code is single-use, expires in 60s, and is bound to this exact redirect_uri + PKCE challenge.
          *
          */
         post: operations["cliAuthorize"];
@@ -436,7 +436,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List the caller's CLI credentials (metadata only — never tokens) */
+        /** List the caller's CLI credentials (metadata only, never tokens) */
         get: operations["listCliCredentials"];
         put?: never;
         post?: never;
@@ -458,7 +458,7 @@ export interface paths {
         post?: never;
         /**
          * Revoke one of the caller's CLI credentials (immediate)
-         * @description Self-scoped (a caller revokes only their own credential). Allowed unverified — revoking a credential is logout-class, not org-mutating.
+         * @description Self-scoped (a caller revokes only their own credential). Allowed unverified, revoking a credential is logout-class, not org-mutating.
          *
          */
         delete: operations["revokeCliCredential"];
@@ -478,7 +478,7 @@ export interface paths {
         put?: never;
         /**
          * Start the device-code fallback (browserless hosts)
-         * @description Public. Returns a short user_code the user enters at verification_uri from any browser, and a device_code the CLI polls with. Same hygiene class as authorization codes — hashed at rest, single-use, short TTL.
+         * @description Public. Returns a short user_code the user enters at verification_uri from any browser, and a device_code the CLI polls with. Same hygiene class as authorization codes, hashed at rest, single-use, short TTL.
          *
          */
         post: operations["cliDeviceStart"];
@@ -499,7 +499,7 @@ export interface paths {
         put?: never;
         /**
          * Approve a device-code login (browser leg)
-         * @description COOKIE-SESSION ONLY (same argued exception as cliAuthorize) + verified email required — this is the human checkpoint of the device flow.
+         * @description COOKIE-SESSION ONLY (same argued exception as cliAuthorize) + verified email required, this is the human checkpoint of the device flow.
          *
          */
         post: operations["cliDeviceApprove"];
@@ -577,7 +577,7 @@ export interface paths {
         };
         /**
          * List the org's AI agents (enterprise)
-         * @description S15.3 — the agents enrolled in this organization, each with the human who authorised it and whether its activity is attributable. ⛔ ENTERPRISE: the open edition receives 403 edition_required, which is a SUCCESSFUL REFUSAL — the surface renders ABSENCE, never an error. ⛔ This endpoint says which agents EXIST and who owns them. It says nothing about what they may do: reachability is set by grants on Access Policies, and per-tool control does not exist in this product.
+         * @description S15.3, the agents enrolled in this organization, each with the human who authorised it and whether its activity is attributable. ⛔ ENTERPRISE: the open edition receives 403 edition_required, which is a SUCCESSFUL REFUSAL, the surface renders ABSENCE, never an error. ⛔ This endpoint says which agents EXIST and who owns them. It says nothing about what they may do: reachability is set by grants on Access Policies, and per-tool control does not exist in this product.
          */
         get: operations["listAgents"];
         put?: never;
@@ -845,7 +845,7 @@ export interface paths {
         put?: never;
         /**
          * Restore the devices a gateway revoke cascaded, onto a replacement gateway
-         * @description S13.1 Slice 7. Revoking a gateway revokes every device homed on it, so rebuilding that gateway hands back a working gateway with ZERO users. This brings those devices back — onto a REPLACEMENT gateway, because a revoked node is never active again (recovery from a revoke is a join-token enrolment, which creates a new node). ONLY devices revoked as a CASCADE return; a device an admin revoked deliberately is never revived by a gateway rebuild. A device that cannot reclaim its original address comes back on a fresh one and is audited distinctly — its config embeds the old address and must be re-imported. A DELIBERATE OPERATOR ACT by construction: RBAC device:restore, audited with the actor. Re-key performs the same restore for a gateway that recovered ITSELF, where no human is involved and nothing re-homes; this endpoint is the only path for a gateway that was REVOKED, which proof of possession must never undo (D3).
+         * @description S13.1 Slice 7. Revoking a gateway revokes every device homed on it, so rebuilding that gateway hands back a working gateway with ZERO users. This brings those devices back, onto a REPLACEMENT gateway, because a revoked node is never active again (recovery from a revoke is a join-token enrolment, which creates a new node). ONLY devices revoked as a CASCADE return; a device an admin revoked deliberately is never revived by a gateway rebuild. A device that cannot reclaim its original address comes back on a fresh one and is audited distinctly, its config embeds the old address and must be re-imported. A DELIBERATE OPERATOR ACT by construction: RBAC device:restore, audited with the actor. Re-key performs the same restore for a gateway that recovered ITSELF, where no human is involved and nothing re-homes; this endpoint is the only path for a gateway that was REVOKED, which proof of possession must never undo (D3).
          */
         post: operations["restoreNodeDevices"];
         delete?: never;
@@ -869,14 +869,14 @@ export interface paths {
         post?: never;
         /**
          * Delete a REVOKED gateway permanently
-         * @description S12.12 D2. A revoked gateway is terminal and never serves anything again, but its row stayed on the list forever — so a deployment accumulated dead entries an operator could not clear. Only a REVOKED node can be deleted, and that predicate is the whole safety argument: the revoke itself refuses while any device is homed there, so by the time a node is revoked the transfer has already moved them and the cascading foreign keys have nothing left to destroy. It is the SEQUENCE that makes this safe, not the FK actions. The gateway's ENROLMENT TOKEN is deleted with it: it is ON DELETE SET NULL and would have survived unlinked, and a token whose gateway an operator has just deleted must not still enrol another. Anyone holding that token finds it stops working, which the confirm says because it may be sitting in a colleague's terminal about to be run.
+         * @description S12.12 D2. A revoked gateway is terminal and never serves anything again, but its row stayed on the list forever, so a deployment accumulated dead entries an operator could not clear. Only a REVOKED node can be deleted, and that predicate is the whole safety argument: the revoke itself refuses while any device is homed there, so by the time a node is revoked the transfer has already moved them and the cascading foreign keys have nothing left to destroy. It is the SEQUENCE that makes this safe, not the FK actions. The gateway's ENROLMENT TOKEN is deleted with it: it is ON DELETE SET NULL and would have survived unlinked, and a token whose gateway an operator has just deleted must not still enrol another. Anyone holding that token finds it stops working, which the confirm says because it may be sitting in a colleague's terminal about to be run.
          */
         delete: operations["deleteNode"];
         options?: never;
         head?: never;
         /**
          * Rename a gateway
-         * @description S12.12 D3. Nothing about a gateway was editable: a typo at enrolment was permanent, because enrolment is a CLI act on the operator's own server and the name it supplies is written once. The NAME is a label — nothing consumes it structurally — so changing it costs nothing and is safe to expose. THE ENDPOINT IS DELIBERATELY NOT EDITABLE HERE, and the asymmetry is the point: peers hold the endpoint and every issued device config bakes it, so changing it invalidates those configs, and this product has no snapshot of the endpoint a config was issued against — so the change would be invisible to needs_reexport and every affected user would discover it by failing to connect. That is the exact defect the transfer step was built to avoid one story earlier. Correcting a wrong endpoint is re-enrolment until that snapshot exists.
+         * @description S12.12 D3. Nothing about a gateway was editable: a typo at enrolment was permanent, because enrolment is a CLI act on the operator's own server and the name it supplies is written once. The NAME is a label, nothing consumes it structurally, so changing it costs nothing and is safe to expose. THE ENDPOINT IS DELIBERATELY NOT EDITABLE HERE, and the asymmetry is the point: peers hold the endpoint and every issued device config bakes it, so changing it invalidates those configs, and this product has no snapshot of the endpoint a config was issued against, so the change would be invisible to needs_reexport and every affected user would discover it by failing to connect. That is the exact defect the transfer step was built to avoid one story earlier. Correcting a wrong endpoint is re-enrolment until that snapshot exists.
          */
         patch: operations["updateNode"];
         trace?: never;
@@ -895,7 +895,7 @@ export interface paths {
         put?: never;
         /**
          * Move every live device homed on this gateway to another gateway
-         * @description S12.12 D1. Revoking a gateway CASCADES to every active and pending device homed on it, in the same transaction, and a revoked gateway is never active again — so retiring a gateway used to mean disconnecting everyone on it. This moves them first, and the revoke REFUSES (409 devices_still_homed) while any remain, which is what makes the step unskippable. Transfer-first is the ruled order because of the state the flow is ABANDONED in: "devices moved, old gateway still running" is harmless and resumable, whereas revoke-then-restore leaves a disconnected fleet and no un-revoke. PENDING devices move too and stay pending — an outstanding approval is about the person, not the gateway. Addresses are NOT reallocated: the pool is org-scoped, so a same-org move cannot collide. The response reports PER DEVICE whether its issued config must be re-imported, which is a different question from whether the row moved: a static export bakes the gateway's endpoint and never polls, and a managed device only re-homes itself onto a gateway in the active hub set.
+         * @description S12.12 D1. Revoking a gateway CASCADES to every active and pending device homed on it, in the same transaction, and a revoked gateway is never active again, so retiring a gateway used to mean disconnecting everyone on it. This moves them first, and the revoke REFUSES (409 devices_still_homed) while any remain, which is what makes the step unskippable. Transfer-first is the ruled order because of the state the flow is ABANDONED in: "devices moved, old gateway still running" is harmless and resumable, whereas revoke-then-restore leaves a disconnected fleet and no un-revoke. PENDING devices move too and stay pending, an outstanding approval is about the person, not the gateway. Addresses are NOT reallocated: the pool is org-scoped, so a same-org move cannot collide. The response reports PER DEVICE whether its issued config must be re-imported, which is a different question from whether the row moved: a static export bakes the gateway's endpoint and never polls, and a managed device only re-homes itself onto a gateway in the active hub set.
          */
         post: operations["transferNodeDevices"];
         delete?: never;
@@ -952,7 +952,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Dashboard overview — counts + recent activity */
+        /** Dashboard overview, counts + recent activity */
         get: operations["getOrgOverview"];
         put?: never;
         post?: never;
@@ -971,7 +971,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** The org's audit log — filterable, keyset-paginated (read-only) */
+        /** The org's audit log, filterable, keyset-paginated (read-only) */
         get: operations["listAuditLogs"];
         put?: never;
         post?: never;
@@ -990,7 +990,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** The org's Zero Trust access/flow events — keyset-paginated (enterprise, read-only) */
+        /** The org's Zero Trust access/flow events, keyset-paginated (enterprise, read-only) */
         get: operations["listAccessEvents"];
         put?: never;
         post?: never;
@@ -1009,7 +1009,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Access-log subsystem health — retention sweep (enterprise) */
+        /** Access-log subsystem health, retention sweep (enterprise) */
         get: operations["getAccessLogHealth"];
         put?: never;
         post?: never;
@@ -1091,7 +1091,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Map a directory group to a Tunnex group — new or an EMPTY manual group (enterprise) */
+        /** Map a directory group to a Tunnex group, new or an EMPTY manual group (enterprise) */
         post: operations["mapIdpGroup"];
         delete?: never;
         options?: never;
@@ -1151,8 +1151,8 @@ export interface paths {
         };
         get?: never;
         /**
-         * Set the org OpenVPN opt-in (S9.1 D-S9.5-OPTIN — unlock-then-opt-in, OFF by default)
-         * @description Flips org-level OpenVPN. Enabling makes the OVPN capability available on the org's gateways; disabling is NOT revocation — issued client certs survive and a re-enable restores service.
+         * Set the org OpenVPN opt-in (S9.1 D-S9.5-OPTIN, unlock-then-opt-in, OFF by default)
+         * @description Flips org-level OpenVPN. Enabling makes the OVPN capability available on the org's gateways; disabling is NOT revocation, issued client certs survive and a re-enable restores service.
          */
         put: operations["setOVPNEnabled"];
         post?: never;
@@ -1242,8 +1242,8 @@ export interface paths {
         post?: never;
         /**
          * Remove a REVOKED device from the roster (soft delete)
-         * @description ⛔ SOFT, AND THE CASCADE IS WHY. Every foreign key into `devices` is ON DELETE CASCADE, including `ovpn_client_certs` — and the OpenVPN CRL is built from that table. A hard delete would drop the device's serial out of the CRL and thereby UN-REVOKE the credential on the wire: a tidy-up that silently restores access. It would also destroy the device's posture history, its telemetry and any policy rule naming it as an agent source.
-         *     ⚠ REVOKED ONLY. Removing an ACTIVE device would leave a live credential with no surface to revoke it from — invisible and still working. A device that is not revoked answers 409.
+         * @description ⛔ SOFT, AND THE CASCADE IS WHY. Every foreign key into `devices` is ON DELETE CASCADE, including `ovpn_client_certs`, and the OpenVPN CRL is built from that table. A hard delete would drop the device's serial out of the CRL and thereby UN-REVOKE the credential on the wire: a tidy-up that silently restores access. It would also destroy the device's posture history, its telemetry and any policy rule naming it as an agent source.
+         *     ⚠ REVOKED ONLY. Removing an ACTIVE device would leave a live credential with no surface to revoke it from, invisible and still working. A device that is not revoked answers 409.
          */
         delete: operations["removeDevice"];
         options?: never;
@@ -1321,7 +1321,7 @@ export interface paths {
         };
         /** Get the org device-approval mode (enterprise) */
         get: operations["getDeviceApproval"];
-        /** Set the org device-approval mode — enabling gates new enrollments (enterprise) */
+        /** Set the org device-approval mode, enabling gates new enrollments (enterprise) */
         put: operations["setDeviceApproval"];
         post?: never;
         delete?: never;
@@ -1482,10 +1482,10 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** List machine credentials — the GitOps operator's org identity (S10.2; machine:manage). Fingerprint only, never the secret. */
+        /** List machine credentials, the GitOps operator's org identity (S10.2; machine:manage). Fingerprint only, never the secret. */
         get: operations["listMachineCredentials"];
         put?: never;
-        /** Mint a machine credential — the token is shown ONCE (S10.2; machine:manage, owner-only). One-time-secret ceremony. */
+        /** Mint a machine credential, the token is shown ONCE (S10.2; machine:manage, owner-only). One-time-secret ceremony. */
         post: operations["mintMachineCredential"];
         delete?: never;
         options?: never;
@@ -1504,10 +1504,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Assign the human owner of a machine credential (S15.1/D14; machine:manage, owner-only). The admin CHOOSES — created_by does not exist, so nothing is suggested. */
+        /** Assign the human owner of a machine credential (S15.1/D14; machine:manage, owner-only). The admin CHOOSES, created_by does not exist, so nothing is suggested. */
         put: operations["assignMachineCredentialOwner"];
         post?: never;
-        /** Revoke a machine credential — severs on its next request (S10.2; machine:manage). */
+        /** Revoke a machine credential, severs on its next request (S10.2; machine:manage). */
         delete: operations["revokeMachineCredential"];
         options?: never;
         head?: never;
@@ -1588,7 +1588,7 @@ export interface paths {
         get?: never;
         /**
          * Extend a temporary grant's expiry window in place (enterprise)
-         * @description S7.5.4: moves a temporary grant's expires_at forward (window-extensible, never delete+recreate). Refuses a permanent grant (409 not_temporary) or an already-lapsed one (409 grant_lapsed) — a lapsed grant is terminal.
+         * @description S7.5.4: moves a temporary grant's expires_at forward (window-extensible, never delete+recreate). Refuses a permanent grant (409 not_temporary) or an already-lapsed one (409 grant_lapsed), a lapsed grant is terminal.
          *
          */
         put: operations["extendGrant"];
@@ -1599,7 +1599,7 @@ export interface paths {
         head?: never;
         /**
          * Enable or disable an allow-rule without deleting it (enterprise, F3)
-         * @description F3: toggle a rule's enabled state. Disabling WITHDRAWS the rule's permission under default-deny ("as if the rule weren't there" — NOT a deny-rule, not active blocking); it is a real, in-hash policy change that recompiles + pushes (traffic matching the rule stops within a push cycle). Re-enabling restores the grant. Audited as two distinct actions (policy.rule_enabled / policy.rule_disabled). No RequiredVersion bump.
+         * @description F3: toggle a rule's enabled state. Disabling WITHDRAWS the rule's permission under default-deny ("as if the rule weren't there", NOT a deny-rule, not active blocking); it is a real, in-hash policy change that recompiles + pushes (traffic matching the rule stops within a push cycle). Re-enabling restores the grant. Audited as two distinct actions (policy.rule_enabled / policy.rule_disabled). No RequiredVersion bump.
          *
          */
         patch: operations["setPolicyRuleEnabled"];
@@ -1616,7 +1616,7 @@ export interface paths {
         };
         /** Get the org enforcement mode (enterprise) */
         get: operations["getZeroTrustMode"];
-        /** Set the org enforcement mode — enabling turns on default-deny (enterprise) */
+        /** Set the org enforcement mode, enabling turns on default-deny (enterprise) */
         put: operations["setZeroTrustMode"];
         post?: never;
         delete?: never;
@@ -1634,12 +1634,12 @@ export interface paths {
         };
         /**
          * What this deployment is entitled to
-         * @description The current entitlement, whether or not a licence key is installed. An absent licence is COMMUNITY — not an error — so this always answers.
+         * @description The current entitlement, whether or not a licence key is installed. An absent licence is COMMUNITY, not an error, so this always answers.
          */
         get: operations["getLicense"];
         put?: never;
         /**
-         * Install a licence key — takes effect immediately, no restart
+         * Install a licence key, takes effect immediately, no restart
          * @description Verifies the key offline against the public key set compiled into this build and installs it. A key that does not verify is REFUSED and the existing entitlement is left untouched.
          */
         post: operations["installLicense"];
@@ -1678,7 +1678,7 @@ export interface paths {
         /**
          * List the organization's invitations
          * @description Returns every invitation row for the org, newest first, with its lifecycle timestamps.
-         *     Gated on `member:invite` — the same permission as the three verbs it exists to serve.
+         *     Gated on `member:invite`, the same permission as the three verbs it exists to serve.
          *     Reading which addresses are outstanding is only actionable to someone who can resend or
          *     revoke them, so this deliberately reuses that permission rather than minting a read-only
          *     one whose grant table would have to answer "who may see who was invited, but do nothing".
@@ -1848,7 +1848,7 @@ export interface paths {
         get?: never;
         /**
          * Grant or revoke the deployment-administrator capability
-         * @description Requires `users.cp_admin`. Refuses any change that would leave the deployment with ZERO holders (409 `last_cp_admin`) — there is no public signup, so a deployment with no deployment administrator cannot be recovered without database access.
+         * @description Requires `users.cp_admin`. Refuses any change that would leave the deployment with ZERO holders (409 `last_cp_admin`), there is no public signup, so a deployment with no deployment administrator cannot be recovered without database access.
          *
          */
         put: operations["adminSetCpAdmin"];
@@ -1894,7 +1894,7 @@ export interface paths {
         put?: never;
         /**
          * Request a single-use nonce for proof-of-possession re-key (unauthenticated)
-         * @description S13.1 D9. Returns a single-use, short-lived nonce the agent signs together with its new CSR. UNAUTHENTICATED by construction: the caller's certificate is the thing that has failed. It does NOT verify that the identifier is known — a challenge that succeeded only for real identifiers would make them probeable one request at a time, so an unknown one fails at SUBMIT with the same uniform refusal as every other failure. Accepts EXACTLY ONE of two identifiers (D10): the certificate serial, or the SHA-256 fingerprint of the public key the control plane recorded. Rate-limited per client address.
+         * @description S13.1 D9. Returns a single-use, short-lived nonce the agent signs together with its new CSR. UNAUTHENTICATED by construction: the caller's certificate is the thing that has failed. It does NOT verify that the identifier is known, a challenge that succeeded only for real identifiers would make them probeable one request at a time, so an unknown one fails at SUBMIT with the same uniform refusal as every other failure. Accepts EXACTLY ONE of two identifiers (D10): the certificate serial, or the SHA-256 fingerprint of the public key the control plane recorded. Rate-limited per client address.
          */
         post: operations["rekeyChallenge"];
         delete?: never;
@@ -1914,7 +1914,7 @@ export interface paths {
         put?: never;
         /**
          * Re-key an existing gateway by proof of possession (unauthenticated)
-         * @description S13.1. Issues a fresh certificate for an EXISTING node id — same node, same site binding, same history — to a caller proving possession of the keypair the control plane recorded for it. UNAUTHENTICATED by construction; its entire defence is (i) the gone-gate, which authorizes ONLY on certificate expiry and REFUSES a revoked node, and (ii) the signature over (nonce ‖ CSR). A revoked gateway recovers with an operator-minted join token instead — a proof of possession must never overturn a human decision, since it cannot distinguish the legitimate holder from whoever took the key. Every failure returns the SAME refusal: live node, unknown identifier, ambiguous identifier, spent nonce, malformed CSR and wrong key are indistinguishable, so the endpoint cannot be used as an oracle. Rate-limited per client address.
+         * @description S13.1. Issues a fresh certificate for an EXISTING node id, same node, same site binding, same history, to a caller proving possession of the keypair the control plane recorded for it. UNAUTHENTICATED by construction; its entire defence is (i) the gone-gate, which authorizes ONLY on certificate expiry and REFUSES a revoked node, and (ii) the signature over (nonce ‖ CSR). A revoked gateway recovers with an operator-minted join token instead, a proof of possession must never overturn a human decision, since it cannot distinguish the legitimate holder from whoever took the key. Every failure returns the SAME refusal: live node, unknown identifier, ambiguous identifier, spent nonce, malformed CSR and wrong key are indistinguishable, so the endpoint cannot be used as an oracle. Rate-limited per client address.
          */
         post: operations["rekeyAgent"];
         delete?: never;
@@ -1965,7 +1965,7 @@ export interface paths {
         post?: never;
         /**
          * Soft-delete an organization (refused while it still owns resources)
-         * @description Owner-only (`org:delete`). Refuses with 409 `org_not_empty` while the organization still has gateways, sites, devices, Kubernetes clusters or machine credentials — a soft delete leaves them running with no organization to manage them from. There is no force flag.
+         * @description Owner-only (`org:delete`). Refuses with 409 `org_not_empty` while the organization still has gateways, sites, devices, Kubernetes clusters or machine credentials, a soft delete leaves them running with no organization to manage them from. There is no force flag.
          */
         delete: operations["deleteOrganization"];
         options?: never;
@@ -2007,7 +2007,7 @@ export interface paths {
         };
         /**
          * What still blocks deleting this organization
-         * @description The counts the delete refusal is derived from, read BEFORE anyone types a confirmation. Same permission as the delete itself — a preflight is only actionable to someone who could act on it.
+         * @description The counts the delete refusal is derived from, read BEFORE anyone types a confirmation. Same permission as the delete itself, a preflight is only actionable to someone who could act on it.
          */
         get: operations["orgDeletionPreflight"];
         put?: never;
@@ -2088,7 +2088,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** The org's VOLATILE network-topology facts for a split-tunnel device (S8.5 + WF-A). Carries ONLY what the network currently looks like (ranges, and — with device_id — the device's dial endpoint + gateway pubkey); NEVER device-identity material (no private key, no pool-address re-issue, no enrollment token). The device's own identity is minted once and never re-fetched; the gateway it dials is a routing fact the network makes volatile (WF-A — the hub can change beneath a running device). Approved-only, sorted + canonical. Empty is a first-class answer. */
+        /** The org's VOLATILE network-topology facts for a split-tunnel device (S8.5 + WF-A). Carries ONLY what the network currently looks like (ranges, and, with device_id, the device's dial endpoint + gateway pubkey); NEVER device-identity material (no private key, no pool-address re-issue, no enrollment token). The device's own identity is minted once and never re-fetched; the gateway it dials is a routing fact the network makes volatile (WF-A, the hub can change beneath a running device). Approved-only, sorted + canonical. Empty is a first-class answer. */
         get: operations["listRoutedRanges"];
         put?: never;
         post?: never;
@@ -2109,7 +2109,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** One-screen "route a LAN through this gateway" (S8.5 D1; site:manage). Composes register-site + bind-gateway + advertise-subnet + approve into one call — byte-identical DB state + the four constituent audit events. On a range collision the site+bind+pending-subnet persist and the typed refusal is returned. */
+        /** One-screen "route a LAN through this gateway" (S8.5 D1; site:manage). Composes register-site + bind-gateway + advertise-subnet + approve into one call, byte-identical DB state + the four constituent audit events. On a range collision the site+bind+pending-subnet persist and the typed refusal is returned. */
         post: operations["routeLAN"];
         delete?: never;
         options?: never;
@@ -2128,14 +2128,14 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Count what references a site — cascade preview + reverse link (S8.3; site:manage)
+         * Count what references a site, cascade preview + reverse link (S8.3; site:manage)
          * @description The rule/subnet counts the UI needs BEFORE a delete (D4 cascade preview: N rules deleted, M subnets released) and to render the site page's "rules referencing this site" reverse link (D1). ONE endpoint serves both. A rule is referenced if it names this site as src OR dst.
          */
         get: operations["getSiteReferences"];
         put?: never;
         post?: never;
         /**
-         * Delete a site — cascades its subnets + site-referencing rules (S8.3; site:manage)
+         * Delete a site, cascades its subnets + site-referencing rules (S8.3; site:manage)
          * @description Deletes the site; ON DELETE CASCADE removes its subnets and any policy rule naming it as src/dst, and the bound gateway is unbound. The UI gates this behind a name-typed confirm + the getSiteReferences cascade preview (D4). Discharges the S8.1 DELIBERATELY-UNWIRED DeleteSite query.
          */
         delete: operations["deleteSite"];
@@ -2155,12 +2155,12 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List a site's subnets (S8.1; org:view — MEMBER-READABLE)
-         * @description ⚠ THIS LINE SAID `site:manage` UNTIL S14.7 AND THE HANDLER NEVER DID. `ListSiteSubnets` authorizes on `rbac.PermOrgView` (`internal/http/site_handlers.go:195`), per S8.3 D5: subnets are part of the read-only topology a MEMBER may see; advertise and approve stay `site:manage`. PLAN.md's S8.3 entry rules the same thing. The wrong annotation caused a real design decision to be taken on a false constraint — Routed Ranges was scoped as "attribution is admin-only" because of it. On an OpenAPI-first codebase a wrong summary is a wrong source of truth, so it is corrected here rather than noted elsewhere. VERIFY AGAINST THE SWITCH, NOT AGAINST THE NAME.
+         * List a site's subnets (S8.1; org:view, MEMBER-READABLE)
+         * @description ⚠ THIS LINE SAID `site:manage` UNTIL S14.7 AND THE HANDLER NEVER DID. `ListSiteSubnets` authorizes on `rbac.PermOrgView` (`internal/http/site_handlers.go:195`), per S8.3 D5: subnets are part of the read-only topology a MEMBER may see; advertise and approve stay `site:manage`. PLAN.md's S8.3 entry rules the same thing. The wrong annotation caused a real design decision to be taken on a false constraint, Routed Ranges was scoped as "attribution is admin-only" because of it. On an OpenAPI-first codebase a wrong summary is a wrong source of truth, so it is corrected here rather than noted elsewhere. VERIFY AGAINST THE SWITCH, NOT AGAINST THE NAME.
          */
         get: operations["listSiteSubnets"];
         put?: never;
-        /** Advertise a subnet on a site — pending approval (S8.1; site:manage) */
+        /** Advertise a subnet on a site, pending approval (S8.1; site:manage) */
         post: operations["addSiteSubnet"];
         delete?: never;
         options?: never;
@@ -2183,7 +2183,7 @@ export interface paths {
         put?: never;
         /**
          * Add/update a forwarded zone (S8.4; site:manage)
-         * @description Forwards {domain} to {resolver_ip} — the resolver MUST be inside one of this site's approved subnets (409 dns_resolver_not_in_site_subnet otherwise), and the domain must not already be forwarded by ANOTHER site in the org (409 dns_domain_conflict — one zone → one resolver). Same domain on this site updates its resolver. Audited site.dns_forwarding_set.
+         * @description Forwards {domain} to {resolver_ip}, the resolver MUST be inside one of this site's approved subnets (409 dns_resolver_not_in_site_subnet otherwise), and the domain must not already be forwarded by ANOTHER site in the org (409 dns_domain_conflict, one zone → one resolver). Same domain on this site updates its resolver. Audited site.dns_forwarding_set.
          */
         post: operations["setSiteDNSForward"];
         delete?: never;
@@ -2206,7 +2206,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Remove a forwarded zone — full-sweep withdraws it from all gateways (S8.4; site:manage) */
+        /** Remove a forwarded zone, full-sweep withdraws it from all gateways (S8.4; site:manage) */
         delete: operations["removeSiteDNSForward"];
         options?: never;
         head?: never;
@@ -2225,11 +2225,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Bind a gateway node to a site — single-node v1 (S8.1; site:manage) */
+        /** Bind a gateway node to a site, single-node v1 (S8.1; site:manage) */
         post: operations["bindSiteNode"];
         /**
-         * Unbind a gateway node from the site — D6 replace-node (S8.1/S8.6
-         * @description Unbinds a gateway. With a node_id body, unbinds THAT gateway — post the single-node lift a site may hold several, so the caller names which (S8.6 #3). WITHOUT a body (the legacy caller shape, S8.6 #6 compat), unbinds the site's SOLE gateway; a multi-gateway site then requires node_id (409). 404 when the node is not bound to this site / the site has no gateway.
+         * Unbind a gateway node from the site, D6 replace-node (S8.1/S8.6
+         * @description Unbinds a gateway. With a node_id body, unbinds THAT gateway, post the single-node lift a site may hold several, so the caller names which (S8.6 #3). WITHOUT a body (the legacy caller shape, S8.6 #6 compat), unbinds the site's SOLE gateway; a multi-gateway site then requires node_id (409). 404 when the node is not bound to this site / the site has no gateway.
          *
          */
         delete: operations["unbindSiteNode"];
@@ -2252,7 +2252,7 @@ export interface paths {
         put?: never;
         /**
          * Register a Kubernetes cluster + its synthetic VIP range (S10.3; k8s:manage)
-         * @description Registers a cluster fronted by a site gateway. The VIP range must be DISJOINT from the device pool, every site subnet, and other clusters' VIP ranges (409 vip_range_overlap). The name is a DNS label and dns_zone a domain — together they form each exposed Service's hostname &lt;service&gt;.&lt;namespace&gt;.svc.&lt;name&gt;.&lt;zone&gt;. A DNS VIP is reserved from the range automatically (never handed to a Service).
+         * @description Registers a cluster fronted by a site gateway. The VIP range must be DISJOINT from the device pool, every site subnet, and other clusters' VIP ranges (409 vip_range_overlap). The name is a DNS label and dns_zone a domain, together they form each exposed Service's hostname &lt;service&gt;.&lt;namespace&gt;.svc.&lt;name&gt;.&lt;zone&gt;. A DNS VIP is reserved from the range automatically (never handed to a Service).
          */
         post: operations["registerK8sCluster"];
         delete?: never;
@@ -2271,12 +2271,12 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Fetch one cluster by id (S10.2; org:view) — the operator's confirm-by-ID before a drift-recreate */
+        /** Fetch one cluster by id (S10.2; org:view), the operator's confirm-by-ID before a drift-recreate */
         get: operations["getK8sCluster"];
         put?: never;
         post?: never;
         /**
-         * Deregister a cluster — full-sweep of its Services + rules (S10.3; k8s:manage)
+         * Deregister a cluster, full-sweep of its Services + rules (S10.3; k8s:manage)
          * @description Removes the cluster; ON DELETE CASCADE removes its exposed Services and any policy rule reaching one, and frees the whole VIP range (incl the reserved DNS VIP) + the DNS zone for reuse.
          */
         delete: operations["deregisterK8sCluster"];
@@ -2322,7 +2322,7 @@ export interface paths {
         get: operations["listK8sServices"];
         put?: never;
         /**
-         * Expose an in-cluster Service to the fabric — allocates a VIP (S10.3; k8s:manage)
+         * Expose an in-cluster Service to the fabric, allocates a VIP (S10.3; k8s:manage)
          * @description Allocates a /32 VIP from the cluster's range and records the Service (a stable identity). Clients reach the VIP; the gateway DNATs it to the Service's real ClusterIP. 409 vip_range_exhausted when the range is full, 409 service_exists when that namespace/name is already exposed.
          */
         post: operations["exposeK8sService"];
@@ -2341,7 +2341,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** List ALL exposed Services in the org — the grant destination picker + K8s overview (S10.3; org:view) */
+        /** List ALL exposed Services in the org, the grant destination picker + K8s overview (S10.3; org:view) */
         get: operations["listK8sServicesForOrg"];
         put?: never;
         post?: never;
@@ -2361,12 +2361,12 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Fetch one exposed Service by id (S10.2; org:view) — the operator's confirm-by-ID before a drift-recreate */
+        /** Fetch one exposed Service by id (S10.2; org:view), the operator's confirm-by-ID before a drift-recreate */
         get: operations["getK8sService"];
         put?: never;
         post?: never;
         /**
-         * Unexpose a Service — full-sweep withdraws its VIP + DNS answer (S10.3; k8s:manage)
+         * Unexpose a Service, full-sweep withdraws its VIP + DNS answer (S10.3; k8s:manage)
          * @description Soft-deletes the Service; it vanishes from the LIVE resolution so its VIP + DNS answer drop from every gateway on the next compile, and any grant that reached it compiles to nothing (shown as vanished). The freed VIP is immediately reusable.
          */
         delete: operations["unexposeK8sService"];
@@ -2384,7 +2384,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** List advertised-but-unapproved subnets — the review queue (S8.1; site:manage) */
+        /** List advertised-but-unapproved subnets, the review queue (S8.1; site:manage) */
         get: operations["listPendingSiteSubnets"];
         put?: never;
         post?: never;
@@ -2429,7 +2429,7 @@ export interface paths {
         post?: never;
         /**
          * Un-advertise / remove a site subnet (S8.2c WF-5; site:manage)
-         * @description Removes an advertised subnet from a site. A pending subnet just disappears; an APPROVED subnet's route is withdrawn from all gateways on the next reconcile (the full-sweep contract) — the UI states this consequence in the confirm. Correcting a mis-advertised subnet no longer requires deleting the whole site (the WF-5 trap the cross-cloud walk hit). Audited site.subnet_removed.
+         * @description Removes an advertised subnet from a site. A pending subnet just disappears; an APPROVED subnet's route is withdrawn from all gateways on the next reconcile (the full-sweep contract), the UI states this consequence in the confirm. Correcting a mis-advertised subnet no longer requires deleting the whole site (the WF-5 trap the cross-cloud walk hit). Audited site.subnet_removed.
          */
         delete: operations["removeSiteSubnet"];
         options?: never;
@@ -3222,27 +3222,27 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
-            /** @description Keyed proof-of-secret — a stable display id, NEVER the token. */
+            /** @description Keyed proof-of-secret, a stable display id, NEVER the token. */
             fingerprint: string;
             /** Format: date-time */
             created_at: string;
             /**
              * Format: date-time
-             * @description LAST AUTHENTICATED AT, and nothing more. Stamped on every successful auth — NOT a liveness signal. A credential idle for a day may be an hourly GitOps reconcile or abandoned, and this column cannot tell them apart, so it renders as 'last seen'. No in-use badge is derived from it.
+             * @description LAST AUTHENTICATED AT, and nothing more. Stamped on every successful auth, NOT a liveness signal. A credential idle for a day may be an hourly GitOps reconcile or abandoned, and this column cannot tell them apart, so it renders as 'last seen'. No in-use badge is derived from it.
              */
             last_used_at?: string | null;
             /**
              * Format: uuid
-             * @description S15.1/D14 — the human this machine principal acts for. NULL means UNASSIGNED, and an unassigned credential is REFUSED AT USE (machine_bearer.go). Nullable only for the length of the expand/contract migration; step 4 contracts it.
+             * @description S15.1/D14, the human this machine principal acts for. NULL means UNASSIGNED, and an unassigned credential is REFUSED AT USE (machine_bearer.go). Nullable only for the length of the expand/contract migration; step 4 contracts it.
              */
             owner_user_id?: string | null;
-            /** @description Resolved from owner_user_id for display. NULL when unassigned — never a guess, and never a suggestion: created_by does not exist, so the system does not know who minted this. */
+            /** @description Resolved from owner_user_id for display. NULL when unassigned, never a guess, and never a suggestion: created_by does not exist, so the system does not know who minted this. */
             owner_email?: string | null;
         };
         AssignMachineCredentialOwnerRequest: {
             /**
              * Format: uuid
-             * @description The org member who owns this credential. The admin CHOOSES — there is no created_by to confirm against.
+             * @description The org member who owns this credential. The admin CHOOSES, there is no created_by to confirm against.
              */
             user_id: string;
         };
@@ -3255,7 +3255,7 @@ export interface components {
             id: string;
             name: string;
             fingerprint: string;
-            /** @description The bearer secret (tnxm_...), shown ONCE. Save it — never re-displayed; revoke + re-mint if lost. */
+            /** @description The bearer secret (tnxm_...), shown ONCE. Save it, never re-displayed; revoke + re-mint if lost. */
             token: string;
         };
         Resource: {
@@ -3270,7 +3270,7 @@ export interface components {
             protocol: "any" | "tcp" | "udp";
             port_low?: number | null;
             port_high?: number | null;
-            /** @description S15.3 — a free-text note describing what this destination IS (e.g. "MCP server"). ⛔ AN OPERATOR'S ASSERTION, NEVER AN INFERENCE: the product cannot detect that something speaks MCP, and a field implying it could would claim a capability the system does not have. ⛔ It NEVER reaches the compiled artifact — the compiler reads cidr, protocol and the port bounds from this table and nothing else — so it cannot desync an artifact or bump RequiredVersion. */
+            /** @description S15.3, a free-text note describing what this destination IS (e.g. "MCP server"). ⛔ AN OPERATOR'S ASSERTION, NEVER AN INFERENCE: the product cannot detect that something speaks MCP, and a field implying it could would claim a capability the system does not have. ⛔ It NEVER reaches the compiled artifact, the compiler reads cidr, protocol and the port bounds from this table and nothing else, so it cannot desync an artifact or bump RequiredVersion. */
             label?: string | null;
             /** Format: date-time */
             created_at: string;
@@ -3315,12 +3315,12 @@ export interface components {
             src_cidr?: string | null;
             /**
              * Format: uuid
-             * @description S15.3 — set when src_kind=agent: the agent device whose /32 is the source.
+             * @description S15.3, set when src_kind=agent: the agent device whose /32 is the source.
              */
             src_device_id?: string | null;
             /**
              * Format: uuid
-             * @description F09 — set when src_kind=agent_group: the reusable managed-agent group expanded by the compiler.
+             * @description F09, set when src_kind=agent_group: the reusable managed-agent group expanded by the compiler.
              */
             src_agent_group_id?: string | null;
             cidr_outside_org_ranges: boolean;
@@ -3365,7 +3365,7 @@ export interface components {
             src_cidr?: string | null;
             /**
              * Format: uuid
-             * @description Required when src_kind=agent (S15.3): the agent DEVICE whose /32 is the source. An agent is a peer, so a grant names exactly one device — never a node, which would grant every device behind that gateway.
+             * @description Required when src_kind=agent (S15.3): the agent DEVICE whose /32 is the source. An agent is a peer, so a grant names exactly one device, never a node, which would grant every device behind that gateway.
              */
             src_device_id?: string | null;
             /** @enum {string} */
@@ -3412,7 +3412,7 @@ export interface components {
         DNSForward: {
             /** @description The forwarded zone (e.g. corp.local). */
             domain: string;
-            /** @description The site's internal resolver — must be inside one of the site's approved subnets (S8.4). */
+            /** @description The site's internal resolver, must be inside one of the site's approved subnets (S8.4). */
             resolver_ip: string;
         };
         K8sCluster: {
@@ -3495,13 +3495,13 @@ export interface components {
             port_high?: number | null;
         };
         RoutedRanges: {
-            /** @description Approved site-subnet CIDRs (canonical masked form, sorted) pushed to split-tunnel device AllowedIPs (S8.5). Ranges only — no identity material. Empty when none declared. */
+            /** @description Approved site-subnet CIDRs (canonical masked form, sorted) pushed to split-tunnel device AllowedIPs (S8.5). Ranges only, no identity material. Empty when none declared. */
             ranges: string[];
-            /** @description DNS forwards whose resolver is REACHABLE via the returned ranges (S8.5 Slice 3). GATED: a forward is included only if its resolver_ip falls inside a routed range — a resolver you can't reach is never handed over (no SERVFAIL generator). Empty when none reachable. */
+            /** @description DNS forwards whose resolver is REACHABLE via the returned ranges (S8.5 Slice 3). GATED: a forward is included only if its resolver_ip falls inside a routed range, a resolver you can't reach is never handed over (no SERVFAIL generator). Empty when none reachable. */
             forwards: components["schemas"]["DNSForward"][];
-            /** @description WF-A: the device's current dial ENDPOINT (host:port) — the ACTIVE PRIMARY hub's endpoint when the device's assigned node is a hub-set member, so a running device re-homes on promotion. A network fact, not identity. NULL when no device_id was passed, or the device's node is not a hub-set member (it keeps its baked endpoint — the deferred spoke-device case). */
+            /** @description WF-A: the device's current dial ENDPOINT (host:port), the ACTIVE PRIMARY hub's endpoint when the device's assigned node is a hub-set member, so a running device re-homes on promotion. A network fact, not identity. NULL when no device_id was passed, or the device's node is not a hub-set member (it keeps its baked endpoint, the deferred spoke-device case). */
             dial_endpoint?: string | null;
-            /** @description WF-A: the active-primary hub's WireGuard PUBLIC key — the peer the device swaps to on re-home (a different gateway = a different pubkey; the client does a peer SWAP, not an endpoint update). A public network address, not a secret. NULL under the same conditions as dial_endpoint; always paired with it. */
+            /** @description WF-A: the active-primary hub's WireGuard PUBLIC key, the peer the device swaps to on re-home (a different gateway = a different pubkey; the client does a peer SWAP, not an endpoint update). A public network address, not a secret. NULL under the same conditions as dial_endpoint; always paired with it. */
             dial_pubkey?: string | null;
         };
         RouteLANRequest: {
@@ -3516,13 +3516,13 @@ export interface components {
             name?: string;
         };
         HubPriorityRequest: {
-            /** @description The admin hub pin (S8.6 D1) — lower = more preferred; null CLEARS the pin. Pinning declares a gateway a hub candidate; the PINNED set IS the HA hub set (opt-in). */
+            /** @description The admin hub pin (S8.6 D1), lower = more preferred; null CLEARS the pin. Pinning declares a gateway a hub candidate; the PINNED set IS the HA hub set (opt-in). */
             priority?: number | null;
         };
         HubSet: {
             /**
              * Format: int64
-             * @description The set's version tag (S8.6 D5) — bumps on every membership/order change (a promotion event).
+             * @description The set's version tag (S8.6 D5), bumps on every membership/order change (a promotion event).
              */
             generation: number;
             /** @description The ORDERED active hub set: members[0] = the acting primary, the rest = standbys. */
@@ -3533,7 +3533,7 @@ export interface components {
             node_id: string;
             /** @enum {string} */
             role: "primary" | "standby";
-            /** @description The admin pin (the CONFIGURED order) — so the UI can show a promotion 'in effect' when the active order diverges. Null = unpinned. */
+            /** @description The admin pin (the CONFIGURED order), so the UI can show a promotion 'in effect' when the active order diverges. Null = unpinned. */
             hub_priority?: number | null;
             /** @description Latest node_peer_status observation, or ABSENT when this member is not reporting (distinct from an idle link with zero bytes). */
             metrics?: components["schemas"]["HubMemberMetrics"] | null;
@@ -3562,7 +3562,7 @@ export interface components {
              */
             status: "pending" | "approved";
         };
-        /** @description S8.3 D1/D4: what references a site — the delete cascade preview + the reverse-link count. */
+        /** @description S8.3 D1/D4: what references a site, the delete cascade preview + the reverse-link count. */
         SiteReferences: {
             /** @description Policy rules naming this site as src or dst (deleted on cascade). */
             rule_count: number;
@@ -3609,13 +3609,13 @@ export interface components {
             tier: "community" | "trial" | "starter" | "growth" | "scale";
             /** @description Gateways this deployment may ENROL. null means unlimited. Running gateways are never stopped. */
             gateway_ceiling: number | null;
-            /** @description Live gateways ACROSS EVERY ORGANIZATION — the number the ceiling is actually checked against. A per-org count paired with this ceiling reads as spare capacity that does not exist: a fresh organization would show 0 of 5 on a deployment that is already full and refuses the enrolment. */
+            /** @description Live gateways ACROSS EVERY ORGANIZATION, the number the ceiling is actually checked against. A per-org count paired with this ceiling reads as spare capacity that does not exist: a fresh organization would show 0 of 5 on a deployment that is already full and refuses the enrolment. */
             gateways_in_use?: number;
             /** @description Organizations it may CREATE. null means unlimited. */
             org_ceiling: number | null;
             /** @description The named capabilities this tier grants. */
             features: string[];
-            /** @description The licence store could not be read. The entitlement above is the LAST KNOWN one — nothing has been downgraded, and it recovers on its own. NOT the same as having no licence. */
+            /** @description The licence store could not be read. The entitlement above is the LAST KNOWN one, nothing has been downgraded, and it recovers on its own. NOT the same as having no licence. */
             store_stale?: boolean;
             /**
              * @description A key IS stored and does not verify. Community is being served deliberately, and this names which failure it was so the remedy is obvious.
@@ -3631,7 +3631,7 @@ export interface components {
              * @description When gated capabilities stop. Absent unless expired.
              */
             grace_ends_at?: string | null;
-            /** @description The deployment's clock moved materially backwards. Reported, never enforced — a backward clock is overwhelmingly a VM restore or an NTP correction. */
+            /** @description The deployment's clock moved materially backwards. Reported, never enforced, a backward clock is overwhelmingly a VM restore or an NTP correction. */
             clock_went_backwards?: boolean;
         };
         ZeroTrustMode: {
@@ -3640,7 +3640,7 @@ export interface components {
              * @enum {string}
              */
             mode: "off" | "enforcing";
-            /** @description On ENABLING enforcing (PUT only), the full-tunnel devices whose internet egress becomes policy-governed by the flip — the blast radius for the warn-and-confirm. The server obeys regardless; this is the honest count + names. Absent/empty when disabling or when none are affected. State name for these = egress_policy_denied (distinct from gateway_no_egress: the gateway CAN egress, policy is denying it).
+            /** @description On ENABLING enforcing (PUT only), the full-tunnel devices whose internet egress becomes policy-governed by the flip, the blast radius for the warn-and-confirm. The server obeys regardless; this is the honest count + names. Absent/empty when disabling or when none are affected. State name for these = egress_policy_denied (distinct from gateway_no_egress: the gateway CAN egress, policy is denying it).
              *      */
             affected_full_tunnel_devices?: components["schemas"]["AffectedDevice"][];
         };
@@ -3685,7 +3685,7 @@ export interface components {
             url: string;
         };
         CliAuthorizeRequest: {
-            /** @description Loopback only — http://127.0.0.1:<port>/callback or http://[::1]:<port>/callback (any port, exactly that path; hostnames incl. "localhost" are refused — DNS-spoofable).
+            /** @description Loopback only, http://127.0.0.1:<port>/callback or http://[::1]:<port>/callback (any port, exactly that path; hostnames incl. "localhost" are refused, DNS-spoofable).
              *      */
             redirect_uri: string;
             /** @description PKCE S256 challenge (base64url SHA-256 of the CLI's verifier). */
@@ -3771,9 +3771,9 @@ export interface components {
         };
         InviteCreated: {
             message: string;
-            /** @description Raw one-time accept token. The dashboard builds the accept link (origin + /accept-invite?token=…) for the admin to hand to the invitee — the SMTP-less delivery path. Also emailed when SMTP is configured. Shown once; not retrievable later. */
+            /** @description Raw one-time accept token. The dashboard builds the accept link (origin + /accept-invite?token=…) for the admin to hand to the invitee, the SMTP-less delivery path. Also emailed when SMTP is configured. Shown once; not retrievable later. */
             invite_token: string;
-            /** @description Whether the invitation email actually left. ⛔ False means the invitation EXISTS and delivery FAILED — two facts, both true. The token is still valid and can be handed over another way, so the invitation is kept; what changes is that the response stops claiming a send happened. */
+            /** @description Whether the invitation email actually left. ⛔ False means the invitation EXISTS and delivery FAILED, two facts, both true. The token is still valid and can be handed over another way, so the invitation is kept; what changes is that the response stops claiming a send happened. */
             delivered?: boolean;
         };
         SsoRedirect: {
@@ -3801,7 +3801,7 @@ export interface components {
                 name: string;
                 needs_reissue: boolean;
                 /**
-                 * @description Why this device's config stopped working. `static_export` — a file that cannot be re-pointed. `destination_not_hub_set_member` — a managed device whose destination it cannot follow itself onto. `destination_self_homing_unknown` — the topology could not be read, reported as needing a re-issue because overstating the work is recoverable and understating it means the user finds out by failing to connect. Absent when needs_reissue is false.
+                 * @description Why this device's config stopped working. `static_export`, a file that cannot be re-pointed. `destination_not_hub_set_member`, a managed device whose destination it cannot follow itself onto. `destination_self_homing_unknown`, the topology could not be read, reported as needing a re-issue because overstating the work is recoverable and understating it means the user finds out by failing to connect. Absent when needs_reissue is false.
                  * @enum {string}
                  */
                 reissue_cause?: "static_export" | "destination_not_hub_set_member" | "destination_self_homing_unknown";
@@ -3831,7 +3831,7 @@ export interface components {
         RekeyChallengeRequest: {
             /** @description Serial of the agent's CURRENT (expired) certificate. NO length or pattern constraint, deliberately and for the same reason key_fingerprint carries none: a schema violation answers 400 where an unknown identifier answers 403, and that difference tells a prober how far they got. The handler validates and returns the UNIFORM refusal. The 64 KiB body cap bounds the request. Keyed on the serial rather than the node name: names are guessable, serials are not, so a name-keyed challenge would be an enumeration oracle (D9). */
             cert_serial?: string;
-            /** @description SHA-256 of the agent's recorded public key (SPKI DER), lowercase hex — the SECOND identifier (D10). Supply EXACTLY ONE of cert_serial or key_fingerprint; supplying both, neither, or a malformed value is refused identically to an unknown identifier, so the endpoint cannot be probed for well-formedness. It exists because a re-key whose RESPONSE is lost leaves the control plane holding a serial the agent never received: the agent's stored serial is stale, and its only durable handle on its own identity is the key material the control plane recorded. No length or pattern constraint here on purpose — a schema violation would answer with 400 where an unknown identifier answers 403, which is a distinction worth denying. */
+            /** @description SHA-256 of the agent's recorded public key (SPKI DER), lowercase hex, the SECOND identifier (D10). Supply EXACTLY ONE of cert_serial or key_fingerprint; supplying both, neither, or a malformed value is refused identically to an unknown identifier, so the endpoint cannot be probed for well-formedness. It exists because a re-key whose RESPONSE is lost leaves the control plane holding a serial the agent never received: the agent's stored serial is stale, and its only durable handle on its own identity is the key material the control plane recorded. No length or pattern constraint here on purpose, a schema violation would answer with 400 where an unknown identifier answers 403, which is a distinction worth denying. */
             key_fingerprint?: string;
         };
         RekeyNonce: {
@@ -3839,15 +3839,15 @@ export interface components {
             nonce: string;
         };
         RekeyRequest: {
-            /** @description Serial of the certificate being replaced. EXACTLY ONE of cert_serial or key_fingerprint. No length constraint — see RekeyChallengeRequest. */
+            /** @description Serial of the certificate being replaced. EXACTLY ONE of cert_serial or key_fingerprint. No length constraint, see RekeyChallengeRequest. */
             cert_serial?: string;
-            /** @description SHA-256 of the recorded public key (SPKI DER), lowercase hex. Must match the identifier the challenge was issued for — a nonce is bound to its identifier, so the two cannot be mixed. See RekeyChallengeRequest for why a second identifier exists. */
+            /** @description SHA-256 of the recorded public key (SPKI DER), lowercase hex. Must match the identifier the challenge was issued for, a nonce is bound to its identifier, so the two cannot be mixed. See RekeyChallengeRequest for why a second identifier exists. */
             key_fingerprint?: string;
             /** @description base64 nonce from /agent/rekey/challenge. */
             nonce: string;
             /** @description PEM CSR for the agent's NEW keypair. The old key may be compromised or discarded, so re-key always issues over fresh material. */
             csr: string;
-            /** @description base64 RSA-PKCS1v15-SHA256 over (nonce || CSR DER), signed by whichever private key the control plane RECORDED for this node — the expired certificate's key when identifying by cert_serial, or the key named by key_fingerprint. Binding to the CSR is required: without it a captured proof pairs with an attacker's own CSR. */
+            /** @description base64 RSA-PKCS1v15-SHA256 over (nonce || CSR DER), signed by whichever private key the control plane RECORDED for this node, the expired certificate's key when identifying by cert_serial, or the key named by key_fingerprint. Binding to the CSR is required: without it a captured proof pairs with an attacker's own CSR. */
             signature: string;
             agent_version: string;
         };
@@ -3877,24 +3877,24 @@ export interface components {
             name: string;
             /** @description The human who enrolled this agent. Resolved from `users`, so it survives them leaving the org. */
             owner_email?: string | null;
-            /** @description The agent's own /32 on the tunnel — what a grant matches on, and what a flow event is attributed by. */
+            /** @description The agent's own /32 on the tunnel, what a grant matches on, and what a flow event is attributed by. */
             address?: string | null;
             /** @description The gateway this agent connects THROUGH. Its traffic is forwarded there, which is why the policy chain sees it. */
             gateway_name: string;
             /** Format: uuid */
             node_id?: string;
-            /** @description No owner is recorded, so activity cannot be tied to a person. ⛔ A statement about the AUDIT TRAIL, never about permission — an unattributable agent is not less authorized. */
+            /** @description No owner is recorded, so activity cannot be tied to a person. ⛔ A statement about the AUDIT TRAIL, never about permission, an unattributable agent is not less authorized. */
             unattributable: boolean;
-            /** @description A WireGuard key is registered — the connect command was issued. ⛔ RENAMED FROM `connected`, WHICH WAS A LIE: it reported a row's shape, not a connection, so an agent that had never once handshaked read as connected. It is a statement about ISSUANCE and carries no time component at all. */
+            /** @description A WireGuard key is registered, the connect command was issued. ⛔ RENAMED FROM `connected`, WHICH WAS A LIE: it reported a row's shape, not a connection, so an agent that had never once handshaked read as connected. It is a statement about ISSUANCE and carries no time component at all. */
             config_issued?: boolean;
-            /** @description DERIVED from handshake recency against the same window as `Device.online` — WireGuard has no connection state. ⚠ Only meaningful when `gateway_reporting` is true; the gateway is the sole reporter of peer liveness, so its silence makes every agent on it read offline. */
+            /** @description DERIVED from handshake recency against the same window as `Device.online`, WireGuard has no connection state. ⚠ Only meaningful when `gateway_reporting` is true; the gateway is the sole reporter of peer liveness, so its silence makes every agent on it read offline. */
             online?: boolean;
             /**
              * Format: date-time
-             * @description Last WireGuard handshake, as reported by the gateway. `null` means NO handshake has ever been recorded — with `config_issued` true that is "never connected", which is a different fact from "was connected, now stale".
+             * @description Last WireGuard handshake, as reported by the gateway. `null` means NO handshake has ever been recorded, with `config_issued` true that is "never connected", which is a different fact from "was connected, now stale".
              */
             last_handshake_at?: string | null;
-            /** @description ⛔ THE FIELD THAT STOPS THE UI BLAMING THE AGENT FOR THE GATEWAY'S SILENCE. Peer liveness reaches the control plane ONLY through the gateway's status push, so a dead gateway and a dead agent produce an identical absence of handshakes. When this is false, `online` says nothing about the agent and the surface must render liveness as UNKNOWN, not as offline. ⚠ Measured from the freshness of the STATUS channel itself (`device_status.updated_at`), not from the gateway's separate `/agent/report` clock — a freshness claim must be stamped by the channel it vouches for. */
+            /** @description ⛔ THE FIELD THAT STOPS THE UI BLAMING THE AGENT FOR THE GATEWAY'S SILENCE. Peer liveness reaches the control plane ONLY through the gateway's status push, so a dead gateway and a dead agent produce an identical absence of handshakes. When this is false, `online` says nothing about the agent and the surface must render liveness as UNKNOWN, not as offline. ⚠ Measured from the freshness of the STATUS channel itself (`device_status.updated_at`), not from the gateway's separate `/agent/report` clock, a freshness claim must be stamped by the channel it vouches for. */
             gateway_reporting?: boolean;
             /** Format: int64 */
             rx_bytes?: number | null;
@@ -3913,14 +3913,14 @@ export interface components {
             enrolled_at: string;
             /** Format: date-time */
             last_seen_at?: string;
-            /** @description Zero Trust (enterprise): a single CONSERVATIVE health signal for the gateway's policy enforcement. degraded = (apply error) OR (an enforcing apply is currently failing) OR (enforcing AND the policy in force differs from what the control plane would push now). The field errs toward OVER-reporting (a false "degraded" is an annoyance; a false "healthy" is the silent-blackhole class) — except in the provider can't-determine window, where the gateway is guaranteed on its last-good fail-closed policy (never open, never blackholing from this cause). The differentiated breakdown (which kind of degraded) + badge UX is S7.4, reading the same agent-reported JSONB. */
+            /** @description Zero Trust (enterprise): a single CONSERVATIVE health signal for the gateway's policy enforcement. degraded = (apply error) OR (an enforcing apply is currently failing) OR (enforcing AND the policy in force differs from what the control plane would push now). The field errs toward OVER-reporting (a false "degraded" is an annoyance; a false "healthy" is the silent-blackhole class), except in the provider can't-determine window, where the gateway is guaranteed on its last-good fail-closed policy (never open, never blackholing from this cause). The differentiated breakdown (which kind of degraded) + badge UX is S7.4, reading the same agent-reported JSONB. */
             policy_degraded?: boolean;
             /**
              * Format: uuid
-             * @description S15.2/D14: the human this agent principal acts for — carried from the join token's ISSUER at enrolment. NULL means UNATTRIBUTABLE, never "nobody is responsible": it means the control plane cannot say who authorised this agent into the org, which is a different and weaker claim.
+             * @description S15.2/D14: the human this agent principal acts for, carried from the join token's ISSUER at enrolment. NULL means UNATTRIBUTABLE, never "nobody is responsible": it means the control plane cannot say who authorised this agent into the org, which is a different and weaker claim.
              */
             owner_user_id?: string | null;
-            /** @description Resolved server-side from owner_user_id by LEFT JOIN on users (S15.1/D22 — the roster cannot name an owner who has LEFT the org, and that is exactly the row an accountability screen exists for). NULL when unattributable. */
+            /** @description Resolved server-side from owner_user_id by LEFT JOIN on users (S15.1/D22, the roster cannot name an owner who has LEFT the org, and that is exactly the row an accountability screen exists for). NULL when unattributable. */
             owner_email?: string | null;
             /** @description The public host:port peers dial to reach this gateway. ⛔ EMPTY MEANS NO PEER CAN CONNECT: a config issued for such a gateway carries `Endpoint = ` and wg-quick refuses it. Surfaced so a client can refuse to issue an unusable config rather than emitting one. */
             endpoint?: string | null;
@@ -3929,36 +3929,36 @@ export interface components {
              * @enum {string|null}
              */
             egress_mode?: "dual_stack" | "ipv4_only" | "checking" | null;
-            /** @description S15.2/D25(C) — DEGRADE, DO NOT REFUSE. An agent with no owner KEEPS RUNNING and says so. An unattributable tunnel is a LOGGING failure, not an access-control one: the policy engine still enforces every rule, so refusing at use would take a tunnel down for an identity-management reason and buy nothing. Contrast the cold-start deny-until-first-fetch, which IS fail-closed because its alternative is a breach. This flag is what the operator sees instead. */
+            /** @description S15.2/D25(C), DEGRADE, DO NOT REFUSE. An agent with no owner KEEPS RUNNING and says so. An unattributable tunnel is a LOGGING failure, not an access-control one: the policy engine still enforces every rule, so refusing at use would take a tunnel down for an identity-management reason and buy nothing. Contrast the cold-start deny-until-first-fetch, which IS fail-closed because its alternative is a breach. This flag is what the operator sees instead. */
             unattributable?: boolean;
             /**
              * Format: uuid
-             * @description S8.3 (D2/CH): the site this gateway is bound to (null = not a site gateway). The topology view joins nodes to sites by this field — a site's gateways are the nodes with this site_id, rendered as a LIST (many nodes → one site scales to future HA; the UI never assumes one-gateway-per-site).
+             * @description S8.3 (D2/CH): the site this gateway is bound to (null = not a site gateway). The topology view joins nodes to sites by this field, a site's gateways are the nodes with this site_id, rendered as a LIST (many nodes → one site scales to future HA; the UI never assumes one-gateway-per-site).
              */
             site_id?: string | null;
-            /** @description S8.3 (CW): the agent's REPORTED max-supported policy version — observability (a reported fact, OUTSIDE the compile hash; no ProtocolVersion bump). NULL = never reported (a pre-upgrade agent): absence reads as BELOW the current ceiling, never unknown-treated-as-ready (S7.5.3 absence-is- not-compliance, applied to version readiness). The UI's cross-site upgrade warning names the gateways whose max is below the ceiling. */
+            /** @description S8.3 (CW): the agent's REPORTED max-supported policy version, observability (a reported fact, OUTSIDE the compile hash; no ProtocolVersion bump). NULL = never reported (a pre-upgrade agent): absence reads as BELOW the current ceiling, never unknown-treated-as-ready (S7.5.3 absence-is- not-compliance, applied to version readiness). The UI's cross-site upgrade warning names the gateways whose max is below the ceiling. */
             max_policy_version?: number | null;
             /**
-             * @description S9.1 (4d): the OpenVPN server's refuse-loudly kind, present ONLY when an OVPN-enabled gateway is not serving. ovpn_certs_absent / ovpn_binary_absent = missing material or binary; ovpn_transit_conflict (WF-OVPN-2) = the server tun's transit range overlaps the device pool or a pushed route on this gateway (a local disjointness guard). A DIFFERENT axis from policy health — surfaced so an operator sees WHY. Absent when healthy (resolves on its own once the material/binary/config is corrected).
+             * @description S9.1 (4d): the OpenVPN server's refuse-loudly kind, present ONLY when an OVPN-enabled gateway is not serving. ovpn_certs_absent / ovpn_binary_absent = missing material or binary; ovpn_transit_conflict (WF-OVPN-2) = the server tun's transit range overlaps the device pool or a pushed route on this gateway (a local disjointness guard). A DIFFERENT axis from policy health, surfaced so an operator sees WHY. Absent when healthy (resolves on its own once the material/binary/config is corrected).
              * @enum {string}
              */
             ovpn_health?: "ovpn_certs_absent" | "ovpn_binary_absent" | "ovpn_transit_conflict";
-            /** @description S8.3 (D2): true iff this gateway is the org's transit HUB — a PROJECTION of the ONE hub election (`electSiteHub`, the endpoint-bearing gateway with the lowest id; single hub v1). Backend-derived so the UI never re-elects the hub in TS. Absent/false for non-gateway nodes and NAT-only meshes. */
+            /** @description S8.3 (D2): true iff this gateway is the org's transit HUB, a PROJECTION of the ONE hub election (`electSiteHub`, the endpoint-bearing gateway with the lowest id; single hub v1). Backend-derived so the UI never re-elects the hub in TS. Absent/false for non-gateway nodes and NAT-only meshes. */
             is_site_hub?: boolean;
             /**
-             * @description S7.4b: the ADVISORY differentiated health kind — display detail over `policy_degraded`, which stays the sole authoritative signal (nothing keys logic on this). ⚠ EDITION: THE FIELD IS SERVED IN BOTH EDITIONS, and MOST kinds are edition-independent. ENTERPRISE-ONLY is the DESYNC TRIO — `converging`, `silent_desync`, `desync_unknown` — which come from `degradedKind(...)` under the `case enterprise:` arm, because only an enterprise build has a policy engine that can desync. EVERY OTHER KIND has an explicit `!enterprise` branch in `internal/nodes/service.go` (the switch at ~L1955): `cert_expired_cannot_reconnect`, `unsupported_policy_version`, `site_hub_down`, `site_link_down`, `site_subnet_unreachable`, `hub_forwarding_not_reconciling`, `apply_failing`, `stuck_enforcing`, `k8s_endpoints_unavailable`, `conntrack_flush_unavailable`. `healthy` is the default in both. `ListNodes` sets the field unconditionally (`internal/http/node_handlers.go`). THIS PARAGRAPH IS LOAD-BEARING (S14.5): it previously opened "Zero Trust (enterprise, S7.4b)", which reads as enterprise-ONLY. A UI gated on `edition === "enterprise"` on the strength of that line would silently deny the open edition a site-link health signal it is entitled to — the edition-mistaken-for-absence class. Corrected, not annotated: on an OpenAPI-first codebase a wrong description is a wrong source of truth. ⚠ THE CORRECTION'S OWN FIRST DRAFT WAS ALSO WRONG (it put `stuck_enforcing` on the enterprise side and named only 4 of the 10 open-edition kinds) and was caught only by reading the switch rather than reasoning about which kinds "sound like" policy features. VERIFY AGAINST THE SWITCH, NOT AGAINST THE NAME. `desync_unknown` is a FIRST-CLASS honest state (compile-hash unavailable, or the gateway stopped reporting) — it means "cannot determine", NEVER healthy and NEVER a specific kind. `converging` is a normal push settling (< the report-cadence debounce) and must not alarm; `silent_desync` is a stuck pushed≠applied past the debounce with fresh reports. `unsupported_policy_version` (S8.1 D1): the agent REFUSED the compiled artifact (its Version exceeds what the agent can apply) and went deny-all — the ONE kind whose remedy is edition-independent and operator-side: upgrade the agent. Set for any edition (the version gate lives on the agent, not the policy engine). `site_hub_down` / `site_link_down` (S8.2 H5/B2; site_link_down CP-derived WF-B): a SITE gateway's site-to-site transit is down — no public-endpoint carrier (`site_hub_down`) or the ACTIVE PRIMARY hub is stale (`site_link_down`, the org-level HEADLINE from THE ONE liveness derivation, NOT the retired agent bool). A down site bridge is never green. Hub outranks a single link-down. NOTE: a DEMOTED member's dead link while transit rides the active primary is NOT this headline — it is the subordinate `site_link_note_peer` (below), so a healthy failover reads transit-healthy. `site_subnet_unreachable` (S8.2c D3): the gateway advertises a local site subnet but NO host address is inside it (bridge-trapped wg0 / misconfig) — agent-reported and INDEPENDENT of link state, so it catches the reassuring-green shape where the link handshake is fresh yet forwarded traffic can't be sourced onto the LAN. Ranks below the link-down kinds (a dead link masks it). `hub_forwarding_not_reconciling` (WF-C L2 D-WFC2-1a): a hub-set member whose spoke-observed handshake is FRESH (its wg0 keeps forwarding) while its OWN agent is SILENT (last_seen stale — crashed/OOM, but the host-netns interface it created survives). A "zombie hub": wire warm, brain dead — it can't reconcile, so a since-revoked device / tightened grant it never received is still enforced as the frozen last artifact (stale-enforcement). NEITHER plain "offline" (it forwards) NOR healthy (it's stale) — a distinct honest state, remedy = restart the agent (the wire is fine). A CONJUNCTION of two existing signals (the ONE liveness derivation's wire-freshness ⋂ last_seen staleness), edition-independent. Ranked above the apply/desync kinds so a dead agent's frozen last report can't mask it.
+             * @description S7.4b: the ADVISORY differentiated health kind, display detail over `policy_degraded`, which stays the sole authoritative signal (nothing keys logic on this). ⚠ EDITION: THE FIELD IS SERVED IN BOTH EDITIONS, and MOST kinds are edition-independent. ENTERPRISE-ONLY is the DESYNC TRIO, `converging`, `silent_desync`, `desync_unknown`, which come from `degradedKind(...)` under the `case enterprise:` arm, because only an enterprise build has a policy engine that can desync. EVERY OTHER KIND has an explicit `!enterprise` branch in `internal/nodes/service.go` (the switch at ~L1955): `cert_expired_cannot_reconnect`, `unsupported_policy_version`, `site_hub_down`, `site_link_down`, `site_subnet_unreachable`, `hub_forwarding_not_reconciling`, `apply_failing`, `stuck_enforcing`, `k8s_endpoints_unavailable`, `conntrack_flush_unavailable`. `healthy` is the default in both. `ListNodes` sets the field unconditionally (`internal/http/node_handlers.go`). THIS PARAGRAPH IS LOAD-BEARING (S14.5): it previously opened "Zero Trust (enterprise, S7.4b)", which reads as enterprise-ONLY. A UI gated on `edition === "enterprise"` on the strength of that line would silently deny the open edition a site-link health signal it is entitled to, the edition-mistaken-for-absence class. Corrected, not annotated: on an OpenAPI-first codebase a wrong description is a wrong source of truth. ⚠ THE CORRECTION'S OWN FIRST DRAFT WAS ALSO WRONG (it put `stuck_enforcing` on the enterprise side and named only 4 of the 10 open-edition kinds) and was caught only by reading the switch rather than reasoning about which kinds "sound like" policy features. VERIFY AGAINST THE SWITCH, NOT AGAINST THE NAME. `desync_unknown` is a FIRST-CLASS honest state (compile-hash unavailable, or the gateway stopped reporting), it means "cannot determine", NEVER healthy and NEVER a specific kind. `converging` is a normal push settling (< the report-cadence debounce) and must not alarm; `silent_desync` is a stuck pushed≠applied past the debounce with fresh reports. `unsupported_policy_version` (S8.1 D1): the agent REFUSED the compiled artifact (its Version exceeds what the agent can apply) and went deny-all, the ONE kind whose remedy is edition-independent and operator-side: upgrade the agent. Set for any edition (the version gate lives on the agent, not the policy engine). `site_hub_down` / `site_link_down` (S8.2 H5/B2; site_link_down CP-derived WF-B): a SITE gateway's site-to-site transit is down, no public-endpoint carrier (`site_hub_down`) or the ACTIVE PRIMARY hub is stale (`site_link_down`, the org-level HEADLINE from THE ONE liveness derivation, NOT the retired agent bool). A down site bridge is never green. Hub outranks a single link-down. NOTE: a DEMOTED member's dead link while transit rides the active primary is NOT this headline, it is the subordinate `site_link_note_peer` (below), so a healthy failover reads transit-healthy. `site_subnet_unreachable` (S8.2c D3): the gateway advertises a local site subnet but NO host address is inside it (bridge-trapped wg0 / misconfig), agent-reported and INDEPENDENT of link state, so it catches the reassuring-green shape where the link handshake is fresh yet forwarded traffic can't be sourced onto the LAN. Ranks below the link-down kinds (a dead link masks it). `hub_forwarding_not_reconciling` (WF-C L2 D-WFC2-1a): a hub-set member whose spoke-observed handshake is FRESH (its wg0 keeps forwarding) while its OWN agent is SILENT (last_seen stale, crashed/OOM, but the host-netns interface it created survives). A "zombie hub": wire warm, brain dead, it can't reconcile, so a since-revoked device / tightened grant it never received is still enforced as the frozen last artifact (stale-enforcement). NEITHER plain "offline" (it forwards) NOR healthy (it's stale), a distinct honest state, remedy = restart the agent (the wire is fine). A CONJUNCTION of two existing signals (the ONE liveness derivation's wire-freshness ⋂ last_seen staleness), edition-independent. Ranked above the apply/desync kinds so a dead agent's frozen last report can't mask it.
              * @enum {string}
              */
             policy_degraded_kind?: "healthy" | "apply_failing" | "stuck_enforcing" | "converging" | "silent_desync" | "desync_unknown" | "unsupported_policy_version" | "site_hub_down" | "site_link_down" | "site_subnet_unreachable" | "conntrack_flush_unavailable" | "hub_forwarding_not_reconciling" | "k8s_endpoints_unavailable" | "cert_expired_cannot_reconnect";
-            /** @description WF-B: the SUBORDINATE site-link note — a DEMOTED hub member whose link is dead WHILE org transit rides the active primary (healthy). Names the demoted-dead peer for a distinct line item ("aws-gw-1 (demoted)"), INDEPENDENT of `policy_degraded_kind` (the headline stays its real state). NULL = no note. Never set alongside a `site_link_down` headline (a real transit failure gets no reassuring subordinate — the inverse-red guard). Derived from THE ONE liveness census. */
+            /** @description WF-B: the SUBORDINATE site-link note, a DEMOTED hub member whose link is dead WHILE org transit rides the active primary (healthy). Names the demoted-dead peer for a distinct line item ("aws-gw-1 (demoted)"), INDEPENDENT of `policy_degraded_kind` (the headline stays its real state). NULL = no note. Never set alongside a `site_link_down` headline (a real transit failure gets no reassuring subordinate, the inverse-red guard). Derived from THE ONE liveness census. */
             site_link_note_peer?: string | null;
-            /** @description WF-B: true iff `site_link_note_peer` is set — carries the render's "(demoted)" qualifier so the operator distinguishes "expected, this member was failed-over-past" from a live peer's real outage. Absent when there is no note. */
+            /** @description WF-B: true iff `site_link_note_peer` is set, carries the render's "(demoted)" qualifier so the operator distinguishes "expected, this member was failed-over-past" from a live peer's real outage. Absent when there is no note. */
             site_link_note_demoted?: boolean | null;
         };
         JoinTokenRequest: {
             node_name?: string;
             /**
-             * @description S15.3 — THE OPERATOR'S DECLARATION of what this token enrols. Captured at mint, the same instant as the issuer, because that is the one act that says both who is accountable and what is being brought online. ⛔ ABSENCE IS THE CLOSED STATE: omitted means 'gateway'. A token that enrols an agent must say so, and an agent additionally requires an issuer (D14) — both conditions, not one.
+             * @description S15.3, THE OPERATOR'S DECLARATION of what this token enrols. Captured at mint, the same instant as the issuer, because that is the one act that says both who is accountable and what is being brought online. ⛔ ABSENCE IS THE CLOSED STATE: omitted means 'gateway'. A token that enrols an agent must say so, and an agent additionally requires an issuer (D14), both conditions, not one.
              * @enum {string}
              */
             enrols_kind?: "gateway" | "agent";
@@ -3976,7 +3976,7 @@ export interface components {
             name: string;
             platform?: string;
             /**
-             * @description S15.2/S15.3 — what KIND of principal this device belongs to. 'agent' is a data-plane agent's own row: it is cap-EXEMPT (a fleet of gateways must not spend one admin's laptop allowance), unique per node, and address-bearing so the agent is attributable. 'human' is everything else. ⛔ STRUCTURAL, not descriptive — code branches on this. Contrast Resource.label, which carries nothing and is an operator's free-text note.
+             * @description S15.2/S15.3, what KIND of principal this device belongs to. 'agent' is a data-plane agent's own row: it is cap-EXEMPT (a fleet of gateways must not spend one admin's laptop allowance), unique per node, and address-bearing so the agent is attributable. 'human' is everything else. ⛔ STRUCTURAL, not descriptive, code branches on this. Contrast Resource.label, which carries nothing and is an operator's free-text note.
              * @enum {string}
              */
             kind?: "human" | "agent";
@@ -3984,7 +3984,7 @@ export interface components {
             /** @description The device's issued routing mode: true = full tunnel, false = split tunnel. */
             full_tunnel: boolean;
             assigned_ip?: string;
-            /** @description True when the config this device was ISSUED no longer matches reality, so the user must re-import it. Three causes: (1) its baked site ROUTES no longer match the org's current routed ranges — STATIC exports only, since a managed device polls routes; (2) its baked tunnel ADDRESS is not the device's current address — EVERY mode, including managed, because every issued config embeds an interface address; (3) its baked GATEWAY is not the device's current gateway — STATIC exports only, because a static export is a file that never polls and cannot be re-pointed, whereas a managed device re-homes itself through the dial channel (residual: only when its node is a hub-set member). Reported for all provisioning modes; false when nothing was recorded at issuance (rows predating the address snapshot), because unknown must not be reported as stale. Advisory, never enforcement. */
+            /** @description True when the config this device was ISSUED no longer matches reality, so the user must re-import it. Three causes: (1) its baked site ROUTES no longer match the org's current routed ranges, STATIC exports only, since a managed device polls routes; (2) its baked tunnel ADDRESS is not the device's current address, EVERY mode, including managed, because every issued config embeds an interface address; (3) its baked GATEWAY is not the device's current gateway, STATIC exports only, because a static export is a file that never polls and cannot be re-pointed, whereas a managed device re-homes itself through the dial channel (residual: only when its node is a hub-set member). Reported for all provisioning modes; false when nothing was recorded at issuance (rows predating the address snapshot), because unknown must not be reported as stale. Advisory, never enforcement. */
             needs_reexport?: boolean;
             /** @enum {string} */
             status: "active" | "revoked" | "pending" | "suspended";
@@ -4026,7 +4026,7 @@ export interface components {
             user_id?: string;
             full_tunnel?: boolean;
             /**
-             * @description S15.3 — 'agent' enrols an AI agent as a PEER homed on the chosen gateway. ⛔ An agent is a CLIENT, not a gateway: it holds its own /32, its traffic is FORWARDED through the gateway, and the policy chain therefore sees it. Default 'human'.
+             * @description S15.3, 'agent' enrols an AI agent as a PEER homed on the chosen gateway. ⛔ An agent is a CLIENT, not a gateway: it holds its own /32, its traffic is FORWARDED through the gateway, and the policy chain therefore sees it. Default 'human'.
              * @enum {string}
              */
             kind?: "human" | "agent";
@@ -4319,7 +4319,7 @@ export interface components {
              * @enum {string}
              */
             mode: "off" | "on";
-            /** @description On ENABLING (PUT off->on only), the count of existing active devices that stay active (grandfathered — a flip must not black-hole the fleet). Best-effort; absent when disabling.
+            /** @description On ENABLING (PUT off->on only), the count of existing active devices that stay active (grandfathered, a flip must not black-hole the fleet). Best-effort; absent when disabling.
              *      */
             grandfathered_count?: number;
         };
@@ -4335,10 +4335,10 @@ export interface components {
              * @enum {string}
              */
             mode: "warn" | "require";
-            /** @description Check parameters. os_version: {"min":{"macos":"14.0","windows":"10.0"}} — a platform absent from "min" is not enforced. disk_encryption: none.
+            /** @description Check parameters. os_version: {"min":{"macos":"14.0","windows":"10.0"}}, a platform absent from "min" is not enforced. disk_encryption: none.
              *      */
             param?: Record<string, never>;
-            /** @description On PUT only: how many devices' LAST report would fail this check (best-effort blast radius). The config write itself blocks nothing — a device's gate only ever flips on its own next report (D4 grandfather).
+            /** @description On PUT only: how many devices' LAST report would fail this check (best-effort blast radius). The config write itself blocks nothing, a device's gate only ever flips on its own next report (D4 grandfather).
              *      */
             would_fail_count?: number;
         };
@@ -4347,7 +4347,7 @@ export interface components {
             mode: "warn" | "require";
             param?: Record<string, never>;
         };
-        /** @description Client-reported posture facts (S7.5.3). NOT attestation — a compromised device can misreport; posture checks deter honest non-compliance and give an audit trail (defense-in-depth, not a guarantee).
+        /** @description Client-reported posture facts (S7.5.3). NOT attestation, a compromised device can misreport; posture checks deter honest non-compliance and give an audit trail (defense-in-depth, not a guarantee).
          *      */
         DeviceHealthReport: {
             /** @enum {string} */
@@ -4387,7 +4387,7 @@ export interface components {
             email_verified: boolean;
             /** Format: date-time */
             joined_at: string;
-            /** @description Live machine credentials this person OWNS, across every organization. Deactivating them stops every one of these immediately (D23) — the roster carries the number so the confirmation can say what the act will break, rather than an operator finding out from a broken pipeline. */
+            /** @description Live machine credentials this person OWNS, across every organization. Deactivating them stops every one of these immediately (D23), the roster carries the number so the confirmation can say what the act will break, rather than an operator finding out from a broken pipeline. */
             machine_credentials?: number;
             /** @description Current managed agents this person can manage through team membership, across every organization. Deactivation withdraws that authority immediately without clearing the team's assignment. */
             managed_agent_delegations?: number;
@@ -4455,7 +4455,7 @@ export interface components {
             challenge?: string;
             /** @description Challenge TTL in seconds. */
             challenge_expires_in?: number;
-            /** @description S7.5.5: session minted but gated — the org enforces MFA and the user must enroll before proceeding (D8). */
+            /** @description S7.5.5: session minted but gated, the org enforces MFA and the user must enroll before proceeding (D8). */
             enrollment_required?: boolean;
         };
         MfaEnforce: {
@@ -4563,7 +4563,7 @@ export interface components {
              * @description Rows deleted by the last retention sweep (age + cap).
              */
             retention_dropped: number;
-            /** @description The last retention sweep errored (partial/failed) — the PG hot-window may be growing. */
+            /** @description The last retention sweep errored (partial/failed), the PG hot-window may be growing. */
             retention_failed: boolean;
         };
         OrgOverview: {
@@ -4576,15 +4576,15 @@ export interface components {
         Meta: {
             /** @enum {string} */
             edition: "open" | "enterprise";
-            /** @description Whether this deployment can send email at all. ⛔ False means invitations, password resets and email verification cannot be delivered — and invitations are the only way anyone joins. The screens that send mail say so BEFORE the operator acts, rather than after a recipient does not receive something. */
+            /** @description Whether this deployment can send email at all. ⛔ False means invitations, password resets and email verification cannot be delivered, and invitations are the only way anyone joins. The screens that send mail say so BEFORE the operator acts, rather than after a recipient does not receive something. */
             smtp_configured?: boolean;
-            /** @description S8.2c: the control plane's own CONFIGURED public base URL (APP_BASE_URL / install.sh's public address) — the AUTHORITATIVE answer to "where do gateways reach me", independent of how an admin happened to open the dashboard (a tunnel/alias/bare IP would bake the wrong URL into the emitted gateway install command). The gateway-enroll command derives TUNNEX_API_URL/TUNNEX_AGENT_URL from this, never from window.location. Empty when unset (the SPA then falls back to its own origin). */
+            /** @description S8.2c: the control plane's own CONFIGURED public base URL (APP_BASE_URL / install.sh's public address), the AUTHORITATIVE answer to "where do gateways reach me", independent of how an admin happened to open the dashboard (a tunnel/alias/bare IP would bake the wrong URL into the emitted gateway install command). The gateway-enroll command derives TUNNEX_API_URL/TUNNEX_AGENT_URL from this, never from window.location. Empty when unset (the SPA then falls back to its own origin). */
             public_base_url?: string;
             /** @description Deployment-wide raw mTLS endpoint for new gateway join commands. Empty means the command derives port 8443 from public_base_url for backward compatibility. */
             gateway_control_url?: string;
-            /** @description S8.2c WF-2: the gateway agent image the emitted enroll command uses (TUNNEX_NODE_AGENT_IMAGE). One-truth applied to the artifact version — pin it to a DIGEST and the stale-`:latest` drift that mis-convicted D2 becomes structurally impossible. The SPA falls back to its own default ref when unset. */
+            /** @description S8.2c WF-2: the gateway agent image the emitted enroll command uses (TUNNEX_NODE_AGENT_IMAGE). One-truth applied to the artifact version, pin it to a DIGEST and the stale-`:latest` drift that mis-convicted D2 becomes structurally impossible. The SPA falls back to its own default ref when unset. */
             node_agent_image?: string;
-            /** @description S8.3 (CW): the control plane's current compiled-artifact version CEILING (policyspec.ProtocolVersion). The cross-site upgrade warning names gateways whose reported max is below this — server-sourced so the UI never hardcodes the ceiling (it bumps with each protocol change; a hardcoded copy would silently fork on the next bump). */
+            /** @description S8.3 (CW): the control plane's current compiled-artifact version CEILING (policyspec.ProtocolVersion). The cross-site upgrade warning names gateways whose reported max is below this, server-sourced so the UI never hardcodes the ceiling (it bumps with each protocol change; a hardcoded copy would silently fork on the next bump). */
             protocol_version: number;
             setup_complete?: boolean;
             sso_providers: ("google" | "microsoft")[];
@@ -5131,7 +5131,7 @@ export interface operations {
     startSsoLogin: {
         parameters: {
             query?: {
-                /** @description Organization slug whose SSO config to use. OMIT IT and the server resolves the SOLE organization with this provider enabled — the login page must not ask a human to type their tenant. Resolution FAILS CLOSED: zero configured orgs and two-or-more both reject (sso_not_configured / sso_org_ambiguous) rather than guessing, and the caller then supplies the slug explicitly. */
+                /** @description Organization slug whose SSO config to use. OMIT IT and the server resolves the SOLE organization with this provider enabled, the login page must not ask a human to type their tenant. Resolution FAILS CLOSED: zero configured orgs and two-or-more both reject (sso_not_configured / sso_org_ambiguous) rather than guessing, and the caller then supplies the slug explicitly. */
                 org?: string;
             };
             header?: never;
@@ -5169,7 +5169,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Authenticated — session cookie set, browser redirected to the app. */
+            /** @description Authenticated, session cookie set, browser redirected to the app. */
             302: {
                 headers: {
                     Location: string;
@@ -5192,7 +5192,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The provider config (no secret material — only a keyed fingerprint). */
+            /** @description The provider config (no secret material, only a keyed fingerprint). */
             200: {
                 headers: {
                     "X-Request-Id": components["headers"]["RequestId"];
@@ -5271,7 +5271,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description The dedicated CLI credential — shown exactly once, never re-served. */
+            /** @description The dedicated CLI credential, shown exactly once, never re-served. */
             200: {
                 headers: {
                     "X-Request-Id": components["headers"]["RequestId"];
@@ -5363,7 +5363,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Approved — the polling CLI will receive its credential. */
+            /** @description Approved, the polling CLI will receive its credential. */
             200: {
                 headers: {
                     "X-Request-Id": components["headers"]["RequestId"];
@@ -5389,7 +5389,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description The dedicated CLI credential — shown exactly once. */
+            /** @description The dedicated CLI credential, shown exactly once. */
             200: {
                 headers: {
                     "X-Request-Id": components["headers"]["RequestId"];
@@ -5415,7 +5415,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Enrolled — returns the signed agent certificate and the CA. */
+            /** @description Enrolled, returns the signed agent certificate and the CA. */
             200: {
                 headers: {
                     "X-Request-Id": components["headers"]["RequestId"];
@@ -6898,7 +6898,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Minted. The token is returned ONCE and never re-displayed — save it, or revoke + re-mint. */
+            /** @description Minted. The token is returned ONCE and never re-displayed, save it, or revoke + re-mint. */
             201: {
                 headers: {
                     "X-Request-Id": components["headers"]["RequestId"];
@@ -7665,7 +7665,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Re-keyed — returns the new certificate and the CA. */
+            /** @description Re-keyed, returns the new certificate and the CA. */
             200: {
                 headers: {
                     "X-Request-Id": components["headers"]["RequestId"];
@@ -7973,7 +7973,7 @@ export interface operations {
     listRoutedRanges: {
         parameters: {
             query?: {
-                /** @description WF-A: when present, the response ALSO carries this device's dial (endpoint + gateway pubkey) derived from the org's ACTIVE HUB, so a running device re-homes on promotion via the SAME poll. The device MUST belong to the calling org AND be owned by the authenticated user — a device fetches only its OWN dial (cross-org/cross-device is refused). Omit for the pre-WF-A ranges-only behavior. */
+                /** @description WF-A: when present, the response ALSO carries this device's dial (endpoint + gateway pubkey) derived from the org's ACTIVE HUB, so a running device re-homes on promotion via the SAME poll. The device MUST belong to the calling org AND be owned by the authenticated user, a device fetches only its OWN dial (cross-org/cross-device is refused). Omit for the pre-WF-A ranges-only behavior. */
                 device_id?: string;
             };
             header?: never;

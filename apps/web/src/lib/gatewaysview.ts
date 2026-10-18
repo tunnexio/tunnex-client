@@ -2,13 +2,13 @@ import type { Node } from "./api";
 import { policyHealthBadge, type HealthBadge } from "./healthview";
 import { gatewayLiveness } from "./sitesview";
 
-// gatewaysview — PURE view-models for the Gateways screen (S14.6 slice 2). Electron-free, no React.
+// gatewaysview, PURE view-models for the Gateways screen (S14.6 slice 2). Electron-free, no React.
 //
 // ⛔ THE HEALTH GROUPING IS THE SCREEN'S CONTENT, and it exists because `Fleet risk` was CUT.
 //
 // The handoff's left column is a bubble plot: agent version × peer load, bubble size = peers, colour =
-// health. It was ruled out at epic open — *"risk scoring is an unbuilt Tier-3 name in the competitive
-// ledger. Replaced by a HEALTH-GROUPED GATEWAY LIST — same information, legible at a glance."*
+// health. It was ruled out at epic open, *"risk scoring is an unbuilt Tier-3 name in the competitive
+// ledger. Replaced by a HEALTH-GROUPED GATEWAY LIST, same information, legible at a glance."*
 //
 // This is that replacement, and the ruling is right for a reason worth restating: a scatter plot answers
 // "which gateway is an outlier"; an operator at 3am is asking "WHAT IS BROKEN". Grouping answers the second
@@ -21,7 +21,7 @@ export interface GatewayRow {
   name: string;
   status: Node["status"];
   health: HealthBadge | null;
-  /** The OpenVPN refuse-loudly kind — a DIFFERENT axis from policy health (S9.1 4d). */
+  /** The OpenVPN refuse-loudly kind, a DIFFERENT axis from policy health (S9.1 4d). */
   ovpnHealth: string | null;
   /** Verified internet egress mode used by newly generated full-tunnel profiles. */
   egressMode: Node["egress_mode"];
@@ -42,7 +42,7 @@ export interface GatewayGroup {
  * Project nodes into rows.
  *
  * ⛔ A REVOKED GATEWAY CARRIES NO HEALTH BADGE. `revoked` IS its state, and a degradation badge beside it
- * would have the row asserting two things at once — the WF-S11-10 finding, preserved here rather than
+ * would have the row asserting two things at once, the WF-S11-10 finding, preserved here rather than
  * re-derived. `policyHealthBadge` is only consulted for an active node.
  */
 export function toGatewayRow(
@@ -61,7 +61,7 @@ export function toGatewayRow(
     id: n.id,
     name: n.name,
     status: n.status,
-    // S14.21: guard moved into policyHealthBadge — this line was the second copy of it.
+    // S14.21: guard moved into policyHealthBadge, this line was the second copy of it.
     health:
       policyHealth ??
       (liveness?.offline
@@ -115,11 +115,11 @@ export type GatewayFilter = "all" | "healthy" | "degraded";
  * The header's filter chips, with their counts.
  *
  * ⛔ THE COUNTS ARE DERIVED FROM THE SAME GROUPING THE TABLE RENDERS. The handoff shows `All (7)`,
- * `Healthy (3)`, `Degraded (4)` — three numbers that must add up, and would not if the chips counted one way
+ * `Healthy (3)`, `Degraded (4)`, three numbers that must add up, and would not if the chips counted one way
  * and the list grouped another. ONE derivation, two renderings.
  *
  * ⚠ `all` INCLUDES REVOKED and the other two do not, which is why `healthy + degraded` can be less than
- * `all`. That is honest — a revoked gateway is neither — but it looks like an arithmetic bug unless the
+ * `all`. That is honest, a revoked gateway is neither, but it looks like an arithmetic bug unless the
  * screen says so, so the chip row carries the revoked count separately when there is one.
  */
 export function gatewayFilterCounts(nodes: Node[]): {
@@ -144,29 +144,29 @@ export function applyGatewayFilter(
   groups: GatewayGroup[],
   filter: GatewayFilter,
 ): GatewayGroup[] {
-  // ⛔ UNDER "ALL", AN EMPTY GROUP IS NOT A SECTION — IT IS A HEADING AND A SENTENCE SAYING NOTHING IS HERE,
+  // ⛔ UNDER "ALL", AN EMPTY GROUP IS NOT A SECTION, IT IS A HEADING AND A SENTENCE SAYING NOTHING IS HERE,
   // and it cost a full screen of scrolling between the two groups that did have rows. The CHIP already
   // reports "Healthy (0)": the count is the answer, and rendering a card to repeat it is the answer twice,
   // the second time in the space where content should be.
   //
   // ⚠ THE EXCEPTION IS THE WHOLE REASON THIS IS NOT A ONE-LINE FILTER. When the operator SELECTS a group,
-  // its emptiness is the answer to the question they just asked, and it must render — an explicitly chosen
+  // its emptiness is the answer to the question they just asked, and it must render, an explicitly chosen
   // filter that produces a blank page is indistinguishable from a page that failed to load.
   if (filter === "all") return groups.filter((g) => g.rows.length > 0);
   return groups.filter((g) => g.key === filter);
 }
 
-// ── THE NOTES — the epic's KEEP list, rendered ONCE PER GROUP (S14.6, founder-ruled) ────────────────────
+// ── THE NOTES, the epic's KEEP list, rendered ONCE PER GROUP (S14.6, founder-ruled) ────────────────────
 //
 // ⛔ THE COPY IS THE POINT. The epic's KEEP list names these as its examples of the copy to carry VERBATIM:
-// *"THE COPY — carried VERBATIM. It states the product's laws in the interface."* The BADGE names the state;
+// *"THE COPY, carried VERBATIM. It states the product's laws in the interface."* The BADGE names the state;
 // THE NOTE SAYS WHAT IT MEANS AND WHAT IT IMPLIES, and losing it was the biggest gap on this screen.
 //
-// ⛔ AND THEY RENDER PER GROUP, NOT PER ROW. The note is a property of the health KIND, not of the gateway —
+// ⛔ AND THEY RENDER PER GROUP, NOT PER ROW. The note is a property of the health KIND, not of the gateway ,
 // four `site link down` rows would carry four copies of one sentence, which the placement test forbids
 // (*is it identical on every row? then it renders once*). Under health grouping the header is that "once".
 //
-// Keyed by the badge LABEL because that is what `policyHealthBadge` returns and what the row renders — one
+// Keyed by the badge LABEL because that is what `policyHealthBadge` returns and what the row renders, one
 // vocabulary, not a second enum to keep in sync with the first.
 const KIND_NOTES: Record<string, string> = {
   "site link down":
@@ -202,7 +202,7 @@ const KIND_NOTES: Record<string, string> = {
  * The distinct notes for the kinds present in a group, in the order the rows appear.
  *
  * ⚠ A GROUP CAN MIX KINDS, so this returns a LIST rather than one string. Collapsing a mixed group to a
- * single note would attach one kind's explanation to another kind's row — the badge stays the per-row truth
+ * single note would attach one kind's explanation to another kind's row, the badge stays the per-row truth
  * and the header explains only the kinds actually present.
  */
 export function groupNotes(rows: GatewayRow[]): string[] {
@@ -227,21 +227,21 @@ export function groupNotes(rows: GatewayRow[]): string[] {
  *
  * The previous version said the devices homed here "stop connecting immediately", which was TRUE: revoke
  * cascaded to them in the same transaction. It stopped being true in the commit that added the transfer
- * step and the revoke refusal, and it was changed in that commit and not one earlier — copy describing a
+ * step and the revoke refusal, and it was changed in that commit and not one earlier, copy describing a
  * flow the product does not have is the defect recorded twice in docs/laws.md this cycle.
  *
  * WHAT IT SAYS NOW, and the split is the point:
  *
- *   n > 0  — the revoke will be REFUSED. So the sentence is not a warning about a cost, it is an
+ *   n > 0 , the revoke will be REFUSED. So the sentence is not a warning about a cost, it is an
  *            instruction: move them first. The server refuses with `devices_still_homed` and names the same
  *            count, so the screen and the API tell one story.
- *   n === 0 — the permanence, which is a fact about the GATEWAY and true whether or not anyone is homed
+ *   n === 0, the permanence, which is a fact about the GATEWAY and true whether or not anyone is homed
  *            here. It stays at zero devices; only the count falls silent, because a caution that fires on
  *            the harmless case is a caution nobody reads on the dangerous one.
  *
  * ⚠ AND AN UNREADABLE COUNT IS NOT ZERO. `counts === null` means the devices list failed to load. A silent
  * all-clear manufactured by a failure is the worst possible output for the one sentence whose job is to
- * stop a destructive click — and here it would also promise a revoke the server may well refuse.
+ * stop a destructive click, and here it would also promise a revoke the server may well refuse.
  */
 export function revokeConsequence(
   counts: Record<string, number> | null,
@@ -263,7 +263,7 @@ export function revokeConsequence(
 }
 
 /**
- * transferConsequence states what MOVING these devices costs — the sentence beside the destination picker.
+ * transferConsequence states what MOVING these devices costs, the sentence beside the destination picker.
  *
  * ⛔ IT LEADS WITH THE RE-IMPORT, BECAUSE THAT IS THE PART THE OPERATOR MUST PLAN FOR. Moving the row is
  * the easy half; every issued config bakes its gateway's endpoint and public key, so a moved device holds a
@@ -276,7 +276,7 @@ export function revokeConsequence(
  * say so is a silent access change wearing a maintenance label, which is the one thing this surface must
  * not be.
  *
- * ⚠ IT IS DELIBERATELY VAGUE ABOUT THE DIRECTION — "may widen or narrow" — because the screen genuinely
+ * ⚠ IT IS DELIBERATELY VAGUE ABOUT THE DIRECTION, "may widen or narrow", because the screen genuinely
  * does not know. Computing it would mean evaluating the org's whole rule set per device, and a confident
  * wrong answer here is worse than an honest uncertain one: an operator told "nothing changes" will not
  * check, and an operator told "this may change what they reach" will.

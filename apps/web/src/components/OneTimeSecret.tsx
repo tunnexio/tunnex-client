@@ -4,16 +4,16 @@ import { Button, StatusDot } from "./ui";
 
 /**
  * OneTimeSecretModal is the shared "shown once" ceremony for the app's most
- * security-sensitive moments — a device config (with its private key) and a
+ * security-sensitive moments, a device config (with its private key) and a
  * gateway join token. The secret exists only in the caller's page state, is never
  * re-fetched (the server serves it exactly once), and must be explicitly
  * acknowledged to dismiss; navigating away discards it.
  *
- * Kept as ONE component so both ceremonies can't drift — a hardening of the reveal
+ * Kept as ONE component so both ceremonies can't drift, a hardening of the reveal
  * (e.g. copy-confirmation, redaction) lands in a single place. `leadingActions`
  * lets a caller add extra buttons (e.g. Download) beside the built-in Copy.
  */
-// legacyCopy copies via a throwaway <textarea> + document.execCommand("copy") —
+// legacyCopy copies via a throwaway <textarea> + document.execCommand("copy") ,
 // the only clipboard path available in an insecure (plain-HTTP) context, where
 // the async Clipboard API is undefined. Returns whether the copy succeeded.
 function legacyCopy(text: string): boolean {
@@ -33,7 +33,7 @@ function legacyCopy(text: string): boolean {
   }
 }
 
-// downloadText saves the secret as a file. Uses a Blob object-URL — works in an
+// downloadText saves the secret as a file. Uses a Blob object-URL, works in an
 // INSECURE (plain-HTTP) context too (no secure-context requirement), matching the
 // self-host POC case where the async Clipboard API is unavailable.
 function downloadText(filename: string, text: string) {
@@ -63,12 +63,12 @@ export function OneTimeSecretModal({
   caption: ReactNode;
   secret: string;
   copyLabel?: string;
-  // When set, a Download button is shown that saves the secret to this filename —
+  // When set, a Download button is shown that saves the secret to this filename ,
   // the offline fallback to Copy for the codes a user must keep (recovery codes).
   downloadFilename?: string;
   leadingActions?: ReactNode;
   // Extra one-time content rendered inside the modal (e.g. a QR of the secret). Lives and dies with
-  // the modal — dismissing clears it, so a QR here inherits the one-time discipline (never re-rendered
+  // the modal, dismissing clears it, so a QR here inherits the one-time discipline (never re-rendered
   // after close, since the secret it encodes is only in the caller's state and never re-fetched).
   children?: ReactNode;
   onDismiss: () => void;
@@ -76,8 +76,8 @@ export function OneTimeSecretModal({
    * ⛔ REQUIRE AN EXPLICIT ACKNOWLEDGEMENT BEFORE THE MODAL CAN CLOSE.
    *
    * The wireframe's forced-enrollment ceremony specifies it: *"Modal cannot be dismissed by
-   * click-away or Esc — only by the 'I've saved them' checkbox + button."* Two of those three were
-   * already true HERE BY ABSENCE — there is no backdrop `onClick` and no key handler, so neither
+   * click-away or Esc, only by the 'I've saved them' checkbox + button."* Two of those three were
+   * already true HERE BY ABSENCE, there is no backdrop `onClick` and no key handler, so neither
    * gesture closes it. **But absence is not a guarantee**: nothing stopped a later edit adding
    * either, and nothing tested it. The checkbox was genuinely missing.
    *
@@ -95,8 +95,8 @@ export function OneTimeSecretModal({
   async function copy() {
     try {
       // The async Clipboard API only exists in a SECURE context (HTTPS or
-      // localhost). A plain-HTTP self-host (e.g. http://<ip>) — exactly the POC
-      // case — leaves navigator.clipboard UNDEFINED, so fall back to the legacy
+      // localhost). A plain-HTTP self-host (e.g. http://<ip>), exactly the POC
+      // case, leaves navigator.clipboard UNDEFINED, so fall back to the legacy
       // execCommand path, which works off-HTTPS.
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(secret);
@@ -106,7 +106,7 @@ export function OneTimeSecretModal({
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // Never fail silently — tell the user to select + copy by hand.
+      // Never fail silently, tell the user to select + copy by hand.
       setCopyFailed(true);
       setTimeout(() => setCopyFailed(false), 4000);
     }

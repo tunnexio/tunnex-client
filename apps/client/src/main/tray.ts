@@ -73,14 +73,14 @@ export class TunnelTray {
     const m = trayMenuModel(this.state);
     this.tray.setImage(trayIcon(this.state));
     const template: Electron.MenuItemConstructorOptions[] = [
-      { label: `Tunnex — ${m.statusLabel}`, enabled: false },
+      { label: `Tunnex, ${m.statusLabel}`, enabled: false },
       { type: "separator" },
     ];
     if (m.showConnect) template.push({ label: m.showDisconnect ? "Reconnect" : "Connect", click: () => this.actions.onConnect() });
     if (m.showDisconnect) template.push({ label: "Disconnect", click: () => this.actions.onDisconnect() });
-    template.push({label:`Beam — ${this.beamCount} active share${this.beamCount===1?"":"s"}`,enabled:false},{label:"Show Beam",click:()=>this.actions.onShowBeam?.()});
-    template.push({ type: "separator" }, { label: "Show Tunnex", click: () => this.actions.onShow() }, { label: this.beamCount ? "Quit (ends Beam sharing)" : "Quit", click: () => this.actions.onQuit() });
+    template.push({label:`Local Sharing, ${this.beamCount} active share${this.beamCount===1?"":"s"}`,enabled:false},{label:"Show Local Sharing",click:()=>this.actions.onShowBeam?.()});
+    template.push({ type: "separator" }, { label: "Show Tunnex", click: () => this.actions.onShow() }, { label: this.beamCount ? "Quit (ends Local Sharing)" : "Quit", click: () => this.actions.onQuit() });
     this.tray.setContextMenu(Menu.buildFromTemplate(template));
-    this.tray.setToolTip(`Tunnex — ${m.statusLabel}`);
+    this.tray.setToolTip(`Tunnex, ${m.statusLabel}`);
   }
 }

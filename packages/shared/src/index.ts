@@ -1,4 +1,4 @@
-// @tunnex/shared — the single source of API types + a typed client, all derived
+// @tunnex/shared, the single source of API types + a typed client, all derived
 // from openapi/openapi.yaml via `make generate`. Consumed by the web app, the
 // Electron client, and the CLI. Do not hand-edit api.d.ts.
 
@@ -7,7 +7,7 @@ import type { paths, components } from "./api";
 
 export type { paths, components };
 
-// S14.1 — design tokens. The ONE authored form for colour/typography, shared with the desktop client per
+// S14.1, design tokens. The ONE authored form for colour/typography, shared with the desktop client per
 // Item A ruling A3 (own components, shared tokens). See ./tokens.ts.
 export * from "./tokens";
 
@@ -22,14 +22,14 @@ const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 // Desktop transport switch (S6.2). The web SPA is same-origin (baseUrl "/"), but
 // the Electron renderer loads over app:// and must reach the CONFIGURED server
 // origin. setApiOrigin rewrites the ORIGIN of every request URL at the client
-// layer — one bundle, runtime branch, no build fork. Null (the default) leaves
+// layer, one bundle, runtime branch, no build fork. Null (the default) leaves
 // requests same-origin, so the browser build is unaffected. Auth is untouched
 // here: the desktop bearer is injected by the Electron MAIN process on the
-// configured origin (S6.1), never by this middleware — the token never enters
+// configured origin (S6.1), never by this middleware, the token never enters
 // renderer JS.
 let apiOrigin: string | null = null;
 export function setApiOrigin(origin: string | null): void {
-  // Pin to a bare origin (scheme://host[:port]) — self-defending against a
+  // Pin to a bare origin (scheme://host[:port]), self-defending against a
   // caller passing a path/garbage. Empty/invalid → disabled (same-origin).
   if (!origin) {
     apiOrigin = null;
@@ -47,8 +47,8 @@ export function setApiOrigin(origin: string | null): void {
  *
  * Every unsafe-method request carries the X-Tunnex-CSRF header AT THE CLIENT
  * LAYER, so no call site can forget it. The server's csrfGuard requires the
- * header whenever a request CARRIES the session cookie — including a stale,
- * already-revoked cookie — so pre-auth calls (login/signup/reset) need it too:
+ * header whenever a request CARRIES the session cookie, including a stale,
+ * already-revoked cookie, so pre-auth calls (login/signup/reset) need it too:
  * a browser holding a revoked session cookie would otherwise be locked out of
  * login until the cookie expires (Round-2 walk, bug B1). The header is
  * presence-only (a cross-site form cannot set custom headers), so sending it

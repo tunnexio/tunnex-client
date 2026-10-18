@@ -16,7 +16,7 @@ func TestParseFileVaultStatus(t *testing.T) {
 	if v := parseFileVaultStatus("FileVault is On.\nDeferred enablement appears to be active for user 'x'.\n"); v == nil || !*v {
 		t.Fatalf("On+detail => true, got %v", v)
 	}
-	// Unrecognized output is INDETERMINATE (nil) — reported absent, never guessed.
+	// Unrecognized output is INDETERMINATE (nil), reported absent, never guessed.
 	if v := parseFileVaultStatus("fdesetup: something unexpected"); v != nil {
 		t.Fatalf("garbage => nil, got %v", *v)
 	}
@@ -32,7 +32,7 @@ func TestParseProtectionStatus(t *testing.T) {
 	if v := parseProtectionStatus("0\n"); v == nil || *v {
 		t.Fatalf("0 => false, got %v", v)
 	}
-	// 2 = WMI "unknown" — indeterminate, not a guess either way.
+	// 2 = WMI "unknown", indeterminate, not a guess either way.
 	if v := parseProtectionStatus("2"); v != nil {
 		t.Fatalf("2 => nil, got %v", *v)
 	}
@@ -42,7 +42,7 @@ func TestParseProtectionStatus(t *testing.T) {
 }
 
 // TestIPCPostureStatus drives the verb through the real dispatch (auth, envelope,
-// framing) with an injected collector — the read must carry no config, mutate no
+// framing) with an injected collector, the read must carry no config, mutate no
 // tunnel state, and claim no connection ownership.
 func TestIPCPostureStatus(t *testing.T) {
 	srv, sup := newServer(t, &fakeBackend{}, trustedResolver)

@@ -11,7 +11,7 @@ import { OrgProvider } from "../src/lib/useOrg";
 
 afterEach(cleanup);
 
-// ── S14.7 — ROUTED RANGES, THE WIRING TIER ──────────────────────────────────────────────────────────────
+// ── S14.7, ROUTED RANGES, THE WIRING TIER ──────────────────────────────────────────────────────────────
 //
 // This screen makes ONE derivation and it is the only reason it is worth more than a fixture echo: the
 // endpoint does NOT serve `site_id`, so the SITE column is joined client-side from an N-site fan-out.
@@ -44,7 +44,7 @@ vi.mock("../src/lib/api", async () => {
 const { default: RoutedRanges } = await import("../src/pages/RoutedRanges");
 
 // ⛔ SCOPED TO THE TABLE, DELIBERATELY. The address-space map renders the same CIDR strings as SVG <text>, so
-// an unscoped findByText("10.20.0.0/24") now matches twice — and would have matched the MAP while claiming to
+// an unscoped findByText("10.20.0.0/24") now matches twice, and would have matched the MAP while claiming to
 // prove something about the TABLE. The ambiguity is the finding: "the range is on the page" was never the
 // property; "the range is in the list a device reads" is.
 const inTable = () =>
@@ -110,7 +110,7 @@ beforeEach(() => {
   handler = backend({});
 });
 
-describe("RoutedRanges — the attribution join", () => {
+describe("RoutedRanges, the attribution join", () => {
   it("attributes a range to its site once the fan-out lands", async () => {
     handler = backend({
       ranges: ["10.20.0.0/24"],
@@ -126,7 +126,7 @@ describe("RoutedRanges — the attribution join", () => {
 
   it("⛔ NEVER claims 'no site' while the fan-out is still in flight", async () => {
     // THE DEFECT THIS FILE EXISTS FOR. The table renders from ONE request and the SITE column fills in later.
-    // If the in-flight cell rendered as blank — or worse, as the unmatched copy — the screen would state a
+    // If the in-flight cell rendered as blank, or worse, as the unmatched copy, the screen would state a
     // FACT ("nobody advertises this") during the window before it has asked anyone.
     const gate = deferred<void>();
     handler = backend({
@@ -140,7 +140,7 @@ describe("RoutedRanges — the attribution join", () => {
       </OrgProvider>,
     );
 
-    // The RANGE is already in the table — proving we are past the first request and genuinely mid-fan-out,
+    // The RANGE is already in the table, proving we are past the first request and genuinely mid-fan-out,
     // rather than asserting against a page that has not rendered at all (which would pass vacuously).
     await screen.findByRole("table", { name: /approved routed ranges/i });
     expect(inTable().getByText("10.20.0.0/24")).toBeTruthy();
@@ -154,7 +154,7 @@ describe("RoutedRanges — the attribution join", () => {
     await waitFor(() => expect(screen.queryByText(/^loading…$/i)).toBeNull());
   });
 
-  it("⛔ says 'could not load' — NOT 'no site' — when a site's subnet fetch fails", async () => {
+  it("⛔ says 'could not load', NOT 'no site', when a site's subnet fetch fails", async () => {
     handler = backend({
       ranges: ["10.99.0.0/24"],
       subnets: { s1: [], s2: "fail" },
@@ -229,7 +229,7 @@ describe("RoutedRanges — the attribution join", () => {
   });
 });
 
-describe("RoutedRanges — failure and emptiness", () => {
+describe("RoutedRanges, failure and emptiness", () => {
   it("⛔ a failed ranges read renders a RETRY, never an empty routing table", async () => {
     // On the screen that answers "does my LAN traffic go down the tunnel", `[]` for a fetch failure says NO
     // with total confidence. This is the Loaded<T> class, on the surface where it is most expensive.
@@ -276,8 +276,8 @@ describe("RoutedRanges — failure and emptiness", () => {
   });
 });
 
-describe("RoutedRanges — the DNS forward gate", () => {
-  it("⛔ an empty forwards list never says 'none configured' — it says none REACHABLE", async () => {
+describe("RoutedRanges, the DNS forward gate", () => {
+  it("⛔ an empty forwards list never says 'none configured', it says none REACHABLE", async () => {
     // The gate is the subtlety: a forward is withheld when its resolver sits outside every routed range.
     // "None configured" sends an admin to create one that already exists.
     handler = backend({ ranges: ["10.20.0.0/24"], forwards: [] });
@@ -293,7 +293,7 @@ describe("RoutedRanges — the DNS forward gate", () => {
     );
   });
 
-  it("states the gate even when the list is NON-empty — a withheld zone is invisible here", async () => {
+  it("states the gate even when the list is NON-empty, a withheld zone is invisible here", async () => {
     // ⛔ THE ONE-SIDED-OBSERVATION TRAP, AVOIDED DELIBERATELY. It would be easy to explain the gate only in
     // the empty state. But the reader who most needs it is the one looking at a POPULATED list and wondering
     // why their zone is missing from it.
@@ -313,7 +313,7 @@ describe("RoutedRanges — the DNS forward gate", () => {
   });
 });
 
-describe("RoutedRanges — the address-space map", () => {
+describe("RoutedRanges, the address-space map", () => {
   it("draws PENDING cells from the fan-out the screen already issues, without an approve control", async () => {
     // The pending QUEUE is cut (its endpoints are site:manage and live on Sites). The pending CELLS are not
     // the same thing: they are real served data from the attribution fan-out, and showing a withheld range is
@@ -340,7 +340,7 @@ describe("RoutedRanges — the address-space map", () => {
     expect(screen.queryByRole("button", { name: /approve/i })).toBeNull();
   });
 
-  it("⛔ a 192.168 range is DRAWN — the handoff's fixed 10/8 grid would have hidden it", async () => {
+  it("⛔ a 192.168 range is DRAWN, the handoff's fixed 10/8 grid would have hidden it", async () => {
     handler = backend({ ranges: ["10.10.0.0/16", "192.168.4.0/24"] });
     render(
       <OrgProvider>
@@ -365,7 +365,7 @@ describe("RoutedRanges — the address-space map", () => {
     );
     const note = await screen.findByText(/outside the private blocks/i);
     expect(note.textContent).toContain("203.0.113.0/24");
-    // And it must not read as "not routed" — it is routed identically; only the drawing cannot place it.
+    // And it must not read as "not routed", it is routed identically; only the drawing cannot place it.
     expect(note.textContent).toMatch(/routed exactly the same/i);
   });
 
@@ -380,7 +380,7 @@ describe("RoutedRanges — the address-space map", () => {
     expect(screen.queryByRole("img", { name: /address space/i })).toBeNull();
   });
 
-  it("the grid's facts are also TEXT — the picture is never the only path", async () => {
+  it("the grid's facts are also TEXT, the picture is never the only path", async () => {
     // An SVG is unreadable to a screen reader and unqueryable by this tier. Same three-failures-one-cause the
     // Donut avoids. Every number the drawing carries is asserted here through its accessible name.
     handler = backend({ ranges: ["10.10.0.0/16"] });

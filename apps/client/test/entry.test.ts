@@ -126,8 +126,8 @@ test("IPC wires the foreign-anchor guard before managed connect and remove effec
 // ⛔ THIS FILE EXISTS BECAUSE A SOURCE CENSUS FOUND A BUG A SOURCE CENSUS HAD MISSED.
 //
 // Step 3 flipped the renderer entry from the web dashboard to the client's own page, and reported
-// it as a one-line change. There were TWO load sites. The second — `config:setServerUrl` on the
-// wasUnset branch — is the FIRST-RUN path: setup screen, server URL, load. It still said
+// it as a one-line change. There were TWO load sites. The second, `config:setServerUrl` on the
+// wasUnset branch, is the FIRST-RUN path: setup screen, server URL, load. It still said
 // `index.html`, so a fresh install landed on the web dashboard and only a SECOND launch reached
 // the client.
 //
@@ -135,19 +135,19 @@ test("IPC wires the foreign-anchor guard before managed connect and remove effec
 // tests import no Electron at runtime (CI sets ELECTRON_SKIP_BINARY_DOWNLOAD, which makes
 // `require("electron")` throw), so `config:setServerUrl` has never been executed by a test.
 //
-// > **A BRANCH NO TEST CAN REACH IS NOT UNDER-TESTED, IT IS UNTESTED** — and "we have a census over
+// > **A BRANCH NO TEST CAN REACH IS NOT UNDER-TESTED, IT IS UNTESTED**, and "we have a census over
 // > it" is not a substitute, because the census is the instrument that missed it the first time.
 //
 // So the decision moved into an electron-free module, which is this repo's standing answer to that
 // constraint (trayview / notifyview did the same). It can now be RUN rather than scanned.
 
-test("first run LOADS the client entry — reload cannot change origin from the setup data: URL", () => {
+test("first run LOADS the client entry, reload cannot change origin from the setup data: URL", () => {
   const act = postServerUrlAction(true);
   assert.equal(act.kind, "load");
   assert.equal(act.kind === "load" && act.url, CLIENT_ENTRY);
 });
 
-test("⛔ first run does NOT load the web dashboard — the exact regression that shipped", () => {
+test("⛔ first run does NOT load the web dashboard, the exact regression that shipped", () => {
   const act = postServerUrlAction(true);
   assert.ok(
     act.kind === "load" && !act.url.endsWith("/index.html"),
@@ -159,13 +159,13 @@ test("⛔ first run does NOT load the web dashboard — the exact regression tha
   );
 });
 
-test("a later URL change RELOADS — it must not re-navigate to the entry", () => {
+test("a later URL change RELOADS, it must not re-navigate to the entry", () => {
   // Not a cosmetic difference: a load would discard renderer state on every server-URL edit,
   // where a reload picks up the new auth/config state in place.
   assert.deepEqual(postServerUrlAction(false), { kind: "reload" });
 });
 
-test("the entry is an app:// URL — the navigation lock rejects anything else", () => {
+test("the entry is an app:// URL, the navigation lock rejects anything else", () => {
   // main/index.ts refuses any navigation that does not start with app://. An entry that failed this
   // would be blocked by the client's own security guard and render as a dead window.
   assert.ok(CLIENT_ENTRY.startsWith("app://"), CLIENT_ENTRY);
@@ -185,7 +185,7 @@ test("⛔ this build cannot check for updates, and the reason is the SIGNING one
   assert.match(s.kind === "disabled" ? s.detail : "", /signed|notariz/i);
 });
 
-test("⛔ signing alone is NOT enough — build.publish is null, so there is no feed", () => {
+test("⛔ signing alone is NOT enough, build.publish is null, so there is no feed", () => {
   // The second missing piece, and the one that would still be missing on the day the certs land.
   const s = updateStatus(true, false);
   assert.equal(s.kind, "no_feed");
@@ -210,7 +210,7 @@ test("manual release discovery compares rc versions and never trusts malformed d
 import { setupPageDataUrl } from "../src/main/setup";
 
 test("⛔ the first-run screen uses the DEFAULT theme, not the violet one", () => {
-  // It hardcoded #7c5cff (the `violet` theme's accent) and #0b0b12 — neither is the default, where
+  // It hardcoded #7c5cff (the `violet` theme's accent) and #0b0b12, neither is the default, where
   // --tnx-accent is #C9C9C4 and --tnx-bg is #0A0A0A. The first screen a user ever saw was painted
   // from a palette the rest of the product never uses.
   const page = decodeURIComponent(setupPageDataUrl(true, false));

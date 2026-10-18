@@ -10,13 +10,13 @@ import {
 } from "../src/lib/overviewview";
 import { FAILED, LOADING, ok } from "../src/lib/navcounts";
 
-// S14.4 — the Overview's PURE decisions.
+// S14.4, the Overview's PURE decisions.
 //
 // ⚠ THIS FILE EXISTS BECAUSE TWO MUTATIONS PASSED. `sortGateways`'s ordering and `isFreshOrg`'s
 // known-empty requirement were both asserted only INDIRECTLY, through a screen test that happened to hold
 // while the decision was wrong. Indirect coverage is coverage of the path, not of the decision.
 
-describe("sortGateways — UNHEALTHY FIRST", () => {
+describe("sortGateways, UNHEALTHY FIRST", () => {
   const rows: GatewayRow[] = [
     { id: "1", name: "b-healthy", label: "healthy", tone: "ok" },
     { id: "2", name: "a-broken", label: "silent desync", tone: "danger" },
@@ -26,7 +26,7 @@ describe("sortGateways — UNHEALTHY FIRST", () => {
 
   it("orders danger, warn, neutral, ok", () => {
     // The list shows ALL gateways, so ORDER is what makes it useful. A broken gateway sorted below three
-    // healthy ones is a broken gateway below the fold — present, and not seen.
+    // healthy ones is a broken gateway below the fold, present, and not seen.
     expect(sortGateways(rows).map((r) => r.name)).toEqual([
       "a-broken",
       "c-syncing",
@@ -50,16 +50,16 @@ describe("sortGateways — UNHEALTHY FIRST", () => {
   });
 });
 
-describe("isFreshOrg — onboarding only when the org is KNOWN to be empty", () => {
+describe("isFreshOrg, onboarding only when the org is KNOWN to be empty", () => {
   // ⚠ AND THIS IS BELT-AND-BRACES, WHICH IS WORTH SAYING RATHER THAN OVERSTATING. On the screen today the
-  // primary protection is that a failed `/overview` leaves `data` null, so the whole block is unrendered —
+  // primary protection is that a failed `/overview` leaves `data` null, so the whole block is unrendered ,
   // the screen test passes for THAT reason, not because of these checks. Gating the decision directly means
   // the guard survives a refactor that changes how the screen handles a null `data`.
   it("all zero and all KNOWN -> fresh", () => {
     expect(isFreshOrg(ok(0), ok(0), ok(0))).toBe(true);
   });
 
-  it("a FAILED count is NOT fresh — a failure is not an empty org", () => {
+  it("a FAILED count is NOT fresh, a failure is not an empty org", () => {
     // Showing onboarding because a fetch failed would tell a founder with a working fleet that they have
     // nothing: the reassuring-empty defect wearing an onboarding hat.
     expect(isFreshOrg(FAILED, ok(0), ok(0))).toBe(false);
@@ -67,7 +67,7 @@ describe("isFreshOrg — onboarding only when the org is KNOWN to be empty", () 
     expect(isFreshOrg(ok(0), ok(0), FAILED)).toBe(false);
   });
 
-  it("a LOADING count is NOT fresh — the answer has not arrived", () => {
+  it("a LOADING count is NOT fresh, the answer has not arrived", () => {
     expect(isFreshOrg(LOADING, ok(0), ok(0))).toBe(false);
   });
 
@@ -91,8 +91,8 @@ describe("statFrom / statText", () => {
   });
 });
 
-describe("peerSlices — the donut counts DEVICES, and the buckets are disjoint", () => {
-  // ⚠ The first build counted GATEWAYS. The panel is "Peer Connection Status" and peers are devices — a
+describe("peerSlices, the donut counts DEVICES, and the buckets are disjoint", () => {
+  // ⚠ The first build counted GATEWAYS. The panel is "Peer Connection Status" and peers are devices, a
   // different, larger population. A chart can be perfectly honest about the wrong denominator.
   const D = (o: Partial<Record<string, unknown>>) => o as never;
 
@@ -126,12 +126,12 @@ describe("peerSlices — the donut counts DEVICES, and the buckets are disjoint"
   });
 });
 
-describe("postureSplit — UNKNOWN is its own state and is excluded from the percentage", () => {
+describe("postureSplit, UNKNOWN is its own state and is excluded from the percentage", () => {
   const D = (o: Partial<Record<string, unknown>>) => o as never;
 
   it("never-reported devices are unknown, not compliant", () => {
     // Counting them compliant is the reassuring-empty defect with a denominator. The design says it too:
-    // "Absence ≠ compliance — unknown is its own state."
+    // "Absence ≠ compliance, unknown is its own state."
     const s = postureSplit([
       D({ status: "active" }),
       D({ status: "active", health_state: "ok" }),
@@ -141,7 +141,7 @@ describe("postureSplit — UNKNOWN is its own state and is excluded from the per
     expect(s.percent).toBe(100); // 1 of 1 REPORTED, not 1 of 2 total
   });
 
-  it("percent is null when nothing has reported — not 0, and not 100", () => {
+  it("percent is null when nothing has reported, not 0, and not 100", () => {
     // 0% would claim total non-compliance; 100% would claim the opposite. Neither was measured.
     expect(postureSplit([D({ status: "active" })]).percent).toBeNull();
   });

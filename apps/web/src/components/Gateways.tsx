@@ -15,7 +15,7 @@ import { OneTimeSecretModal } from "./OneTimeSecret";
 
 // enrollCommand builds the COMPLETE, copy-paste command an operator runs in their Tunnex install
 // folder to bring a gateway online (S6.6 / POC ledger item 6): the join-token env INLINE plus the
-// full `docker compose … up -d --force-recreate node-agent` — the piece a POC operator had to know
+// full `docker compose … up -d --force-recreate node-agent`, the piece a POC operator had to know
 // by heart. A pinned node_name is shell-quoted (arbitrary charset) so a space can't silently
 // truncate it and resurrect the node_name_mismatch loop.
 export function enrollCommand(
@@ -32,7 +32,7 @@ export function enrollCommand(
   return `TUNNEX_JOIN_TOKEN=${token}${name} TUNNEX_NODE_AGENT_IMAGE="${agentImage.replace(/(["\\$`])/g, "\\$1")}" docker compose -f tunnex.yml up -d --force-recreate node-agent`;
 }
 
-// The published gateway image (S6.6 zero-build deploy). Pulled by the emitted docker run — nothing builds.
+// The published gateway image (S6.6 zero-build deploy). Pulled by the emitted docker run, nothing builds.
 export const GATEWAY_IMAGE = "ghcr.io/tunnexio/tunnex-node-agent:latest";
 
 export interface RemoteEnrollOpts {
@@ -45,13 +45,13 @@ export interface RemoteEnrollOpts {
   image: string; // WF-2: the agent image (CP-configured, digest-pinnable). One-truth over the artifact version.
 }
 
-// remoteEnrollCommand builds the ONE true `docker run` for a REMOTE cloud gateway (S8.2c D4) — a SINGLE
+// remoteEnrollCommand builds the ONE true `docker run` for a REMOTE cloud gateway (S8.2c D4), a SINGLE
 // LINE (D4b: a multi-line/compose line LOOKS copyable and got mis-pasted twice in the cross-cloud demo; a
 // one-line docker run with every env inline cannot be). It bakes in EVERYTHING the demo needed by hand:
 // `--network host` (so wg0 lives on the host + reaches real host LANs, not the bridge), `wgctrl` (real
 // WireGuard, not the mem fake), `/dev/net/tun` + NET_ADMIN, the public CP URLs + servername, the token,
 // the optional public endpoint. Pasted verbatim on a clean VM it reaches agent_ready with ZERO edits.
-// q shell-quotes an env VALUE (single charset, one rule for the whole command — review: an unquoted
+// q shell-quotes an env VALUE (single charset, one rule for the whole command, review: an unquoted
 // space/metachar in ANY operator-supplied value corrupts the zero-touch command). Applied uniformly to the
 // name, endpoint AND the CP urls (the urls now come from operator config, not the browser origin).
 const q = (s: string) => `"${s.replace(/(["\\$`])/g, "\\$1")}"`;
@@ -72,9 +72,9 @@ export function remoteEnrollCommand(o: RemoteEnrollOpts): string {
 
 // CpEndpoints is a DISCRIMINATED result (re-review budget-rule reduce: one state model for CP-url consumption
 // instead of scattered empty-string sentinels). The emitted command must NEVER silently carry a broken url.
-//   { ok: true }  — usable urls; usedFallback=true means we used the dashboard origin (the CP has no
+//   { ok: true } , usable urls; usedFallback=true means we used the dashboard origin (the CP has no
 //                   configured public url), which the caller flags when the meta fetch FAILED (vs was unset).
-//   { ok: false } — the CP's CONFIGURED public url is unparseable (operator APP_BASE_URL typo); the caller
+//   { ok: false }, the CP's CONFIGURED public url is unparseable (operator APP_BASE_URL typo); the caller
 //                   BLOCKS token mint on this (a one-time token minted against a broken url is worse than the
 //                   block) and surfaces `reason`.
 export type CpEndpoints =
@@ -88,7 +88,7 @@ export type CpEndpoints =
   | { ok: false; reason: string };
 
 // cpEndpoints derives the public CP urls the remote agent dials from the CP's OWN configured public base URL
-// (meta.public_base_url — AUTHORITATIVE), NOT window.location: the browser URL is whatever path the admin
+// (meta.public_base_url, AUTHORITATIVE), NOT window.location: the browser URL is whatever path the admin
 // happened to use (a tunnel / internal alias / bare IP), which would bake an unreachable endpoint into the
 // pasted command. Falls back to the dashboard origin ONLY when the CP didn't configure a public url. REST
 // rides the origin (nginx); the agent TLS channel is :8443 with the standard cert SAN. PURE.
@@ -141,7 +141,7 @@ export function cpEndpoints(
 
 /**
  * Gateways renders a org's enrolled tunnex-node agents and the enroll ceremony
- * (S4.7). Enrolling mints a ONE-TIME join token — a secret with the same handling
+ * (S4.7). Enrolling mints a ONE-TIME join token, a secret with the same handling
  * as the device config (S4.5 ceremony): it exists only in page state, is never
  * re-fetched (the server shows it exactly once), and must be explicitly
  * acknowledged to dismiss. The token is redeemed by the agent on its first
@@ -160,7 +160,7 @@ export function Gateways({
    * ⛔ S14.6: the PAGE owns the fleet list now, and this component keeps the ENROLMENT CEREMONY.
    *
    * Set false when a caller renders its own list. The alternative was to extract the ceremony into a third
-   * component in the same commit that added the health grouping — a move and a rewrite together, which is
+   * component in the same commit that added the health grouping, a move and a rewrite together, which is
    * the diff nobody can read. One prop, one seam, and the extraction can happen on its own later.
    *
    * DEFAULT TRUE so the component's existing contract is unchanged for anyone still rendering it whole.
@@ -168,7 +168,7 @@ export function Gateways({
   renderList?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  // WF-S11-9: which gateway is awaiting a revoke confirmation. Two-step rather than a window.confirm — the
+  // WF-S11-9: which gateway is awaiting a revoke confirmation. Two-step rather than a window.confirm, the
   // consequence needs naming in the UI, and a native dialog cannot say "every device homed here loses its
   // tunnel". Mirrors the MfaSettings disable ceremony.
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
@@ -184,7 +184,7 @@ export function Gateways({
   const [endpoint, setEndpoint] = useState(""); // D4a: admin-entered public ip:port (blank = NAT'd spoke)
   const [pinnedEndpoint, setPinnedEndpoint] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  // The name the token was PINNED to at issue time — the server refuses this
+  // The name the token was PINNED to at issue time, the server refuses this
   // token from an agent enrolling under any other name, so the ceremony must
   // hand the operator the COMPLETE env line. (Round-2 friction F1: the modal
   // omitted TUNNEX_NODE_NAME and the agent looped node_name_mismatch.)
@@ -194,15 +194,15 @@ export function Gateways({
     null,
   );
   const [busy, setBusy] = useState(false);
-  // The CP's authoritative public base URL for the emitted command (review #1 — not window.location).
+  // The CP's authoritative public base URL for the emitted command (review #1, not window.location).
   // metaError distinguishes "fetch FAILED" from "fetch ok, field unset" (re-review #2): both leave
   // publicBaseURL undefined, but only a genuine unset is a clean origin-fallback; a failure that silently
   // falls back must be flagged, else a tunnel/alias origin gets baked in with no signal.
   // metaLoaded makes the IN-FLIGHT fetch a first-class state (re-review round-3, budget-rule reduce
   // COMPLETION): before it settles, publicBaseURL is undefined so ep transiently narrows to the origin
-  // fallback — minting THEN would either strand the token (a late-arriving broken URL flips ep.ok false and
+  // fallback, minting THEN would either strand the token (a late-arriving broken URL flips ep.ok false and
   // hides the modal) or silently bake the browser origin. Gate the mint on metaLoaded so the emitted command
-  // is only ever built from a SETTLED CP address — the whole in-flight window becomes a disabled button.
+  // is only ever built from a SETTLED CP address, the whole in-flight window becomes a disabled button.
   const [publicBaseURL, setPublicBaseURL] = useState<string | undefined>(
     undefined,
   );
@@ -229,7 +229,7 @@ export function Gateways({
       .catch(() => setMetaError(true))
       .finally(() => setMetaLoaded(true));
   }, []);
-  // ONE derivation of the CP urls (re-review budget-rule reduce). Recomputed each render — cheap + pure.
+  // ONE derivation of the CP urls (re-review budget-rule reduce). Recomputed each render, cheap + pure.
   const ep = cpEndpoints(publicBaseURL, window.location.origin, gatewayControlURL);
 
   useEffect(() => {
@@ -273,7 +273,7 @@ export function Gateways({
         },
       );
       if (error || !data) {
-        // ⛔ THE CEILING REFUSAL IS THE ONE ERROR HERE THAT IS NOT A FAULT — it is the product working,
+        // ⛔ THE CEILING REFUSAL IS THE ONE ERROR HERE THAT IS NOT A FAULT, it is the product working,
         // at the exact moment the operator was deciding to add a gateway. Rendering it as a generic red
         // string told them no and offered nowhere to go.
         setCeiling(ceilingKind(apiErrorCode(error)));
@@ -281,7 +281,7 @@ export function Gateways({
         return;
       }
       setCeiling(null);
-      setToken(data.join_token); // shown once — never re-served
+      setToken(data.join_token); // shown once, never re-served
       setPinnedName(pinned);
       setPinnedEndpoint(endpoint.trim() || null);
       setOpen(false);
@@ -296,7 +296,7 @@ export function Gateways({
     }
   }
 
-  // WF-S11-9: the API has always had POST /nodes/{nodeId}/revoke, and the UI never exposed it — so the
+  // WF-S11-9: the API has always had POST /nodes/{nodeId}/revoke, and the UI never exposed it, so the
   // documented gateway-recovery path (revoke, then re-enroll) was unreachable from the product. Revocation is
   // the mechanism the whole security model rests on (short certs + refused renewal), which makes a
   // revoke-you-cannot-reach worse than a missing convenience.
@@ -324,7 +324,7 @@ export function Gateways({
   }
 
   // S13.1 Slice 7. Revoking a gateway cascade-revokes every device homed on it, and re-key REFUSES a revoked
-  // node (D3) — a proof of possession must never overturn a human decision. So the ONLY way those users come
+  // node (D3), a proof of possession must never overturn a human decision. So the ONLY way those users come
   // back is a human asking, which is what this is: a deliberate operator act, permissioned (device:restore) and
   // audited with the actor, naming the LIVE gateway they are restored onto. Restoring onto the revoked gateway
   // is refused by the server, because active devices pointing at a dead gateway read healthy everywhere and
@@ -352,10 +352,10 @@ export function Gateways({
       // the device list marks them "config out of date". Reporting only the total would hide the work.
       setRestoreResult(
         restored === 0
-          ? "No devices needed restoring — nothing was revoked as a cascade from this gateway."
+          ? "No devices needed restoring, nothing was revoked as a cascade from this gateway."
           : `Restored ${restored} device${restored === 1 ? "" : "s"}` +
               (readdressed > 0
-                ? `. ${readdressed} could not reclaim its original address and must re-import a config — they are marked "config out of date" in Devices.`
+                ? `. ${readdressed} could not reclaim its original address and must re-import a config, they are marked "config out of date" in Devices.`
                 : ", each keeping its original address, so existing configs keep working."),
       );
       setRestoreFrom(null);
@@ -427,9 +427,9 @@ export function Gateways({
         </div>
       )}
 
-      {/* Block the mint (not just the emit) when the CP's configured public URL is unparseable — a one-time
+      {/* Block the mint (not just the emit) when the CP's configured public URL is unparseable, a one-time
           token minted against a broken URL is worse than refusing. The remedy is operator-side (APP_BASE_URL).
-          Only judged once meta has SETTLED (metaLoaded) — an in-flight fetch isn't an error. */}
+          Only judged once meta has SETTLED (metaLoaded), an in-flight fetch isn't an error. */}
       {open && metaLoaded && !ep.ok && (
         <ErrorText>
           {ep.reason} Fix the control plane's public address (APP_BASE_URL)
@@ -444,7 +444,7 @@ export function Gateways({
         </p>
       )}
 
-      {/* ⚠ THE ROUTE REPLACES THE BARE ERROR, never sits beside it — two renderings of one refusal read as
+      {/* ⚠ THE ROUTE REPLACES THE BARE ERROR, never sits beside it, two renderings of one refusal read as
           two problems. The server's message is passed through verbatim: it already names the band, the
           ceiling, what is enrolled, and that nothing running is affected. */}
       {ceiling && error ? (
@@ -468,11 +468,11 @@ export function Gateways({
                 {n.status === "revoked" && (
                   <span className="ml-2 text-xs text-rose-400">revoked</span>
                 )}
-                {/* WF-S11-10: no health badge on a revoked gateway — `revoked` IS its state, and a degradation
+                {/* WF-S11-10: no health badge on a revoked gateway, `revoked` IS its state, and a degradation
                   badge beside it describes a gateway that is no longer meant to work. Matches the same
                   suppression Devices.tsx has always applied to device rows; this list never had it, which stayed
                   invisible only while the badges were vague ("degraded") rather than instructional. */}
-                {/* S14.21: `n.status !== "revoked" &&` removed — policyHealthBadge now refuses a verdict
+                {/* S14.21: `n.status !== "revoked" &&` removed, policyHealthBadge now refuses a verdict
                   for a revoked node itself, so restating it here implied the callee does not. */}
                 {(() => {
                   const b = policyHealthBadge(n);
@@ -482,7 +482,7 @@ export function Gateways({
                     </span>
                   ) : null;
                 })()}
-                {/* S9.1 4d: OpenVPN refuse-loudly surfaced (a different axis from policy health) — an
+                {/* S9.1 4d: OpenVPN refuse-loudly surfaced (a different axis from policy health), an
                   OVPN-enabled gateway missing its material/binary shows WHY, and keeps serving WireGuard. */}
                 {n.ovpn_health && (
                   <span
@@ -555,7 +555,7 @@ export function Gateways({
                       Revoke
                     </Button>
                   ))}
-                {/* S13.1 Slice 7 — only on a REVOKED gateway, because that is the only state whose devices are
+                {/* S13.1 Slice 7, only on a REVOKED gateway, because that is the only state whose devices are
                   stranded: re-key brings back a gateway that expired, and D3 refuses to re-key one that was
                   revoked. Withheld entirely when there is no live gateway to restore onto, rather than offered
                   and then refused. */}
@@ -625,7 +625,7 @@ export function Gateways({
         </ul>
       )}
 
-      {/* One-time join-token CEREMONY — the token authenticates a new agent on its
+      {/* One-time join-token CEREMONY, the token authenticates a new agent on its
           first connect and is shown exactly once (shared OneTimeSecretModal). The
           node itself only appears in the list above once the agent redeems the
           token on first connect. */}
@@ -661,7 +661,7 @@ export function Gateways({
               for the co-located compose form. It carries this same token.)
             </>
           }
-          // D4: the ONE true remote-gateway docker run — single line, host networking + wgctrl baked in.
+          // D4: the ONE true remote-gateway docker run, single line, host networking + wgctrl baked in.
           // CP urls from the CP's own configured public base URL (review #1), not window.location.
           secret={remoteEnrollCommand({
             token,

@@ -5,7 +5,7 @@ import log from "electron-log";
 //
 // `~/Library/Logs/@tunnex/client/main.log` existed, was writable, and rotated correctly. It also
 // contained **thirty lines accumulated over weeks, every one of them the auto-updater announcing
-// itself as inert.** The one failure anybody actually hit —
+// itself as inert.** The one failure anybody actually hit ,
 //
 //     Error occurred in handler for 'tunnel:up': Error: not_authenticated
 //
@@ -14,7 +14,7 @@ import log from "electron-log";
 //
 // > **A LOG FILE THAT EXISTS IS NOT LOGGING.** It is worse than no log file: "check the logs" reads
 // > as a real instruction, the file opens, it has content and timestamps, and the incident is
-// > simply absent. The absence looks like "nothing went wrong" rather than "nothing was recorded" —
+// > simply absent. The absence looks like "nothing went wrong" rather than "nothing was recorded" ,
 // > the same false-green shape as a census that matches its own prose.
 //
 // Everything below is about making the file contain the incident.
@@ -23,7 +23,7 @@ import log from "electron-log";
  * Route the process's own output into the log file.
  *
  * ⛔ `console` IS THE IMPORTANT PART, NOT OUR OWN CALLS. Electron writes "Error occurred in handler
- * for X" to `console.error` itself, which is exactly the line that was missing — so capturing
+ * for X" to `console.error` itself, which is exactly the line that was missing, so capturing
  * console captures failures nobody remembered to instrument, including future ones.
  */
 export function initLogging(): void {
@@ -50,7 +50,7 @@ export function initLogging(): void {
  * Where the log actually is.
  *
  * ⛔ ASKED, NEVER GUESSED. The path is platform-specific and uses the npm SCOPE (`@tunnex/client`),
- * not the product name — a directory a user has already been sent to the wrong version of once.
+ * not the product name, a directory a user has already been sent to the wrong version of once.
  * `electron-log` knows it; hardcoding a second copy of that knowledge is how the two drift.
  */
 export function logFilePath(): string {
@@ -68,7 +68,7 @@ export function logFilePath(): string {
  * It is still the right call: a log a user cannot see is a log they will not read, and "reveal in
  * Finder" is not troubleshooting on a machine where the problem is that the app will not start. The
  * mitigations are that the renderer is `app://` with a strict CSP and no remote script, and that
- * the log carries no key material by construction — the client never writes credentials or WG keys
+ * the log carries no key material by construction, the client never writes credentials or WG keys
  * to it.
  *
  * ⚠ TAIL, NOT WHOLE FILE. An unbounded read would hand a multi-megabyte string to a React state on
@@ -92,7 +92,7 @@ export function readLogTail(maxBytes = 256 * 1024): string {
     }
   } catch (e) {
     // ⛔ AN UNREADABLE LOG IS A REPORTABLE FACT, NOT AN EMPTY ONE. Returning "" would render as a
-    // clean log — the false-green shape again — so the failure is the content.
+    // clean log, the false-green shape again, so the failure is the content.
     return `Could not read the log at ${path}: ${e instanceof Error ? e.message : String(e)}`;
   }
 }

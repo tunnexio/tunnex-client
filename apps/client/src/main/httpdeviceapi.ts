@@ -202,7 +202,7 @@ async function responseErrorCode(r: Response): Promise<string | null> {
 }
 
 // createErr surfaces the server's TYPED error code (body.error.code) when present, so
-// a caller can match on it — e.g. the S3.7 `gateway_no_egress` full-tunnel refusal the
+// a caller can match on it, e.g. the S3.7 `gateway_no_egress` full-tunnel refusal the
 // UI mirrors cleanly. Falls back to the status when the body isn't the typed shape.
 async function createErr(r: Response): Promise<string> {
   const code = await responseErrorCode(r);
@@ -422,11 +422,11 @@ export class HttpDeviceApi implements DeviceApi {
   }
 
   async deviceStatus(deviceId: string, orgId: string): Promise<"active" | "pending" | "gone"> {
-    // Direct query against the device's OWN org. A fetch error THROWS (inconclusive — a blip
+    // Direct query against the device's OWN org. A fetch error THROWS (inconclusive, a blip
     // never reads as a transition); "gone" only when that org's real list omits the id (no
     // cross-org scan that a transient omit could false-"gone"). orgId is ALWAYS present: new
     // configs persist it at create, and a LEGACY config (no orgId) is re-minted before any
-    // monitor runs (the reduction — resolveTunnelConfig + connect never query a no-orgId
+    // monitor runs (the reduction, resolveTunnelConfig + connect never query a no-orgId
     // config). A blank orgId here is a bug, not a fallback: throw rather than build a malformed
     // /organizations//devices URL.
     if (!orgId) throw new Error("no_org: inconclusive");
@@ -449,7 +449,7 @@ export class HttpDeviceApi implements DeviceApi {
   }
 
   // routedConfig GETs the org's declared routed ranges + reachable DNS forwards (S8.5) + this device's
-  // active-hub dial (WF-A, when deviceId is passed). Throws on a non-OK read (inconclusive — the monitor
+  // active-hub dial (WF-A, when deviceId is passed). Throws on a non-OK read (inconclusive, the monitor
   // keeps its last-applied sets, never strip-to-baked). The dial is present only when the server derives
   // one (multi-gateway hub set) AND device_id was sent; a null/absent pair means keep the current peer.
   async routedConfig(orgId: string, deviceId?: string): Promise<RoutedConfig> {
@@ -513,7 +513,7 @@ export class HttpDeviceApi implements DeviceApi {
   }
 
   // reportHealth POSTs one posture self-report (S7.5.3). Terminal answers RETURN
-  // ("unsupported" on 403 — open edition; "gone" on 404 — device no longer exists)
+  // ("unsupported" on 403, open edition; "gone" on 404, device no longer exists)
   // so the monitor stops cleanly; anything else throws (inconclusive → backoff).
   async reportHealth(deviceId: string, orgId: string, facts: HealthFacts): Promise<HealthReportResult | "unsupported" | "gone"> {
     const orgPath = encodeUuidPathSegment(orgId, "report_health_failed: invalid_request");

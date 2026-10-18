@@ -41,7 +41,7 @@ type TunnelConfig struct {
 	PersistentKeepalive int `json:"persistent_keepalive,omitempty"`
 	// ControlPlaneEndpoint is the tenant API host:port (WF-A / D-WFA-4). When set on a FULL tunnel, the
 	// kill-switch carves ONE named pass out to it (+ a host-route via the physical gateway) so the control
-	// channel survives the tunnel going down — the device can still poll the CP to learn a re-home during a
+	// channel survives the tunnel going down, the device can still poll the CP to learn a re-home during a
 	// hard hub death. The CP is already the TLS trust root; a pass to it widens nothing. Optional + additive
 	// (an old client omits it → no carve-out → full-tunnel re-home unavailable, fail-static). Ignored for a
 	// split tunnel (no kill-switch). host may be IP or DNS name, same safe-host rules as Endpoint.
@@ -106,7 +106,7 @@ func (c *TunnelConfig) Validate() error {
 	if c.PersistentKeepalive < 0 || c.PersistentKeepalive > 65535 {
 		return &ProtocolError{Code: "bad_keepalive", Msg: "persistent_keepalive must be 0..65535"}
 	}
-	// The CP endpoint is validated as strictly as the WG endpoint (safe host:port — validEndpoint bars
+	// The CP endpoint is validated as strictly as the WG endpoint (safe host:port, validEndpoint bars
 	// loopback/link-local/metacharacters) so a bad value can't steer the pf carve-out. Empty = no carve-out.
 	if c.ControlPlaneEndpoint != "" && !validEndpoint(c.ControlPlaneEndpoint) {
 		return &ProtocolError{Code: "bad_control_plane_endpoint", Msg: "control_plane_endpoint must be host:port"}
@@ -114,7 +114,7 @@ func (c *TunnelConfig) Validate() error {
 	return nil
 }
 
-// validKey requires standard base64 decoding to EXACTLY 32 bytes — the WireGuard
+// validKey requires standard base64 decoding to EXACTLY 32 bytes, the WireGuard
 // key size. Rejects wrong length, non-base64, and empty.
 func validKey(s string) error {
 	if s == "" {
@@ -131,7 +131,7 @@ func validKey(s string) error {
 }
 
 // validEndpoint requires host:port with a numeric port in 1..65535 and a SAFE
-// host — either a literal IP that is a normal unicast global/private address, or
+// host, either a literal IP that is a normal unicast global/private address, or
 // a syntactically valid DNS name. The host is the one config field a backend may
 // hand to a resolver or (worse) interpolate into a command, so it is validated as
 // strictly as the rest: no spaces/metacharacters/control chars, and no

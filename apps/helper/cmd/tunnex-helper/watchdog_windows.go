@@ -14,7 +14,7 @@ import (
 
 const (
 	winWatchdogInterval      = 30 * time.Second
-	winWatchdogMissThreshold = 3 // ~90s — tolerates an in-place app update
+	winWatchdogMissThreshold = 3 // ~90s, tolerates an in-place app update
 )
 
 // startUninstallWatchdog (Windows) makes uninstall robust even when the NSIS uninstaller
@@ -36,7 +36,7 @@ func startUninstallWatchdog(installDir string, sup *helper.Supervisor) {
 				missing++
 				if missing >= winWatchdogMissThreshold {
 					// selfUninstall os.Exits on success; on failure it returns false and
-					// we keep watching + retry after another window — NEVER os.Exit into
+					// we keep watching + retry after another window, NEVER os.Exit into
 					// the SCM restart policy on a failed delete (= no self-uninstall loop,
 					// review #7).
 					if !selfUninstall(sup) {
@@ -61,11 +61,11 @@ func containsPathListSep(s string) bool {
 
 // selfUninstall releases the kill-switch and marks the service for deletion. Returns
 // false (WITHOUT exiting) if the delete could not be issued, so the caller keeps the
-// process alive and retries — an os.Exit on a failed delete would let the SCM restart
+// process alive and retries, an os.Exit on a failed delete would let the SCM restart
 // policy respawn us into a self-uninstall loop. On a successful Delete it os.Exits;
 // DELETE_PENDING completes once the process is gone.
 func selfUninstall(sup *helper.Supervisor) bool {
-	log.Printf("tunnex-helper: install dir removed — self-uninstalling the service")
+	log.Printf("tunnex-helper: install dir removed, self-uninstalling the service")
 	if err := sup.SelfHeal(); err != nil { // release any armed WFP kill-switch first
 		log.Printf("tunnex-helper: self-uninstall self-heal: %v", err)
 	}
@@ -83,7 +83,7 @@ func selfUninstall(sup *helper.Supervisor) bool {
 	defer func() { _ = s.Close() }()
 	if err := s.Delete(); err != nil {
 		log.Printf("tunnex-helper: self-uninstall delete service: %v", err)
-		return false // do NOT exit — avoids a restart/self-uninstall loop
+		return false // do NOT exit, avoids a restart/self-uninstall loop
 	}
 	os.Exit(0) // marked for deletion; the SCM removes it once this process exits
 	return true

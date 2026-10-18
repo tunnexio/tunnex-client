@@ -17,7 +17,7 @@ export function bearerFor(url: string, origin: string, cred: StoredCredential | 
 }
 
 // attachBearer injects the header on requests to the configured API origin. The
-// raw token lives in main + the keychain and is added here per request — it
+// raw token lives in main + the keychain and is added here per request, it
 // NEVER crosses into the renderer (no getToken).
 export function attachBearer(session: Session, getOrigin: () => string, store: CredentialStore): void {
   session.webRequest.onBeforeSendHeaders((details, callback) => {

@@ -1,4 +1,4 @@
-// Server-URL logic — pure, testable, no Electron. The URL lives in the
+// Server-URL logic, pure, testable, no Electron. The URL lives in the
 // main-process config (it's where the auth flow + updater point); the renderer
 // only reads it over the bridge.
 
@@ -34,7 +34,7 @@ export async function validateServer(raw: string, fetchish: Fetchish): Promise<s
     throw new Error(`could not reach ${origin} (${(e as Error).message})`);
   }
   if (!res.ok) {
-    throw new Error(`${origin}/healthz returned ${res.status} — not a Tunnex server?`);
+    throw new Error(`${origin}/healthz returned ${res.status}, not a Tunnex server?`);
   }
   return origin;
 }

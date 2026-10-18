@@ -2,7 +2,7 @@ import type { Loaded } from "./api";
 import type { NavCount } from "./navcounts";
 import { FAILED, LOADING, ok } from "./navcounts";
 
-// S14.4 — the Overview's PURE decisions, extracted so the tier tests them without a DOM and the screen has
+// S14.4, the Overview's PURE decisions, extracted so the tier tests them without a DOM and the screen has
 // nothing to decide beyond rendering.
 
 /**
@@ -32,7 +32,7 @@ export function statText(s: StatState): string | null {
  * ⛔ IS THIS A FRESH ORG, OR DID WE FAIL TO FIND OUT?
  *
  * The get-started empty state is only honest when we KNOW the org is empty. Showing it because a fetch failed
- * would tell a founder with a working fleet that they have nothing — the reassuring-empty defect wearing an
+ * would tell a founder with a working fleet that they have nothing, the reassuring-empty defect wearing an
  * onboarding hat, and considerably more alarming than a blank panel.
  */
 export function isFreshOrg(
@@ -52,11 +52,11 @@ export function isFreshOrg(
 export interface GatewayRow {
   id: string;
   name: string;
-  /** The badge label from the ONE health interpreter — never a second copy of the vocabulary. */
+  /** The badge label from the ONE health interpreter, never a second copy of the vocabulary. */
   label: string;
   tone: "ok" | "warn" | "danger" | "neutral";
   /**
-   * S15.2 / D25(C) — the attribution badge, INDEPENDENT of the health verdict above.
+   * S15.2 / D25(C), the attribution badge, INDEPENDENT of the health verdict above.
    *
    * ⛔ A SEPARATE FIELD RATHER THAN ANOTHER TONE, because a gateway can be healthy AND unattributable.
    * Merging them would make one of the two facts unreportable whenever the other was present.
@@ -69,7 +69,7 @@ export interface GatewayRow {
  * Sort order for the gateway health list: UNHEALTHY FIRST, then by name.
  *
  * The list shows ALL gateways, not only unhealthy ones (ruled). "Nothing is wrong" and "we have no gateways"
- * must not render identically — and a list that hides healthy rows makes the empty case ambiguous, which is
+ * must not render identically, and a list that hides healthy rows makes the empty case ambiguous, which is
  * the same defect one level up from the one this screen is built to avoid.
  */
 export function sortGateways(rows: GatewayRow[]): GatewayRow[] {
@@ -79,14 +79,14 @@ export function sortGateways(rows: GatewayRow[]): GatewayRow[] {
   );
 }
 
-// ── S14.4 corrected audit — panels whose data DOES exist ────────────────────────────────────────────────────
+// ── S14.4 corrected audit, panels whose data DOES exist ────────────────────────────────────────────────────
 //
 // ⚠ THESE WERE CUT ON A WRONG MEASUREMENT. The cut list said "no hub, generation, pin or handshake-age field
-// exists on Site" — true, and irrelevant: the hub set is its OWN endpoint (`/hub-set`) and its OWN schema
+// exists on Site", true, and irrelevant: the hub set is its OWN endpoint (`/hub-set`) and its OWN schema
 // (`HubSet{generation, members[]}`), with `hubsetview.ts` already projecting it. Device posture was cut as
 // "deferred", while `Device` carries health_state / health_blocked / health_reported_at today.
 //
-// THIRD INSTANCE IN ONE DAY OF AN ABSENCE FOUND BY LOOKING IN ONE PLACE — and the first the founder caught
+// THIRD INSTANCE IN ONE DAY OF AN ABSENCE FOUND BY LOOKING IN ONE PLACE, and the first the founder caught
 // rather than the assistant (docs/laws.md).
 
 import type { Device } from "./api";
@@ -96,7 +96,7 @@ export interface PeerSlice {
   value: number;
   tone: "ok" | "warn" | "danger" | "neutral";
   /**
-   * S15.2 / D25(C) — the attribution badge, INDEPENDENT of the health verdict above.
+   * S15.2 / D25(C), the attribution badge, INDEPENDENT of the health verdict above.
    *
    * ⛔ A SEPARATE FIELD RATHER THAN ANOTHER TONE, because a gateway can be healthy AND unattributable.
    * Merging them would make one of the two facts unreportable whenever the other was present.
@@ -109,7 +109,7 @@ export interface PeerSlice {
  * The device donut the design actually shows: "129 devices", split Connected / Idle / Posture-blocked /
  * Revoked-offline.
  *
- * ⚠ RE-SOURCED. The first build counted GATEWAYS, which is a different population and a smaller one — the
+ * ⚠ RE-SOURCED. The first build counted GATEWAYS, which is a different population and a smaller one, the
  * panel is titled "Peer Connection Status" and peers are devices. A chart can be perfectly honest about the
  * wrong denominator.
  *
@@ -148,7 +148,7 @@ export interface PostureSplit {
  *
  * ⛔ UNKNOWN IS ITS OWN STATE, and the percentage EXCLUDES it. Counting never-reported devices as compliant
  * would be the reassuring-empty defect with a denominator; counting them as blocked would invent a failure.
- * The design says it in its own caption: "Absence ≠ compliance — unknown is its own state."
+ * The design says it in its own caption: "Absence ≠ compliance, unknown is its own state."
  */
 export function postureSplit(devices: Device[]): PostureSplit {
   let compliant = 0,

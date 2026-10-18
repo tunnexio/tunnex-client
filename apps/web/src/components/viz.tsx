@@ -10,12 +10,12 @@ import {
   type Cell,
 } from "../lib/routedrangesview";
 
-// S14.3 SLICE C — DATA VISUALIZATION. THREE PRIMITIVES, HAND-ROLLED SVG, NO CHARTING LIBRARY.
+// S14.3 SLICE C, DATA VISUALIZATION. THREE PRIMITIVES, HAND-ROLLED SVG, NO CHARTING LIBRARY.
 //
 // WHY HAND-ROLLED, measured rather than preferred: of the ten visualization types named across the 17 screens,
 // a general charting library covers at most three (donut, histogram, bar) and NONE of the force-directed
 // network map, the bipartite access-flow, the address-space heatmap or the radial device fabric. A library
-// would be added for three and the other seven hand-rolled anyway — which is exactly how "a design system
+// would be added for three and the other seven hand-rolled anyway, which is exactly how "a design system
 // acquires four charting libraries." Against a 352 kB bundle that is a large fraction for a minority of need.
 //
 // AND THE SURVIVORS REDUCE TO THREE SHAPES, not ten: a PROPORTION, a BINNED COUNT over discrete events, and a
@@ -24,7 +24,7 @@ import {
 /**
  * ⛔ EVERY CHART NAMES ITS SOURCE, AND THE COMPILER ENFORCES IT.
  *
- * The render-floor rule used to be prose — *"every panel names its endpoint or is marked roadmap"* — and prose
+ * The render-floor rule used to be prose, *"every panel names its endpoint or is marked roadmap"*, and prose
  * is a convention. As a REQUIRED prop it is a mechanism: **a chart with no source does not typecheck.**
  *
  * ⚠ AND THE AUDIT READS THE SPEC'S SEMANTICS, NOT MERELY ENDPOINT EXISTENCE. That is the harder case and the
@@ -33,7 +33,7 @@ import {
  *     "Raw gauge since the last handshake (display only, never summed as monotonic)."
  *
  * The endpoint EXISTS. The field EXISTS. The spec FORBIDS the use. An audit that only asks "does an endpoint
- * supply this?" answers YES and lets a throughput chart through — which is why both known render-floor
+ * supply this?" answers YES and lets a throughput chart through, which is why both known render-floor
  * violations in this repo are charts. `endpoint` is therefore a claim about a PERMITTED reading, not about a
  * URL being reachable.
  */
@@ -43,7 +43,7 @@ export type VizSource =
 
 /** Shared frame: accessible name, the source contract, and the failed/empty discipline in ONE place. */
 interface VizFrameProps {
-  /** The chart's accessible name. Required — an unnamed graphic is unqueryable and unannounced. */
+  /** The chart's accessible name. Required, an unnamed graphic is unqueryable and unannounced. */
   label: string;
   source: VizSource;
   /**
@@ -61,7 +61,7 @@ interface VizFrameProps {
 /**
  * The frame every visualization renders through.
  *
- * ⛔ A FAILED LOAD RENDERS NOTHING — never an empty axis, never a flat line at zero. A chart is the easiest
+ * ⛔ A FAILED LOAD RENDERS NOTHING, never an empty axis, never a flat line at zero. A chart is the easiest
  * place in a UI to assert a fact nobody measured: a zero baseline LOOKS like data, and "no traffic" and "we
  * could not read the traffic" are opposite claims that draw identically.
  */
@@ -75,7 +75,7 @@ export function VizFrame({
 }: VizFrameProps) {
   if (failed) return null;
   if (source.roadmap) {
-    // NOT a plausible drawing. A roadmap chart renders its honest state — a picture with no data behind it is
+    // NOT a plausible drawing. A roadmap chart renders its honest state, a picture with no data behind it is
     // the render-floor violation itself, and a greyed-out sample is still a picture.
     return (
       <p
@@ -90,7 +90,7 @@ export function VizFrame({
   return <figure aria-label={label}>{children}</figure>;
 }
 
-// ── PRIMITIVE 1 — PROPORTION ────────────────────────────────────────────────────────────────────────────────
+// ── PRIMITIVE 1, PROPORTION ────────────────────────────────────────────────────────────────────────────────
 
 export interface Slice {
   label: string;
@@ -106,10 +106,10 @@ const TONE_VAR: Record<Slice["tone"], string> = {
 };
 
 /**
- * A proportion of a CURRENT-STATE total — peers online, devices by posture, members by role.
+ * A proportion of a CURRENT-STATE total, peers online, devices by posture, members by role.
  *
  * ⛔ THE NUMBERS ARE RENDERED AS TEXT BESIDE THE ARC, NOT ONLY AS GEOMETRY. An SVG arc is unreadable to a
- * screen reader, unqueryable by the tier, and ambiguous to anyone who cannot distinguish the colours — three
+ * screen reader, unqueryable by the tier, and ambiguous to anyone who cannot distinguish the colours, three
  * failures with one cause, the same one `Badge` avoids by carrying its status as text.
  */
 export function Donut({
@@ -183,7 +183,7 @@ export function Donut({
                   stroke={TONE_VAR[s.tone]}
                   strokeWidth="4"
                   // The arc's length IS its dash, so sweeping it on means growing the dash from 0 to `pct`
-                  // while the gap shrinks — the ring draws clockwise from twelve o'clock, in slice order.
+                  // while the gap shrinks, the ring draws clockwise from twelve o'clock, in slice order.
                   strokeDasharray={animate ? `0 100` : `${pct} ${100 - pct}`}
                   strokeDashoffset={String(offset)}
                 >
@@ -206,7 +206,7 @@ export function Donut({
               return el;
             })}
           </svg>
-          {/* THE TOTAL IN THE CENTRE, as the design has it — and as TEXT, so it is readable, queryable and
+          {/* THE TOTAL IN THE CENTRE, as the design has it, and as TEXT, so it is readable, queryable and
               announced. The ring is the accelerant; the number is the content. */}
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-[26px] font-bold leading-none text-ink-heading">
@@ -245,14 +245,14 @@ export function Donut({
   );
 }
 
-// ── PRIMITIVE 2 — BINNED COUNT OVER DISCRETE EVENTS ─────────────────────────────────────────────────────────
+// ── PRIMITIVE 2, BINNED COUNT OVER DISCRETE EVENTS ─────────────────────────────────────────────────────────
 
 export interface Bin {
-  /** Bucket label — an hour, a day, a provider. */
+  /** Bucket label, an hour, a day, a provider. */
   label: string;
   value: number;
   /**
-   * ⛔ NO DATA FOR THIS BUCKET — DISTINCT FROM ZERO, and the distinction is the reason this primitive is honest
+   * ⛔ NO DATA FOR THIS BUCKET, DISTINCT FROM ZERO, and the distinction is the reason this primitive is honest
    * enough to ship. `AccessEvent.decision` carries `gap` as a first-class enum value precisely because the
    * agent can know it did not observe a window. A chart that draws absent data as a zero-height bar is the
    * reassuring-empty defect with an axis on it: "no denials" and "we did not see" look identical.
@@ -261,7 +261,7 @@ export interface Bin {
 }
 
 /**
- * A count of DISCRETE EVENTS per bucket — never a sampled rate.
+ * A count of DISCRETE EVENTS per bucket, never a sampled rate.
  *
  * That distinction is what makes this chart permissible when a throughput series is not: binning events the
  * API actually returns (`/access-events`, with `occurred_at`) is honest; drawing a rate from a gauge the spec
@@ -315,7 +315,7 @@ export function Histogram({
   );
 }
 
-// ── PRIMITIVE 3 — NODE-LINK ─────────────────────────────────────────────────────────────────────────────────
+// ── PRIMITIVE 3, NODE-LINK ─────────────────────────────────────────────────────────────────────────────────
 
 export interface Node {
   id: string;
@@ -327,7 +327,7 @@ export interface Node {
    * The number inside the ring.
    *
    * ⛔ The wireframe puts a SITE COUNT here because its nodes are regions. Ours are sites, so there is no
-   * count of that kind — this carries whatever real number the caller has (Sites passes the site's bound
+   * count of that kind, this carries whatever real number the caller has (Sites passes the site's bound
    * gateway count). Omitted renders an empty ring rather than a zero, because "no number to show" and
    * "the number is zero" are different and only one of them is a fact about the network.
    */
@@ -336,7 +336,7 @@ export interface Node {
    * The node's own link state, for the ring and the status dot.
    *
    * ⛔ ABSENT MEANS "NO LINK EXISTS", NOT "HEALTHY". A site with no gateway bound, or whose gateway IS the
-   * hub, has no site link at all — so it has no link STATE either, and must not be tinted as if it did.
+   * hub, has no site link at all, so it has no link STATE either, and must not be tinted as if it did.
    * The neutral rendering is the honest one; `note` says why in words.
    */
   tone?: LinkTone;
@@ -345,7 +345,7 @@ export interface Node {
 }
 
 /**
- * ⛔ THREE TONES, NOT A BOOLEAN — S14.5.
+ * ⛔ THREE TONES, NOT A BOOLEAN, S14.5.
  *
  * This was `healthy: boolean` and the legend it feeds has THREE entries (linked · degraded · down). A
  * two-state type under a three-state legend forces every caller to collapse `degraded` into one of the
@@ -366,7 +366,7 @@ export interface Link {
 
 // ⛔ TONES TAKEN FROM THE WIREFRAME'S OWN `TONE` MAP, NOT INVENTED.
 //
-// I had these as ok/warn/danger — a green, an amber and a red. The design is NEAR-MONOCHROME: an `ok` edge
+// I had these as ok/warn/danger, a green, an amber and a red. The design is NEAR-MONOCHROME: an `ok` edge
 // is light grey, and degraded/down are progressively DARKER greys, distinguished by a DASH PATTERN. Only the
 // status dot carries a hue, and only for `degraded`.
 //
@@ -386,7 +386,7 @@ export const LINK_DASH: Record<LinkTone, string | undefined> = {
   down: "6 7",
 };
 
-// ring / fill / dot per tone — the wireframe's TONE map, verbatim.
+// ring / fill / dot per tone, the wireframe's TONE map, verbatim.
 const NODE_RING: Record<LinkTone, string> = {
   linked: "#C9C9C4",
   degraded: "#3A3A3A",
@@ -408,7 +408,7 @@ const NODE_DOT: Record<LinkTone, string> = {
  *
  * ⛔ DELIBERATELY NOT FORCE-DIRECTED, though the wireframe drew it that way. The model already computes a
  * deterministic hub-and-spoke (`siteLinkGraph`, S8.2), and a force simulation over a known structure produces a
- * DIFFERENT PICTURE ON EVERY RENDER of the same data — which makes it untestable, unmemorable, and impossible
+ * DIFFERENT PICTURE ON EVERY RENDER of the same data, which makes it untestable, unmemorable, and impossible
  * to describe over a support call. Determinism is worth more here than organic-looking placement.
  */
 export function NodeLink({
@@ -440,7 +440,7 @@ export function NodeLink({
   // ⛔ THE LAYOUT IS FITTED TO THE NODE COUNT, NOT INHERITED FROM THE POPULATED EXAMPLE.
   //
   // The wireframe places five spokes at fixed coordinates inside a 600x320 frame, and it looks right because
-  // five spokes FILL that frame. I took the frame and the ring radius and left them fixed — so ONE site
+  // five spokes FILL that frame. I took the frame and the ring radius and left them fixed, so ONE site
   // rendered as a column of two circles with the left two-thirds of the panel empty. It read as a broken
   // diagram rather than a sparse one.
   //
@@ -453,11 +453,11 @@ export function NodeLink({
   //
   // THE SCALE IS A CONTRACT. The design's svg is `viewBox 0 0 600 320` at `height: 320px`, so ONE USER UNIT
   // IS ONE PIXEL and a hub ring is 68px ON PURPOSE. Fitting the box breaks that silently, because the shapes
-  // stay in proportion to EACH OTHER while every one of them is the wrong size — nothing looks distorted, it
+  // stay in proportion to EACH OTHER while every one of them is the wrong size, nothing looks distorted, it
   // is just all wrong together, which is the hardest kind to notice.
   //
   // SO: the FRAME stays fixed, the PLACEMENT adapts to the count, and the content is TRANSLATED to centre.
-  // Sparse then reads as sparse — airy and balanced — rather than as broken or as zoomed.
+  // Sparse then reads as sparse, airy and balanced, rather than as broken or as zoomed.
   const HUB = { x: 300, y: 162 };
   const k = spokes.length;
   if (hub) pos.set(hub.id, HUB);
@@ -478,14 +478,14 @@ export function NodeLink({
     });
   }
 
-  // ⛔ FIT THE BOX *AND* THE PIXEL HEIGHT TO THE SAME NUMBER — that is what keeps the scale at 1:1.
+  // ⛔ FIT THE BOX *AND* THE PIXEL HEIGHT TO THE SAME NUMBER, that is what keeps the scale at 1:1.
   //
   // Fitting the viewBox ALONE magnified everything (attempt 2). Pinning a 600x320 box ALONE left a 320px-tall
   // panel with two small rings adrift in it (attempt 3). Both were half the answer.
   //
   // `preserveAspectRatio="xMidYMid meet"` scales to fit the TIGHTER of the two axes. So if the viewBox height
-  // in USER UNITS equals the element height in PIXELS, the scale is exactly 1 — the design's contract, a 68px
-  // hub ring — and the horizontal remainder is simply empty space, centred. The frame follows the content in
+  // in USER UNITS equals the element height in PIXELS, the scale is exactly 1, the design's contract, a 68px
+  // hub ring, and the horizontal remainder is simply empty space, centred. The frame follows the content in
   // SIZE without ever changing its SCALE.
   const pts = [...pos.values()];
   const PAD_X = 34 + 42; // widest ring + room for the label, which is wider than its circle
@@ -512,7 +512,7 @@ export function NodeLink({
       empty={empty}
     >
       {/* ⛔ GEOMETRY TAKEN FROM THE WIREFRAME, NOT INVENTED: viewBox 600x320, hub at (300,162).
-          The earlier version was a 200x120 box of FILLED discs and it was wrong twice over — `w-full` with
+          The earlier version was a 200x120 box of FILLED discs and it was wrong twice over, `w-full` with
           no height made it ~750px tall in an 8fr column, and the nodes were solid where the design has
           HOLLOW RINGS on a dark fill. The gallery could not catch either: it renders every specimen inside
           `w-80`, where the same element is a tidy 192px and a solid dot reads as a deliberate dot.
@@ -558,7 +558,7 @@ export function NodeLink({
                 strokeLinecap="round"
               />
               {/* ⛔ ONLY A `linked` EDGE FLOWS. A crawling dash on a degraded or down link would animate a
-                  fault as if it were alive — the loudest possible version of the reassuring-green defect.
+                  fault as if it were alive, the loudest possible version of the reassuring-green defect.
                   Motion is reserved for the one state that is genuinely current. */}
               {l.tone === "linked" && (
                 <>
@@ -571,7 +571,7 @@ export function NodeLink({
                     stroke="url(#tnxMeshEdge)"
                     strokeWidth={w}
                   />
-                  {/* ⛔ A PACKET CONVERGING ON THE HUB — the handoff's `.tnx-pkt`, its timings verbatim
+                  {/* ⛔ A PACKET CONVERGING ON THE HUB, the handoff's `.tnx-pkt`, its timings verbatim
                       (duration 2.4 + (i%3)*0.4, delay i*0.35, linear, infinite).
 
                       DIRECTION IS SPOKE → HUB, not hub → spoke: the design calls these "packets converging
@@ -579,7 +579,7 @@ export function NodeLink({
                       read as broadcast, which is not what a transit hub does.
 
                       ONLY ON A `linked` EDGE. A packet crawling along a down link would animate traffic on a
-                      tunnel that is carrying none — the same reassuring-green defect the flowing line
+                      tunnel that is carrying none, the same reassuring-green defect the flowing line
                       already avoids, one step louder because a moving dot reads as a PACKET, not a state. */}
                   <circle
                     className="tnx-pkt"
@@ -604,7 +604,7 @@ export function NodeLink({
           // (dc.html meshData). The hub is a fixed 34, as it is there.
           //
           // ⚠ IT BARELY VARIES ON OUR DATA AND THAT IS HONEST. The wireframe's counts are SITES PER REGION
-          // (40, 28, 22, 12, 6) so its rings differ visibly. Ours is GATEWAYS PER SITE — 0 or 1 today — so
+          // (40, 28, 22, 12, 6) so its rings differ visibly. Ours is GATEWAYS PER SITE, 0 or 1 today, so
           // the rings are nearly uniform. The encoding is the design's; the flatness is our network's, and
           // faking a spread would be drawing a distribution we do not have.
           const count = typeof n.value === "number" ? Math.max(0, n.value) : 0;
@@ -614,12 +614,12 @@ export function NodeLink({
           return (
             // ⛔ SELECTION LIVES ON THE NODE, and it is still keyboard-operable.
             //
-            // It was a list of rows beneath the diagram, which is NOT in the design — the handoff's rows are
+            // It was a list of rows beneath the diagram, which is NOT in the design, the handoff's rows are
             // an `sc-for extraSites`, i.e. sites added during the prototype session, not a permanent list.
             // So they duplicated the labels already drawn in the SVG and made the panel look like a diagram
             // with debug output stapled under it.
             //
-            // An SVG shape is not focusable BY DEFAULT — that was the original reason for the rows. It is
+            // An SVG shape is not focusable BY DEFAULT, that was the original reason for the rows. It is
             // focusable when you give it `tabIndex`, a `role` and a key handler, which is what this does. The
             // accessible name carries the node's state IN WORDS, so nothing is conveyed by colour alone, and
             // the sr-only list below still enumerates every link state as text.
@@ -631,7 +631,7 @@ export function NodeLink({
               aria-pressed={interactive ? isSel : undefined}
               aria-label={
                 interactive
-                  ? `${n.label}${n.sub ? ` ${n.sub}` : ""} — ${state}`
+                  ? `${n.label}${n.sub ? ` ${n.sub}` : ""}, ${state}`
                   : undefined
               }
               className={
@@ -662,7 +662,7 @@ export function NodeLink({
                   opacity="0.55"
                 />
               )}
-              {/* The RING. Dark fill + light stroke, per the design — not a solid disc. */}
+              {/* The RING. Dark fill + light stroke, per the design, not a solid disc. */}
               <circle
                 className="tnx-pop"
                 cx={p.x}
@@ -677,7 +677,7 @@ export function NodeLink({
                 strokeWidth="1.6"
               />
               {/* The status dot at upper-right, coloured by the node's own worst link. Carried in the list
-                  as words too — a dot alone states nothing to a screen reader. */}
+                  as words too, a dot alone states nothing to a screen reader. */}
               <circle
                 cx={p.x + r * 0.66}
                 cy={p.y - r * 0.66}
@@ -723,7 +723,7 @@ export function NodeLink({
           );
         })}
       </svg>
-      {/* ⛔ THE LEGEND AND THE READOUT SHARE ONE ROW, INSIDE THE MAP — the handoff's structure (dc.html
+      {/* ⛔ THE LEGEND AND THE READOUT SHARE ONE ROW, INSIDE THE MAP, the handoff's structure (dc.html
           L456-465): three swatches, a flex spacer, then the selected-node box on the right.
 
           The visible node ROWS that used to sit here are GONE. They were never in the design: the handoff's
@@ -733,7 +733,7 @@ export function NodeLink({
 
           Selection moved ONTO the nodes, which are now real focusable controls (role, tabIndex, key handler,
           and an accessible name carrying the state in words). The sr-only list below keeps every link state
-          available as TEXT — so nothing is conveyed by colour alone, which was the rows' actual job. */}
+          available as TEXT, so nothing is conveyed by colour alone, which was the rows' actual job. */}
       <div className="mt-2 flex flex-wrap items-center gap-4">
         {links.length > 0 &&
           (["linked", "degraded", "down"] as const).map((tone) => (
@@ -800,7 +800,7 @@ export function NodeLink({
   );
 }
 
-// ── PRIMITIVE 4 — AREA / TIME SERIES (S14.5) ────────────────────────────────────────────────────────────
+// ── PRIMITIVE 4, AREA / TIME SERIES (S14.5) ────────────────────────────────────────────────────────────
 //
 // ⛔ THE ONE CHART SHAPE THIS SYSTEM DID NOT HAVE, AND THE ONE THE DESIGN ASKS FOR MOST LOUDLY.
 //
@@ -809,7 +809,7 @@ export function NodeLink({
 // and that the gaps between samples mean what the axis says they mean.
 //
 // ⚠ WHICH IS EXACTLY WHY IT NEEDS AN ENDPOINT THAT DOES NOT EXIST YET. `rx_bytes` is a raw gauge that RESETS
-// on every handshake — plotting it against time draws a sawtooth and calls it throughput. So this primitive
+// on every handshake, plotting it against time draws a sawtooth and calls it throughput. So this primitive
 // ships with its consumer rendering `source={{ roadmap: true }}`, and `VizFrame` refuses to draw anything at
 // all in that state. THE COMPONENT BEING READY IS NOT THE DATA BEING READY, and the frame is what keeps those
 // two facts from being confused.
@@ -821,7 +821,7 @@ export interface Series {
   tone: "primary" | "secondary";
 }
 
-/** Catmull-Rom through the points, emitted as cubic beziers — the design's curves are smooth, not polylines. */
+/** Catmull-Rom through the points, emitted as cubic beziers, the design's curves are smooth, not polylines. */
 function smoothPath(pts: Array<{ x: number; y: number }>): string {
   if (pts.length < 2) return "";
   let d = `M ${pts[0]!.x} ${pts[0]!.y}`;
@@ -878,11 +878,11 @@ export function AreaChart({
       isEmpty={n === 0}
       empty={empty}
     >
-      {/* ⛔ HEIGHT PINNED TO THE VIEWBOX HEIGHT — 1 user unit = 1 px, the same contract NodeLink needed.
+      {/* ⛔ HEIGHT PINNED TO THE VIEWBOX HEIGHT, 1 user unit = 1 px, the same contract NodeLink needed.
           I FILED THAT LAW AND THEN REPEATED THE DEFECT IN THE NEXT PRIMITIVE: `w-full` on a 600x220 box with
           no height derives its height from its WIDTH, so at full column width this rendered ~500px tall.
           The gallery's wide specimen caught it on its FIRST render, which is precisely what it was added for
-          — and it caught it in the component written AFTER the lesson, which is the more useful data point:
+         , and it caught it in the component written AFTER the lesson, which is the more useful data point:
           a law in a document does not fire, an instrument does. */}
       <svg
         viewBox={`0 0 ${W} ${H}`}
@@ -1005,23 +1005,23 @@ export function AreaChart({
   );
 }
 
-// ── PRIMITIVE 5 — ADDRESS SPACE ─────────────────────────────────────────────────────────────────────────
+// ── PRIMITIVE 5, ADDRESS SPACE ─────────────────────────────────────────────────────────────────────────
 //
 // The handoff's `buildRangeMap`, read from its source and kept where it was right: x0 44, top 50, 8.4x11.4
 // cells on a 10.4x13.5 pitch, divider at 356, call-out list at 392, utilisation under the list.
 //
 // FOUR THINGS THE FIRST BUILD GOT WRONG AGAINST IT, all caught by putting the two side by side:
-//   · the free-cell grid was invisible — the drawing's frame of reference simply was not there
+//   · the free-cell grid was invisible, the drawing's frame of reference simply was not there
 //   · `fontFamily="JetBrains Mono"` has NO FALLBACK and the real family is "JetBrains Mono Variable", so
 //     every number rendered in SERIF. Now the `font-mono` class, which resolves through the token stack.
-//   · the call-out rows said "fills its /16" instead of WHO OWNS IT — the single most useful label, dropped
+//   · the call-out rows said "fills its /16" instead of WHO OWNS IT, the single most useful label, dropped
 //   · the utilisation block sat under the grid instead of under the list, and the panel grew a dead column
 //
-// ⛔ AN SVG IS UNREADABLE TO A SCREEN READER AND UNQUERYABLE BY THE TEST TIER — the same three-failures-one-
+// ⛔ AN SVG IS UNREADABLE TO A SCREEN READER AND UNQUERYABLE BY THE TEST TIER, the same three-failures-one-
 // cause the `Donut` avoids. Every fact the picture carries is also in its accessible name and in the text
 // beneath it. The picture is the fast path, never the only path.
 
-// The handoff's origin, kept. The PITCH is now derived rather than fixed — see `gridMetrics`.
+// The handoff's origin, kept. The PITCH is now derived rather than fixed, see `gridMetrics`.
 const GRID = { x0: 44, top: 50 };
 /** The left column's usable width, up to the divider at 356. */
 const GRID_MAX = 296;
@@ -1033,7 +1033,7 @@ const ROW_PITCH = 36;
  * Cell pitch sized so the grid stands as tall as the call-out list beside it.
  *
  * ⛔ THE GRID IS SQUARE AND SCALES; IT DOES NOT SIT AT A FIXED 108px WHILE THE LIST GROWS. That mismatch is
- * what made the connectors look like they overflowed the drawing — they were correct, and pointing at a
+ * what made the connectors look like they overflowed the drawing, they were correct, and pointing at a
  * column that had run out of picture.
  */
 function gridMetrics(cols: number, rows: number, listHeight: number) {
@@ -1051,7 +1051,7 @@ export const KIND_TONE: Record<AllocKind, string> = {
   vip: "var(--tnx-neutral)",
 };
 
-/** "10.64" / "172.16" / "192.168.64" — the first address of a grid row, at the block's own resolution. */
+/** "10.64" / "172.16" / "192.168.64", the first address of a grid row, at the block's own resolution. */
 export function mapRowLabel(block: Block, row: number): string {
   const addr =
     block.base + row * block.cols * Math.pow(2, 32 - block.cellPrefix);
@@ -1082,7 +1082,7 @@ function LitCell({
   const cy = GRID.top + row * m.pitch + m.cellH / 2;
   const tone = KIND_TONE[cell.kind];
   const pending = cell.kind === "pending";
-  // ⛔ PARTIAL IS DRAWN INSET — defect ① closed in one line. A /24 inside a /16 cell occupies a visibly
+  // ⛔ PARTIAL IS DRAWN INSET, defect ① closed in one line. A /24 inside a /16 cell occupies a visibly
   // smaller square, so "some of this block" cannot be misread as "all of it".
   // Inset scales with the cell so a partial stays visibly smaller at every grid size.
   const inset = cell.state === "partial" ? m.cellW * 0.26 : 0;
@@ -1126,8 +1126,8 @@ function LitCell({
             fill="freeze"
           />
         )}
-        {/* Only PENDING pulses. It is the one state on this panel that needs a human to act — withheld
-            until approved — so it is the one thing that should not sit still. */}
+        {/* Only PENDING pulses. It is the one state on this panel that needs a human to act, withheld
+            until approved, so it is the one thing that should not sit still. */}
         {animate && pending && (
           <animate
             attributeName="stroke-opacity"
@@ -1170,7 +1170,7 @@ export function AddressSpaceMap({
   const listRows = showList ? lit.length : 0;
   const listBottom = 46 + listRows * ROW_PITCH;
   // ⛔ THE UTILISATION BLOCK SITS UNDER THE LIST, NOT AT max(grid, list). Anchoring it to whichever column
-  // happened to be taller left it FLOATING in space at low N — the right column ended, then 140px of nothing,
+  // happened to be taller left it FLOATING in space at low N, the right column ended, then 140px of nothing,
   // then a bar. It belongs to the list; it goes under the list.
   const utY = listBottom + 30;
   const rightBottom = utY + 40;
@@ -1193,7 +1193,7 @@ export function AddressSpaceMap({
     <svg
       viewBox={`0 0 600 ${height}`}
       // Pixel height matched to the viewBox height. A `w-full` SVG with a viewBox and no height derives its
-      // height from its WIDTH — the defect that shipped a 750px-tall diagram in the gallery.
+      // height from its WIDTH, the defect that shipped a 750px-tall diagram in the gallery.
       style={{ width: "100%", height: `${height}px`, display: "block" }}
       role="img"
       aria-label={`${block.label} address space: ${allocationLabel(map)}, ${utilisationLabel(map)} routed`}
@@ -1235,7 +1235,7 @@ export function AddressSpaceMap({
         ))}
 
       {/* ⛔ THE FREE GRID, AND IT IS LOAD-BEARING. Without it the lit cells float with nothing to be
-          positioned AGAINST — which is exactly how the first build rendered, and the reason a reader could
+          positioned AGAINST, which is exactly how the first build rendered, and the reason a reader could
           not tell 10.10 from 10.40. It is also the only thing that makes "how much is left" visible at all. */}
       {Array.from({ length: block.cells }, (_, i) => (
         <rect
@@ -1327,7 +1327,7 @@ export function AddressSpaceMap({
                 >
                   {primary.cidr}
                 </text>
-                {/* ⛔ WHO OWNS IT. The first build printed "fills its /16" here — a restatement of the
+                {/* ⛔ WHO OWNS IT. The first build printed "fills its /16" here, a restatement of the
                     geometry the reader can already see, in the one slot that could have carried the fact
                     they came for. */}
                 <text
@@ -1370,7 +1370,7 @@ export function AddressSpaceMap({
         </>
       )}
 
-      {/* Utilisation lives under the CALL-OUT LIST, as the handoff has it — the right column is the reading
+      {/* Utilisation lives under the CALL-OUT LIST, as the handoff has it, the right column is the reading
           column, and putting it under the grid left a dead gutter and split the eye's path in two. */}
       <text
         x={listX}

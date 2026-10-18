@@ -5,7 +5,7 @@
 //
 // WF-3 (UI walk): the gate needs BOTH directions. The original code only routed TO /enroll-mfa, which
 // trapped a user whose gate had CLEARED (enrollment confirmed, or a stale flag) on the ceremony page
-// with no way back into the app — the ForcedEnroll comment claimed a release the code never performed.
+// with no way back into the app, the ForcedEnroll comment claimed a release the code never performed.
 // The release branch below is that missing exit, symmetric with the confinement branch.
 
 export const ENROLL_MFA_PATH = "/enroll-mfa";

@@ -59,7 +59,7 @@ func ReadMessage(r io.Reader, v any) error {
 // end of conn. It is PLATFORM-SPECIFIC (macOS: audit token → pid → path; Windows:
 // GetNamedPipeClientProcessId → image path) and injected into the Server so the
 // dispatch logic stays pure + testable. A resolver that cannot determine the peer
-// MUST return an error — the Server then refuses the caller (fail closed).
+// MUST return an error, the Server then refuses the caller (fail closed).
 type PeerResolver func(conn net.Conn) (exePath string, err error)
 
 // Default connection bounds. The read deadline doubles as the app-LIVENESS
@@ -75,7 +75,7 @@ const (
 
 // Server runs the helper's request loop for one listener. It authenticates each
 // connection's caller BEFORE any dispatch, enforces the mode of its ACTUAL
-// verifier, and — critically — FAILS CLOSED only when the connection that OWNS the
+// verifier, and, critically, FAILS CLOSED only when the connection that OWNS the
 // live tunnel goes away (crash/hang/close-without-down). A benign second
 // connection (e.g. a status poll) closing never tears down a tunnel another
 // connection owns.
@@ -88,20 +88,20 @@ type Server struct {
 	writeTimeout time.Duration
 	sem          chan struct{} // caps concurrent connections against a local flood
 
-	// posture reads local device posture facts (S7.5.3) — the platform collector
+	// posture reads local device posture facts (S7.5.3), the platform collector
 	// by default, injectable so dispatch tests never exec fdesetup/powershell.
 	posture func() PostureStatus
 
-	// resolvers reconciles domain-scoped resolver files (S8.4) — the platform
+	// resolvers reconciles domain-scoped resolver files (S8.4), the platform
 	// implementation by default (macOS /etc/resolver; unsupported elsewhere until
 	// S8.4b), injectable so dispatch tests never write to the real /etc/resolver.
 	resolvers func([]ResolverForward) error
 
-	// setAllowedIPs live-updates the tunnel peer's AllowedIPs (S8.5) — Supervisor.UpdateAllowedIPs by
+	// setAllowedIPs live-updates the tunnel peer's AllowedIPs (S8.5), Supervisor.UpdateAllowedIPs by
 	// default, injectable so dispatch tests never touch a real wg device.
 	setAllowedIPs func([]string) error
 
-	// setGatewayPeer live-swaps the gateway peer (WF-A re-homing) — Supervisor.UpdateGatewayPeer by
+	// setGatewayPeer live-swaps the gateway peer (WF-A re-homing), Supervisor.UpdateGatewayPeer by
 	// default, injectable so dispatch tests never touch a real wg device.
 	setGatewayPeer func(newPubKey, newEndpoint string) error
 
@@ -110,7 +110,7 @@ type Server struct {
 }
 
 // NewServer wires the dispatch dependencies. The enforced auth mode is the mode of
-// the verifier itself (path_check now; code_signing at S6.5b) — there is no
+// the verifier itself (path_check now; code_signing at S6.5b), there is no
 // separate knob to drift out of sync with the real check.
 func NewServer(sup *Supervisor, verify CallerVerifier, resolve PeerResolver) *Server {
 	resolverApply := setResolvers
@@ -147,7 +147,7 @@ func (s *Server) Serve(ln net.Listener) error {
 				s.handle(conn)
 			}()
 		default:
-			_ = conn.Close() // at capacity — refuse
+			_ = conn.Close() // at capacity, refuse
 		}
 	}
 }
@@ -160,7 +160,7 @@ func (s *Server) handle(conn net.Conn) {
 	defer func() { pendingRelay.close() }()
 	defer conn.Close()
 	// definitive records HOW this connection ended, for the owner-loss path: a CLOSED
-	// socket (EOF/reset — the app process is gone) is definitive → short orphan window;
+	// socket (EOF/reset, the app process is gone) is definitive → short orphan window;
 	// a READ-DEADLINE timeout (a wedged-but-still-connected app) is NOT → conservative
 	// full window (no early fail-open). Default true: anything but an explicit read
 	// timeout (close, write error, panic) is treated as a real loss of the owner.
@@ -173,7 +173,7 @@ func (s *Server) handle(conn net.Conn) {
 	if err != nil {
 		// Surface the resolver's SPECIFIC code (peer_no_handle / peer_pid_unresolved /
 		// peer_open_failed / peer_path_unresolved) instead of masking every failure as a
-		// generic "peer_unresolved" — the specific code is what makes a caller-auth
+		// generic "peer_unresolved", the specific code is what makes a caller-auth
 		// failure diagnosable in the field.
 		code, msg := "peer_unresolved", "could not identify the caller"
 		var pe *ProtocolError
@@ -196,7 +196,7 @@ func (s *Server) handle(conn net.Conn) {
 		var req Request
 		if err := ReadMessage(conn, &req); err != nil {
 			// A read-deadline timeout means the app is silent but the socket is STILL
-			// OPEN (possibly just wedged) — NOT a definitive death. Any other read error
+			// OPEN (possibly just wedged), NOT a definitive death. Any other read error
 			// (EOF/reset) is the owner socket closing = the process is gone.
 			var ne net.Error
 			if errors.As(err, &ne) && ne.Timeout() {
@@ -207,10 +207,10 @@ func (s *Server) handle(conn net.Conn) {
 		resp := s.dispatchRelay(&req, &pendingRelay)
 		switch req.Verb {
 		case VerbTunnelUp:
-			// Own the connection if the up left the kill-switch ARMED — StateUp on
+			// Own the connection if the up left the kill-switch ARMED, StateUp on
 			// success, OR StateFailed on a partial bring-up that fail-closed. Either way
 			// THIS connection's loss must drive teardown (else a force-quit after a failed
-			// connect would wait the full window with no orphan signal — review #3).
+			// connect would wait the full window with no orphan signal, review #3).
 			if st := s.sup.State(); st == StateUp || st == StateFailed {
 				s.setOwner(conn)
 			}
@@ -240,7 +240,7 @@ func (s *Server) clearOwner(conn net.Conn) {
 	s.mu.Unlock()
 }
 
-// onClose fails the tunnel closed only if the closing connection is the owner —
+// onClose fails the tunnel closed only if the closing connection is the owner ,
 // app death (crash/hang/close-without-down) must not silently drop protection, but
 // a non-owner connection closing must not disturb a live tunnel.
 func (s *Server) onClose(conn net.Conn, definitive bool) {
@@ -263,7 +263,7 @@ func (s *Server) onClose(conn net.Conn, definitive bool) {
 }
 
 // dispatch validates the envelope, enforces auth mode (of the actual verifier), and
-// runs the verb. It never panics on bad input — every failure is a typed Response
+// runs the verb. It never panics on bad input, every failure is a typed Response
 // with a stable code.
 func (s *Server) dispatch(req *Request) *Response {
 	if err := ValidateRequest(req); err != nil {
@@ -292,7 +292,7 @@ func (s *Server) dispatch(req *Request) *Response {
 		return okResponse(&st)
 	case VerbPostureStatus:
 		// Read-only, never fails: an unreadable fact comes back nil (reported
-		// absent upstream, never guessed) rather than an error — the caller has
+		// absent upstream, never guessed) rather than an error, the caller has
 		// nothing to retry and absence is a first-class honest answer.
 		p := s.posture()
 		return &Response{Version: ProtocolVersion, OK: true, Posture: &p}
@@ -300,7 +300,7 @@ func (s *Server) dispatch(req *Request) *Response {
 		// State-changing but NOT tunnel-owning: reconciling resolver files never
 		// affects who owns the live tunnel (unlike tunnel_up). A failure returns a
 		// typed code; the app fail-STATIC (keeps the tunnel up, names just don't
-		// resolve cross-site) — DNS forwarding is never load-bearing for the tunnel.
+		// resolve cross-site), DNS forwarding is never load-bearing for the tunnel.
 		if err := s.resolvers(req.Resolvers); err != nil {
 			return errorResponse(codeOf(err), err.Error())
 		}
@@ -318,7 +318,7 @@ func (s *Server) dispatch(req *Request) *Response {
 		// State-changing but NOT tunnel-owning (same class as set_allowed_ips): a peer swap re-homes the
 		// tunnel, never touching tunnel state / the owner connection / the kill-switch. A failure returns a
 		// typed code; the client fail-STATIC (keeps its current peer, the re-home just doesn't apply). Full-
-		// tunnel is refused upstream (Supervisor.UpdateGatewayPeer) — its carve-out is a separate slice.
+		// tunnel is refused upstream (Supervisor.UpdateGatewayPeer), its carve-out is a separate slice.
 		if err := s.setGatewayPeer(req.GatewayPeer.PeerPublicKey, req.GatewayPeer.Endpoint); err != nil {
 			return errorResponse(codeOf(err), err.Error())
 		}
@@ -345,7 +345,7 @@ func codeOf(err error) string {
 	return "internal"
 }
 
-// Do is a minimal request/response client round-trip over conn — used by tests and
+// Do is a minimal request/response client round-trip over conn, used by tests and
 // callers that speak Go (the Electron main side speaks the same framing in TS).
 func Do(conn net.Conn, req *Request) (*Response, error) {
 	if err := WriteMessage(conn, req); err != nil {

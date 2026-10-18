@@ -8,10 +8,10 @@ import {
   within,
 } from "@testing-library/react";
 
-// SLICE 4 — Access. Last of the four ranked screens, and the only one whose case is CONSEQUENCE-based rather
+// SLICE 4, Access. Last of the four ranked screens, and the only one whose case is CONSEQUENCE-based rather
 // than finding-based. So the consequence is stated here, because it is the decision under test:
 //
-//   A RULE SHOWN AS ACTIVE BUT NOT COMPILED IS A SILENT AUTHORIZATION GAP —
+//   A RULE SHOWN AS ACTIVE BUT NOT COMPILED IS A SILENT AUTHORIZATION GAP ,
 //   the UI asserting access the gateway does not enforce.
 //
 // That is not the rule list's RENDERING. It is the relationship between what this screen claims about
@@ -24,10 +24,10 @@ import {
 // than restating its branches.
 //
 // QUERY RULES 1-4 BIND (docs/UI-REDESIGN-registration.md consequence 2): role + accessible name; mocked at the
-// NETWORK boundary; decisions not rendering; and NO ASSERTION MAY ASSUME A VIEWPORT — nothing below depends on
+// NETWORK boundary; decisions not rendering; and NO ASSERTION MAY ASSUME A VIEWPORT, nothing below depends on
 // layout, column order, or an element visible only at one width.
 
-afterEach(cleanup); // docs/laws.md — no globals/setup file, so auto-cleanup never registers
+afterEach(cleanup); // docs/laws.md, no globals/setup file, so auto-cleanup never registers
 
 let mode: "off" | "enforcing" = "enforcing";
 let rulesFail = false;
@@ -50,7 +50,7 @@ const RULES = [
     dst_resource_id: "res1",
   },
   // ⛔ A TEMPORARY GRANT, so the dashed encoding has a subject. Without one the dash assertion passes
-  // vacuously against a panel that draws no dashes at all — which is exactly how the defect survived.
+  // vacuously against a panel that draws no dashes at all, which is exactly how the defect survived.
   {
     id: "r-temp",
     enabled: true,
@@ -126,10 +126,10 @@ import Access from "../src/pages/Access";
 import { AuthProvider } from "../src/lib/auth";
 
 // The REAL AuthProvider. Stubbing the context would put the TEST's copy of the role gate under assertion
-// instead of the PRODUCT's — fixture-restates-production at the seam that most invites it (docs/laws.md).
+// instead of the PRODUCT's, fixture-restates-production at the seam that most invites it (docs/laws.md).
 const withAuth = (ui: React.ReactElement) =>
   // ⛔ THE ORG PROVIDER IS PART OF THE AUTHENTICATED SHELL (S12.5), so it is part of the harness that
-  // stands in for it. A page rendered without it throws — deliberately: `useOrg()` refuses to guess, and a
+  // stands in for it. A page rendered without it throws, deliberately: `useOrg()` refuses to guess, and a
   // test that quietly rendered without an org would be exercising a state production never reaches.
   render(
     <AuthProvider>
@@ -152,7 +152,7 @@ beforeEach(() => {
   agentReads = 0;
 });
 
-describe("Access — F06 agent sources are first-class", () => {
+describe("Access, F06 agent sources are first-class", () => {
   const agentRule = {
     id: "r-agent",
     enabled: true,
@@ -214,8 +214,8 @@ describe("Access — F06 agent sources are first-class", () => {
   });
 });
 
-describe("Access — wiring: the screen must not claim enforcement it does not have", () => {
-  it("with mode OFF, the posture says NOT ENFORCED — rules present must not imply they are in force", async () => {
+describe("Access, wiring: the screen must not claim enforcement it does not have", () => {
+  it("with mode OFF, the posture says NOT ENFORCED, rules present must not imply they are in force", async () => {
     mode = "off";
     withAuth(<Access />);
 
@@ -239,7 +239,7 @@ describe("Access — wiring: the screen must not claim enforcement it does not h
     );
   });
 
-  it("a DISABLED rule is shown distinctly, never hidden — the list must not lie about what is enforcing", async () => {
+  it("a DISABLED rule is shown distinctly, never hidden, the list must not lie about what is enforcing", async () => {
     withAuth(<Access />);
     // F3's rule. Hiding a disabled rule would make the list read as the complete set of what is in force,
     // which is the same lie as (a) one row down.
@@ -247,8 +247,8 @@ describe("Access — wiring: the screen must not claim enforcement it does not h
   });
 });
 
-describe("Access — failure path: the most consequential one in the product", () => {
-  // D1(b), and it matters most here. The loadOne law's violation mode is a REASSURING EMPTY STATE — and on this
+describe("Access, failure path: the most consequential one in the product", () => {
+  // D1(b), and it matters most here. The loadOne law's violation mode is a REASSURING EMPTY STATE, and on this
   // surface "no rules" is not a neutral emptiness. Under default-deny it reads as "nothing is permitted"; under
   // mode-off it reads as "nothing is restricted". Either way the screen would be asserting an authorization
   // posture it never successfully read.
@@ -262,7 +262,7 @@ describe("Access — failure path: the most consequential one in the product", (
   });
 
   it("⛔ CONVERTING THE LIST TO A TABLE MUST NOT SWALLOW THE FAILURE SENTENCE", async () => {
-    // DataTable renders NOTHING when `failed` — deliberately, because only the page knows what to retry.
+    // DataTable renders NOTHING when `failed`, deliberately, because only the page knows what to retry.
     // So the page has to say it. Without this the rules area would go BLANK on a failed read: the screen
     // saying nothing at all about a load that failed, which is the reassuring-empty defect wearing its
     // quietest possible face, and it would pass every other test in this file.
@@ -278,7 +278,7 @@ describe("Access — failure path: the most consequential one in the product", (
     expect(screen.queryByText(/0 rules while enforcing/)).toBeNull();
   });
 
-  it("a failed load never renders a defaulted rule COUNT — it says the status is unavailable", async () => {
+  it("a failed load never renders a defaulted rule COUNT, it says the status is unavailable", async () => {
     rulesFail = true;
     withAuth(<Access />);
 
@@ -287,7 +287,7 @@ describe("Access — failure path: the most consequential one in the product", (
         screen.getByText("Rule status unavailable. Refresh to try again."),
       ).toBeTruthy(),
     );
-    // The specific lie this prevents: "0 rules — ALL traffic denied." on a load that never returned. A count
+    // The specific lie this prevents: "0 rules, ALL traffic denied." on a load that never returned. A count
     // derived from a failure is an authorization claim invented by the client.
     expect(screen.queryByText(/ALL traffic denied/)).toBeNull();
   });
@@ -296,14 +296,14 @@ describe("Access — failure path: the most consequential one in the product", (
 // ⛔ THE TWO CLAIMS A SCREENSHOT WOULD PROVE AND A SECOND HUMAN PASS WOULD MISS.
 //
 // The wrong-type-tag defect was LIVE FOR A FULL REVIEW CYCLE and the founder caught it by eye. The next one
-// may not be visible — a glyph is small, and "USER" beside a resource name reads as plausible. These assert
+// may not be visible, a glyph is small, and "USER" beside a resource name reads as plausible. These assert
 // at the DOM what the eye was doing.
 //
 // Backed out once already, because they could not reach the panel: a DOM assertion that cannot reach its
 // subject is NO evidence, and tuning it until it passes is the tautological-guard shape. Re-added only after
 // the mock actually renders the section.
-describe("Access flow panel — the geometry contract and the type tags", () => {
-  it("⛔ the SVG is a FIXED 600x312 — one user unit is one pixel", async () => {
+describe("Access flow panel, the geometry contract and the type tags", () => {
+  it("⛔ the SVG is a FIXED 600x312, one user unit is one pixel", async () => {
     // `className="w-full"` over a viewBox let the container stretch 152x36 boxes to ~490x130 and truncate
     // every name. THE SCALE IS A CONTRACT. Second occurrence after the Sites map.
     withAuth(<Access />);
@@ -315,7 +315,7 @@ describe("Access flow panel — the geometry contract and the type tags", () => 
     expect(svg.getAttribute("width")).toBe("600");
     expect(svg.getAttribute("height")).toBe("312");
     expect(svg.getAttribute("viewBox")).toBe("0 0 600 312");
-    // ⛔ CLASS TOKENS, NOT SUBSTRINGS. `max-w-full` CONTAINS "w-full" and is CORRECT — it caps the element
+    // ⛔ CLASS TOKENS, NOT SUBSTRINGS. `max-w-full` CONTAINS "w-full" and is CORRECT, it caps the element
     // on a narrow viewport without stretching it. My first regex matched the substring and reported the
     // right code as wrong, which is the inverted-finding shape one law down.
     const cls = (svg.getAttribute("class") ?? "").split(/\s+/);
@@ -325,7 +325,7 @@ describe("Access flow panel — the geometry contract and the type tags", () => 
 
   it("⛔ a RESOURCE destination renders R / RESOURCE, never U / USER", async () => {
     // The shipped defect: the kind was guessed by matching the label against member names, and
-    // `label.startsWith(m.name)` is ALWAYS TRUE when a member has an empty name — which users.name
+    // `label.startsWith(m.name)` is ALWAYS TRUE when a member has an empty name, which users.name
     // (NOT NULL DEFAULT '') produces for 144 rows. Every resource read USER.
     withAuth(<Access />);
     const svg = await waitFor(() => {
@@ -345,7 +345,7 @@ describe("Access flow panel — the geometry contract and the type tags", () => 
 
   it("⛔ a TEMPORARY grant renders DASHED, and the entry animation must not steal the property", async () => {
     // THE DEFECT: the reveal animated `stroke-dashoffset` with `stroke-dasharray: 1600`, and a CSS
-    // declaration beats an SVG PRESENTATION ATTRIBUTE — so `strokeDasharray="5 6"` was silently overridden
+    // declaration beats an SVG PRESENTATION ATTRIBUTE, so `strokeDasharray="5 6"` was silently overridden
     // and every temporary edge drew SOLID while the legend promised "- - - temporary".
     //   AN ANIMATION AND A SEMANTIC ENCODING MUST NOT SHARE A PROPERTY.
     withAuth(<Access />);

@@ -6,7 +6,7 @@ import { stripJsComments } from "./support/source";
 // ⛔ AN UNSHIPPED SURFACE MUST BE PROVEN UNSHIPPED, NOT ASSUMED.
 //
 // The visual gallery is a dev/test-only route behind `VITE_VISUAL_GALLERY`. If that flag ever defaulted on,
-// or the guard were removed, a debug surface would ship to every self-hosted install — and nothing else in
+// or the guard were removed, a debug surface would ship to every self-hosted install, and nothing else in
 // the build would complain, because the route works perfectly.
 
 const app = stripJsComments(
@@ -22,7 +22,7 @@ describe("the visual gallery is build-flagged OFF", () => {
     expect(app).toContain('path="/__visual"');
   });
 
-  it("the flag is NOT set in any committed env file — it is opt-in per build", () => {
+  it("the flag is NOT set in any committed env file, it is opt-in per build", () => {
     // A default-on flag is the same defect as no flag. This asserts the absence of a committed default.
     for (const f of [".env", ".env.production", ".env.local"]) {
       let contents = "";

@@ -39,7 +39,7 @@ const dayStart = (d: string) => new Date(`${d}T00:00:00`).toISOString();
 const dayEnd = (d: string) => new Date(`${d}T23:59:59.999`).toISOString();
 
 export default function AuditLog() {
-  // ⛔ THE ORG COMES FROM THE SEAM (S12.5) — the page no longer picks index zero out of a list it
+  // ⛔ THE ORG COMES FROM THE SEAM (S12.5), the page no longer picks index zero out of a list it
   // fetched itself, which is what made a second organization unreachable.
   const { org: currentOrg, loading: orgLoading, failed: orgFailed } = useOrg();
   const { state: authState } = useAuth();
@@ -47,7 +47,7 @@ export default function AuditLog() {
   const [members, setMembers] = useState<Member[]>([]);
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
   // `filters` is the editing state; `applied` is the set that produced the current
-  // list — "Load more" must page with `applied`, never mid-edit `filters`, or the
+  // list, "Load more" must page with `applied`, never mid-edit `filters`, or the
   // keyset cursor (from the applied list) mixes with a different filter set.
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [applied, setApplied] = useState<Filters>(NO_FILTERS);
@@ -56,12 +56,12 @@ export default function AuditLog() {
   const [error, setError] = useState<string | null>(null);
   const [memberScoped, setMemberScoped] = useState(false);
   // Generation token: each fetch bumps it; a response whose token is stale (a
-  // newer fetch started, or the component unmounted) is discarded — so out-of-
+  // newer fetch started, or the component unmounted) is discarded, so out-of-
   // order responses can't leave a stale page as the final list.
   const reqSeq = useRef(0);
 
   // fetchPage loads from the top (cursor omitted) or appends after `cursor` (the
-  // last entry's created_at + id — keyset, not offset). It fetches PAGE+1 and
+  // last entry's created_at + id, keyset, not offset). It fetches PAGE+1 and
   // shows PAGE: the extra row is how we know there's a next page without a count
   // (page.length === PAGE would dead-click at exact multiples).
   async function fetchPage(orgId: string, f: Filters, cursor?: AuditLogEntry) {
@@ -110,7 +110,7 @@ export default function AuditLog() {
         );
       // ⛔ LOADING IS NOT ABSENCE (S12.5). The provider resolves the org list asynchronously, so this
       // effect runs once with currentOrg === null before the answer exists. Treating that as "you have no
-      // organization" renders a confident, false statement — and because the second pass only sets the
+      // organization" renders a confident, false statement, and because the second pass only sets the
       // data, the stale error stayed on screen BESIDE the correct org name.
       //
       // ⚠ THREE STATES, NOT TWO: still loading (say nothing), the read failed (say THAT), genuinely no
@@ -150,7 +150,7 @@ export default function AuditLog() {
     //
     // The provider resolves the org list ASYNCHRONOUSLY, so on this effect's first run `currentOrg` is still
     // null. With `[]` deps the effect never ran again: the page rendered "You are not a member of any
-    // organization yet" — a confident, wrong statement — and stayed there forever, for every user.
+    // organization yet", a confident, wrong statement, and stayed there forever, for every user.
     //
     // ⚠ THE SAME DEPENDENCY ALSO MAKES THE SWITCHER WORK. One line, two properties: without it the page
     // either never loads at all, or loads once and then lies about which tenant it is showing.
@@ -232,11 +232,11 @@ export default function AuditLog() {
         </Card>
       </form>
 
-      {/* S14.3 slice A: a real <table>. The audit log IS tabular — action, actor, target, age are the same
-          four facts on every row — and rendering it as <li> blocks meant the tier could only find rows by
+      {/* S14.3 slice A: a real <table>. The audit log IS tabular, action, actor, target, age are the same
+          four facts on every row, and rendering it as <li> blocks meant the tier could only find rows by
           matching their text. Now: getByRole("table", { name: "Audit events" }) and getAllByRole("row"). */}
       {/* ⛔ THE GAP IS COUNTED AND NAMED, not folded into the actor column. "not recorded" reads as a
-          property of the EVENT; it is a property of OUR WRITE PATH — four system-initiated actions use
+          property of the EVENT; it is a property of OUR WRITE PATH, four system-initiated actions use
           the human insert path with a NULL actor instead of InsertSystemAuditLog. Saying so stops an
           operator hunting for a person who was never recorded. Registered server-side; until it is
           fixed this screen must surface it rather than hide it. */}
@@ -249,13 +249,13 @@ export default function AuditLog() {
 
       <div className="mt-4">
         {/* ⛔ NO CLIENT PAGER HERE: this page ALREADY pages server-side with a keyset cursor behind
-                "Load more". Two paging controls on one screen disagree — "Load more" appends rows the
+                "Load more". Two paging controls on one screen disagree, "Load more" appends rows the
                 operator cannot see without advancing a second pager, and the count then describes neither
                 the fetch nor the view. The server's cursor is the one that must win, because it is the one
                 that bounds the query. */}
         {/* ⛔ TWO PAGERS, AND THEY ARE NOT RIVALS ONCE THEY ARE NAMED. This page pages SERVER-SIDE with a
                 keyset cursor; the table pages the rows already FETCHED. I first disabled the client pager to
-                avoid the collision, which meant this screen dumped everything loaded at once — the one thing
+                avoid the collision, which meant this screen dumped everything loaded at once, the one thing
                 the pager exists to stop, and the founder saw it immediately.
 
                 They compose as long as each says which set it is talking about: the table's count reads
@@ -264,11 +264,11 @@ export default function AuditLog() {
         <DataTable
           // ⛔ NO CLIENT PAGER: THIS SURFACE'S PAGING PROOF COUNTS DOM ROWS. The e2e asserts 51 rows,
           // then 54 after "Load more", to prove the keyset cursor stitches pages with NO OVERLAP and NO
-          // GAP — a re-served or skipped row changes the count. A client pager renders 25 of whatever is
+          // GAP, a re-served or skipped row changes the count. A client pager renders 25 of whatever is
           // fetched, so the count stops meaning what the proof needs it to mean.
           //
           // ⚠ Restored deliberately after the founder asked these surfaces to paginate. The server
-          // ALREADY bounds them at 50 per fetch, so "everything at once" is 50 rows, not unbounded —
+          // ALREADY bounds them at 50 per fetch, so "everything at once" is 50 rows, not unbounded ,
           // and re-expressing a paging proof is a decide-item, not a fold.
           pageSize={0}
           caption="Audit events"
@@ -309,7 +309,7 @@ export default function AuditLog() {
                           ? "font-mono text-accent-400"
                           : // ⛔ A DEPLOYMENT ADMINISTRATOR DOES NOT READ AS A COLLEAGUE. They acted
                             // inside this tenant from outside it, which is the fact the row exists to
-                            // convey — rendering them in the same grey as a member would bury it.
+                            // convey, rendering them in the same grey as a member would bury it.
                             actor.kind === "cp_admin"
                             ? "text-accent-400"
                             : "text-slate-500")
@@ -338,7 +338,7 @@ export default function AuditLog() {
               key: "age",
               header: "When",
               numeric: true,
-              // ⚠ SORTS BY THE INSTANT, not by the rendered phrase — "3h ago" and "17m ago" order wrongly
+              // ⚠ SORTS BY THE INSTANT, not by the rendered phrase, "3h ago" and "17m ago" order wrongly
               // as text, and an audit log ordered wrongly by time is worse than one not ordered at all.
               sortValue: (a) => Date.parse(a.created_at),
               cell: (a) => (

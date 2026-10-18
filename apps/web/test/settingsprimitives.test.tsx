@@ -10,7 +10,7 @@ import {
 afterEach(cleanup);
 
 describe("Section", () => {
-  // A group heading that is only visually a heading is invisible to anyone navigating by landmark —
+  // A group heading that is only visually a heading is invisible to anyone navigating by landmark ,
   // which is the failure the settings page had at scale: 15 boxes, no announced structure.
   it("is a region named by its own heading", () => {
     render(
@@ -35,7 +35,7 @@ describe("Section", () => {
 });
 
 describe("SettingRow", () => {
-  // ⛔ THE POINT OF THE ROW. The control must be announced as "OpenVPN", not "switch" — the row owns the
+  // ⛔ THE POINT OF THE ROW. The control must be announced as "OpenVPN", not "switch", the row owns the
   // only text that says WHAT is being toggled, so it has to lend it.
   it("lends its label to the control as an accessible name", () => {
     render(

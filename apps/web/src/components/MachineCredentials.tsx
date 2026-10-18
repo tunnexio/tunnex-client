@@ -19,17 +19,17 @@ import {
 } from "./ui";
 import { OneTimeSecretModal } from "./OneTimeSecret";
 
-// MachineCredentials (S10.2) — the owner-only Settings panel to mint / list / revoke the GitOps operator's
+// MachineCredentials (S10.2), the owner-only Settings panel to mint / list / revoke the GitOps operator's
 // machine credential. The token is shown ONCE via the shared OneTimeSecretModal (the same ceremony as a
-// device config / .ovpn / recovery codes); the list shows the keyed FINGERPRINT only — the server never
-// re-serves the secret. Rendered only for machine:manage (owner) — the endpoints are owner-gated, so a
+// device config / .ovpn / recovery codes); the list shows the keyed FINGERPRINT only, the server never
+// re-serves the secret. Rendered only for machine:manage (owner), the endpoints are owner-gated, so a
 // non-owner would only get 403s here.
 
 /**
  * How many credentials this organization is currently REFUSING.
  *
  * ⛔ Not "how many are untidy". `MachineAuth` returns `nil, nil` on a NULL owner, so this is a count
- * of live failures — exported so the count in the banner and the per-row badge cannot drift apart.
+ * of live failures, exported so the count in the banner and the per-row badge cannot drift apart.
  */
 export function refusedCount(creds: readonly MachineCredential[]): number {
   return creds.filter((c) => !c.owner_user_id).length;
@@ -47,7 +47,7 @@ export function MachineCredentials({
   // list is "migration complete" written by an error path.
   const [creds, setCreds] = useState<Loaded<MachineCredential[]> | null>(null);
   const [owner, setOwner] = useState<Record<string, string>>({});
-  // The org roster, for the owner picker. ⚠ A FAILED ROSTER IS NOT AN EMPTY ORG — if it cannot load, the
+  // The org roster, for the owner picker. ⚠ A FAILED ROSTER IS NOT AN EMPTY ORG, if it cannot load, the
   // picker offers nothing and the copy below says so, rather than implying there is nobody to choose.
   const [members, setMembers] = useState<Member[]>([]);
   const [name, setName] = useState("");
@@ -68,7 +68,7 @@ export function MachineCredentials({
     );
   }
 
-  // Assign the human this credential acts for. The admin CHOOSES — see the copy below.
+  // Assign the human this credential acts for. The admin CHOOSES, see the copy below.
   async function assign(credentialId: string) {
     const userId = owner[credentialId];
     if (!userId) return;
@@ -112,7 +112,7 @@ export function MachineCredentials({
     if (error)
       return setErr(apiErrorMessage(error, "Could not mint the credential."));
     setName("");
-    setSecret(data?.token ?? null); // shown once — the server never re-serves it
+    setSecret(data?.token ?? null); // shown once, the server never re-serves it
     void load();
   }
 
@@ -129,14 +129,14 @@ export function MachineCredentials({
   }
 
   return (
-    // ⛔ THE TABLE IS A COLLECTION AND STAYS A TABLE — it just lives inside the dialog now. The row states
+    // ⛔ THE TABLE IS A COLLECTION AND STAYS A TABLE, it just lives inside the dialog now. The row states
     // how many credentials exist, which is the question a settings page is asked; minting and revoking are
     // transactions, and they belong behind an explicit open rather than permanently on the page.
     <SettingDialogRow
       label="GitOps operator credentials"
       description="Credentials for the Tunnex Kubernetes operator. Shown once at mint."
       value={
-        // ⚠ THREE STATES. `null` is not-loaded and a failed read is not "0 credentials" — a count is a
+        // ⚠ THREE STATES. `null` is not-loaded and a failed read is not "0 credentials", a count is a
         // claim, and claiming zero over an unread list is the same class of lie as an off switch over an
         // unknown setting.
         creds === null ? (
@@ -165,7 +165,7 @@ export function MachineCredentials({
       {canManage && (
         <form onSubmit={mint} className="mt-3 flex items-end gap-2">
           <div className="flex-1">
-            {/* "Credential name", NOT "Name" — the Settings page already has an org "Name" field, and two
+            {/* "Credential name", NOT "Name", the Settings page already has an org "Name" field, and two
                 controls sharing an accessible name are announced identically by a screen reader (S11-1). */}
             <Field label="Credential name">
               <Input
@@ -183,7 +183,7 @@ export function MachineCredentials({
 
       {/* ⛔ THREE DISTINGUISHABLE STATES, AND THE THIRD IS THE REASON THIS SCREEN IS HARD.
           none · all owned · THE LIST FAILED TO LOAD. An unreachable query rendering as an empty list is
-          "migration complete" written by an error path — and on a migration screen that is exactly the
+          "migration complete" written by an error path, and on a migration screen that is exactly the
           reassurance that must be earned rather than defaulted to. */}
       {creds === null ? (
         <p className="mt-3 text-xs text-ink-secondary">Loading…</p>
@@ -192,27 +192,27 @@ export function MachineCredentials({
           data-state="load-failed"
           className="mt-3 rounded-md border border-danger/40 bg-danger/5 px-3 py-2 text-xs text-danger"
         >
-          Could not load machine credentials — {endSentence(creds.error)}{" "}
+          Could not load machine credentials, {endSentence(creds.error)}{" "}
           <strong>This is not the same as having none.</strong> Retry before
           concluding anything about ownership.
         </p>
       ) : creds.data.length === 0 ? (
         <p data-state="none" className="mt-3 text-xs text-ink-secondary">
-          No machine credentials exist in this organization — there is nothing
+          No machine credentials exist in this organization, there is nothing
           to assign.
         </p>
       ) : (
         <>
           {/* ⚠ ABOVE THE ROWS, DELIBERATELY. A qualifier under a list is read after the list is already
               believed. */}
-          {/* ⛔ A CLAIM ABOUT OWNERSHIP, NOT ABOUT HEALTH — AND THE FIRST VERSION SAID
+          {/* ⛔ A CLAIM ABOUT OWNERSHIP, NOT ABOUT HEALTH, AND THE FIRST VERSION SAID
               "the migration is complete for this organization", WHICH IS BOTH.
 
               It reads as "everything is fine here", and this banner cannot know that. It knows one
               predicate: no credential is being refused FOR WANT OF AN OWNER. A credential can still be
               revoked, expired at the far end, pointed at a dead operator, or owned by someone who left.
               ⚠ AND "the migration is complete" IS FALSE ON ITS OWN TERMS: this is the expand half of an
-              expand/contract migration, and step 4 — the NOT NULL contract — has not run. An org can
+              expand/contract migration, and step 4, the NOT NULL contract, has not run. An org can
               reach every-row-owned and still have the column nullable beneath it.
 
               > It is the exact mirror of the refusal banner: that one names what is failing, this one
@@ -222,15 +222,15 @@ export function MachineCredentials({
               data-state="all-owned"
               className="mt-3 rounded-md border border-ok/40 bg-ok/5 px-3 py-2 text-xs text-ok"
             >
-              Every machine credential has an owner — none is being refused for
+              Every machine credential has an owner, none is being refused for
               want of one.
             </p>
           )}
-          {/* ⛔ UNASSIGNED IS AN OUTAGE, NOT UNTIDINESS — AND THE FIRST VERSION OF THIS SCREEN SAID SO
+          {/* ⛔ UNASSIGNED IS AN OUTAGE, NOT UNTIDINESS, AND THE FIRST VERSION OF THIS SCREEN SAID SO
               ONLY IN A FOOTNOTE UNDER THE LIST.
               `MachineAuth` returns `nil, nil` on a NULL owner, so every row below without one is being
               REFUSED RIGHT NOW. A calm amber `unassigned` chip beside it renders a live outage as a
-              tidy label — the reassuring-empty class inverted: not a zero claiming success, but a
+              tidy label, the reassuring-empty class inverted: not a zero claiming success, but a
               failure claiming to be housekeeping.
               ⚠ ABOVE THE ROWS AND IN THE DANGER TONE, for the same reason the all-owned banner is
               above them: a qualifier under a list is read after the list is already believed. An
@@ -246,16 +246,16 @@ export function MachineCredentials({
                   ? "1 machine credential is being refused right now."
                   : `${refusedCount(creds.data)} machine credentials are being refused right now.`}
               </strong>{" "}
-              A credential with no owner cannot authenticate — any operator
+              A credential with no owner cannot authenticate, any operator
               using one is already failing. Assign an owner to restore it.
             </p>
           )}
           {/* ⛔ A TABLE, BECAUSE THIS IS TABULAR AND IT PAGES. Credential / owner / created / last seen /
-              status are the same five facts for every row, and an org accumulates these — the list gave no
+              status are the same five facts for every row, and an org accumulates these, the list gave no
               way to find one and no way to stop rendering all of them.
 
               ⚠ THE OWNER COLUMN IS WHY THIS SCREEN EXISTS. It reads `owner_email`, the SERVER's resolution
-              from `users` (D22), never the member roster — the roster cannot name an owner who has LEFT the
+              from `users` (D22), never the member roster, the roster cannot name an owner who has LEFT the
               org, which is precisely the row accountability is for. */}
           <DataTable<MachineCredential>
             caption="Machine credentials"
@@ -297,7 +297,7 @@ export function MachineCredentials({
                       data-badge="refused"
                       className="rounded border border-danger/40 px-1.5 py-0.5 text-[10px] text-danger"
                     >
-                      no owner — refused
+                      no owner, refused
                     </span>
                   ),
               },
@@ -314,7 +314,7 @@ export function MachineCredentials({
               {
                 key: "seen",
                 header: "Last seen",
-                // ⛔ "last seen", LABELLED. `last_used_at` is stamped on every successful auth — it is LAST
+                // ⛔ "last seen", LABELLED. `last_used_at` is stamped on every successful auth, it is LAST
                 // AUTHENTICATED AT and nothing more. A credential idle for a day may be an hourly GitOps
                 // reconcile or abandoned, and this column cannot tell them apart. No in-use badge, no
                 // active/idle, no threshold: the UI must not re-invent what the spec refused.
@@ -353,7 +353,7 @@ export function MachineCredentials({
                           <option value="">Choose an owner…</option>
                           {/* ⛔ UNVERIFIED ACCOUNTS ARE NOT OFFERED (D21). An account that cannot perform
                               org mutations cannot be held accountable for what a credential does.
-                              ⚠ PRESENTATION, NOT ENFORCEMENT — the server refuses at the handler AND in
+                              ⚠ PRESENTATION, NOT ENFORCEMENT, the server refuses at the handler AND in
                               the UPDATE. */}
                           {members
                             .filter((m) => m.email_verified)
@@ -392,7 +392,7 @@ export function MachineCredentials({
           {canManage && creds.data.some((c) => !c.owner_user_id) && (
             <p className="mt-2 text-[11px] text-ink-secondary">
               Tunnex does not record who minted a credential, so it cannot
-              suggest an owner — choose the person accountable for what this
+              suggest an owner, choose the person accountable for what this
               credential does.
             </p>
           )}
@@ -406,7 +406,7 @@ export function MachineCredentials({
             <>
               This is the operator&rsquo;s bearer token. It is shown{" "}
               <span className="font-semibold">exactly once</span> and can never
-              be retrieved again — save it into the operator&rsquo;s Secret now.
+              be retrieved again, save it into the operator&rsquo;s Secret now.
               If lost, revoke and re-mint.
             </>
           }

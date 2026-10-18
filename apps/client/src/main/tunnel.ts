@@ -36,7 +36,7 @@ export function helperSocketPath(platform: NodeJS.Platform = process.platform): 
 }
 
 // ConfigProvider yields the WireGuard TunnelConfig for the current device. It runs
-// in MAIN and fetches via the bearer-injected API — so the WG PRIVATE KEY, like
+// in MAIN and fetches via the bearer-injected API, so the WG PRIVATE KEY, like
 // the bearer token, never enters the renderer. (D2: the client OWNS device
 // creation and never re-fetches; see PLAN S6.3 ConfigProvider decisions.)
 export type ConfigProvider = () => Promise<TunnelConfig>;
@@ -111,7 +111,7 @@ export class TunnelController {
 
   // baseAllowed caches the session's BAKED-STABLE AllowedIPs (the pool for split, 0.0.0.0/0 + ::/0 for
   // full) so the RoutedRangesMonitor can merge base ∪ ranges without re-fetching the config (identity is
-  // never re-fetched — D2). Refreshed each up(); a mode change re-mints, so a fresh session's monitor
+  // never re-fetched, D2). Refreshed each up(); a mode change re-mints, so a fresh session's monitor
   // reads the fresh base.
   private baseAllowed: string[] = [];
   private activeDial: { endpoint: string; pubkey: string } | null = null;
@@ -123,7 +123,7 @@ export class TunnelController {
       ? { ...this.activeDial } : null;
   }
 
-  // baseAllowedIPs returns the session's baked-stable AllowedIPs — the routes the monitor must always
+  // baseAllowedIPs returns the session's baked-stable AllowedIPs, the routes the monitor must always
   // re-include (the stable core the routed-ranges push never drops).
   baseAllowedIPs(): string[] {
     return [...this.baseAllowed];
@@ -222,9 +222,9 @@ export class TunnelController {
     }
   }
 
-  // resolverApply is the ONE set_resolvers path + the ONE resolversActive latch (S8.5 #6 — the F5 strand
-  // invariant lives here, not in two copies). Marks active the moment we ATTEMPT a non-empty install —
-  // NOT only on success — so a partial helper failure that left owned files can't strand them past a
+  // resolverApply is the ONE set_resolvers path + the ONE resolversActive latch (S8.5 #6, the F5 strand
+  // invariant lives here, not in two copies). Marks active the moment we ATTEMPT a non-empty install ,
+  // NOT only on success, so a partial helper failure that left owned files can't strand them past a
   // down() sweep (F5). `resolvers_unsupported` (Windows stub) means nothing was installed → clear. A
   // genuine failure LEAVES the latch true so down() still sweeps once. Returns the raw response; the two
   // callers apply their error posture (up/down swallow, the monitor throws).
@@ -243,8 +243,8 @@ export class TunnelController {
   }
 
   // applyResolvers is the up()/down() best-effort / fail-STATIC wrapper: a set failure must NEVER fail the
-  // tunnel — cross-site names just don't resolve. Inert when there is nothing to set and nothing was set
-  // before (zero wire calls — the S8.4 inert red).
+  // tunnel, cross-site names just don't resolve. Inert when there is nothing to set and nothing was set
+  // before (zero wire calls, the S8.4 inert red).
   private async applyResolvers(fwds: ResolverForward[]): Promise<void> {
     if (fwds.length === 0 && !this.resolversActive) return;
     try {
@@ -256,7 +256,7 @@ export class TunnelController {
 
   // setAllowedIPs live-updates the tunnel peer's AllowedIPs to the full desired set (S8.5 routed-subnets
   // push) via the helper. Unlike applyResolvers (one-shot, swallow), this is driven by a POLL, so it
-  // THROWS on failure — the RoutedRangesMonitor catches it, keeps its last-applied set (fail-static),
+  // THROWS on failure, the RoutedRangesMonitor catches it, keeps its last-applied set (fail-static),
   // and retries with backoff. A refusal (old helper unknown_verb) or a wire error both throw.
   async setAllowedIPs(allowedIPs: string[]): Promise<void> {
     this.requireActiveTunnel();
@@ -265,14 +265,14 @@ export class TunnelController {
   }
 
   // setResolvers is the POLL-DRIVEN resolver apply (S8.5 Slice 3): the RoutedRangesMonitor hands the FULL
-  // desired forward set (server-gated to reachable resolvers) each time it changes — forwards are VOLATILE,
+  // desired forward set (server-gated to reachable resolvers) each time it changes, forwards are VOLATILE,
   // same lifecycle as routes, so they ride the poll, not the baked config. Full-sweep + reconcile are
   // helper-side (S8.4 set_resolvers). Unlike up()'s one-shot applyResolvers this THROWS on a genuine
-  // failure so the monitor keeps its last-applied set (fail-static) and retries — EXCEPT
+  // failure so the monitor keeps its last-applied set (fail-static) and retries, EXCEPT
   // resolvers_unsupported (Windows: the resolver verb is a stub until Slice 4's NRPT), which returns
   // cleanly (nothing to retry; the slice is macOS-live, Windows-dark, and skips WITHOUT erroring).
   // Latches resolversActive on any non-empty attempt so down()'s sweep can never STRAND monitor-installed
-  // resolver files — the monitor is a SECOND writer to the same helper resolver state (the F5 strand class).
+  // resolver files, the monitor is a SECOND writer to the same helper resolver state (the F5 strand class).
   async setResolvers(fwds: ResolverForward[]): Promise<void> {
     this.requireActiveTunnel();
     const r = await this.resolverApply(fwds); // the ONE set_resolvers path + latch (#6)
@@ -280,7 +280,7 @@ export class TunnelController {
     throw new Error(r.code ? `${r.code}: ${r.error ?? ""}` : (r.error ?? "set_resolvers failed"));
   }
 
-  // setGatewayPeer re-homes the tunnel onto a new active-hub peer (WF-A) via the helper's peer SWAP — the
+  // setGatewayPeer re-homes the tunnel onto a new active-hub peer (WF-A) via the helper's peer SWAP, the
   // device's own key/address/kill-switch are untouched, so the session survives without re-enrollment.
   // POLL-driven like setAllowedIPs, so it THROWS on failure: the RoutedRangesMonitor's dial tier catches
   // it, keeps its last-applied dial (fail-static), and retries with backoff. A refusal (old helper
@@ -392,7 +392,7 @@ export class TunnelController {
     return this.withAddress(status);
   }
 
-  // posture reads local posture facts via the helper (S7.5.3) — read-only, never
+  // posture reads local posture facts via the helper (S7.5.3), read-only, never
   // touches tunnel state or connection ownership. Throws on refusal (incl. an
   // OLD helper's unknown_verb); the caller treats any throw as "facts
   // indeterminate" and reports them ABSENT, never guessed.

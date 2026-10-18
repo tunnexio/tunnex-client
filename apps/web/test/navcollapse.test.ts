@@ -9,11 +9,11 @@ import {
   writeNavCollapse,
 } from "../src/lib/navcollapse";
 
-// ⛔ THE KEY AND ITS VALUES ARE THE DESIGNER'S, TRANSCRIBED — not chosen here.
+// ⛔ THE KEY AND ITS VALUES ARE THE DESIGNER'S, TRANSCRIBED, not chosen here.
 //
 //     localStorage.setItem('tnx-nav', c ? 'closed' : 'open')
 //
-// I previously reported that `tnx-nav` was undocumented. It is documented — in the wireframe's own
+// I previously reported that `tnx-nav` was undocumented. It is documented, in the wireframe's own
 // JS, which is not our README, and I had only grepped the README. **"Not in our README" is not the
 // same as "not documented", and reporting the first as the second sent the decision the wrong way.**
 describe("the persisted key", () => {
@@ -33,7 +33,7 @@ describe("the persisted key", () => {
 });
 
 // ⛔ ABSENT IS NOT A PREFERENCE. A user in private mode gets the full sidebar, not a mystery icon
-// rail they never chose — the same absent-until-known rule the nav counts and the edition seam use.
+// rail they never chose, the same absent-until-known rule the nav counts and the edition seam use.
 describe("readNavCollapse", () => {
   it("defaults OPEN when nothing is stored", () => {
     expect(readNavCollapse({ getItem: () => null })).toBe("open");
@@ -67,7 +67,7 @@ describe("readNavCollapse", () => {
 });
 
 describe("writeNavCollapse", () => {
-  it("⛔ never throws when storage refuses — the toggle must still work", () => {
+  it("⛔ never throws when storage refuses, the toggle must still work", () => {
     // A failed write loses the preference on reload; it must not break the click that made it.
     expect(() =>
       writeNavCollapse(
@@ -93,7 +93,7 @@ describe("toggleNavCollapse", () => {
 
 // ⛔ COLLAPSING IS A PRESENTATION, NEVER A FILTER.
 describe("navShows", () => {
-  it("hides the wordmark, the section headers and the labels — and nothing else", () => {
+  it("hides the wordmark, the section headers and the labels, and nothing else", () => {
     expect(navShows("closed")).toEqual({
       wordmark: false,
       sectionHeaders: false,

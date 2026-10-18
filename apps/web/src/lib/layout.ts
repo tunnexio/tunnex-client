@@ -1,10 +1,10 @@
-// S14.2 — THE LAYOUT DECISION, AS A PURE FUNCTION.
+// S14.2, THE LAYOUT DECISION, AS A PURE FUNCTION.
 //
 // WIDTH -> INTENT -> CAPABILITY -> RENDER DECISION. Never width -> CSS visibility.
 //
 // WHY PURE, AND WHY THIS SHAPE. jsdom HAS NO LAYOUT ENGINE: it does not evaluate media queries, compute widths,
 // or lay anything out. A "responsive test" that rendered components in vitest and asserted layout would assert
-// NOTHING and pass at every width — a check that cannot fail (docs/laws.md, the detector's fourth prospective
+// NOTHING and pass at every width, a check that cannot fail (docs/laws.md, the detector's fourth prospective
 // catch, caught before the test was written). Extracting the decision means the boundaries are unit-testable
 // with no DOM at all, and the component tier never has to ask jsdom a question jsdom cannot answer.
 //
@@ -18,7 +18,7 @@ export type LayoutIntent = "triage" | "compose" | "operate" | "wide" | "max";
  *
  * `compose` (768) IS THE LOAD-BEARING ONE and the only value that is ruled rather than tuned: it is where a
  * SECURITY CAPABILITY turns on. Below it the access-rule builder is not rendered at all. It is a FLOOR, not a
- * guess about tablets — 768px is the narrowest width at which a source/destination/port/expiry form fits
+ * guess about tablets, 768px is the narrowest width at which a source/destination/port/expiry form fits
  * without collapsing fields into an order that invites a mis-tap, and a bad rule builder is worse than none.
  *
  * The others may be re-tuned freely.
@@ -46,7 +46,7 @@ export interface LayoutCapability {
   /**
    * MAY THE USER COMPOSE A POLICY HERE? Mobile is a TRIAGE SUBSET (founder-ruled): read state, act on queues,
    * approve, revoke. Everything that COMPOSES a policy is desktop-and-tablet only, and below the floor it
-   * renders READ-ONLY with an honest line — never a degraded editor.
+   * renders READ-ONLY with an honest line, never a degraded editor.
    */
   canCompose: boolean;
   navMode: NavMode;

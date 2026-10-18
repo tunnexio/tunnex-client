@@ -5,16 +5,16 @@ import { OneTimeSecretModal } from "../src/components/OneTimeSecret";
 // ⛔ THE THREE DISMISSAL RULES, ASSERTED RATHER THAN ASSUMED.
 //
 // The wireframe's forced-enrollment ceremony specifies: *"Modal cannot be dismissed by click-away
-// or Esc — only by the 'I've saved them' checkbox + button."*
+// or Esc, only by the 'I've saved them' checkbox + button."*
 //
-// Two of the three were already true BY ABSENCE — there is no backdrop onClick and no key handler.
+// Two of the three were already true BY ABSENCE, there is no backdrop onClick and no key handler.
 // **Absence is not a guarantee.** Nothing stopped a later edit adding either, and nothing tested
 // it, so the property was true by accident rather than by decision. These tests convert it.
 //
 // Recovery codes are shown ONCE. A dismiss that takes one stray click is the difference between a
 // user who has their codes and a user who needs an administrator.
 // ⛔ EXPLICIT CLEANUP. This project has no `setupFiles` and no `globals: true`, so Testing
-// Library's auto-cleanup NEVER REGISTERS — every render accumulates in the document. My first
+// Library's auto-cleanup NEVER REGISTERS, every render accumulates in the document. My first
 // version called cleanup() at the END of each test, which does not run when the test fails, so one
 // failure cascaded into "found multiple elements" on the next two. afterEach always runs.
 afterEach(cleanup);
@@ -37,7 +37,7 @@ function open(onDismiss = vi.fn(), requireAck?: string) {
   return onDismiss;
 }
 
-describe("OneTimeSecretModal — dismissal", () => {
+describe("OneTimeSecretModal, dismissal", () => {
   it("⛔ CLICK-AWAY on the backdrop does NOT dismiss", () => {
     const onDismiss = open();
     // The backdrop is the fixed overlay; clicking it must do nothing.
@@ -58,7 +58,7 @@ describe("OneTimeSecretModal — dismissal", () => {
     const onDismiss = open(vi.fn(), "I have saved my recovery codes.");
     const btn = screen.getByRole("button", { name: /saved it/i });
     expect(isDisabled(btn)).toBe(true);
-    // Clicking a disabled button must not dismiss either — belt and braces, because "disabled"
+    // Clicking a disabled button must not dismiss either, belt and braces, because "disabled"
     // is a rendering and the handler is the behaviour.
     fireEvent.click(btn);
     expect(onDismiss).not.toHaveBeenCalled();
@@ -74,7 +74,7 @@ describe("OneTimeSecretModal — dismissal", () => {
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
-  it("without requireAck the existing callers are unchanged — button live immediately", () => {
+  it("without requireAck the existing callers are unchanged, button live immediately", () => {
     // The opt-in must not silently gate every other one-time secret in the product.
     const onDismiss = open();
     const btn = screen.getByRole("button", { name: /saved it/i });

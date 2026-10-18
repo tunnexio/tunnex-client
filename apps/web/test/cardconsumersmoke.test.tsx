@@ -9,7 +9,7 @@ import { MemoryRouter } from "react-router-dom";
 // whole set is at least mounted.
 //
 // ⛔ WHAT THIS GATES AND WHAT IT CANNOT. It proves nothing CRASHES and no content DISAPPEARS. It cannot see
-// overlap, truncation, or unreadable contrast, because jsdom has no layout engine — which is the entire
+// overlap, truncation, or unreadable contrast, because jsdom has no layout engine, which is the entire
 // argument for the Playwright viewport leg (docs/laws.md). Claiming this file rules out visual breakage would
 // be the exact substitution this project keeps recording.
 
@@ -53,7 +53,7 @@ const mount = (ui: React.ReactElement) =>
 
 describe("the four Card consumers with no wiring test still mount and keep their content", () => {
   it("AuthLayout renders its children", () => {
-    // AuthLayout takes only `children` — my first version passed a `title` prop it does not have, which
+    // AuthLayout takes only `children`, my first version passed a `title` prop it does not have, which
     // TypeScript would have caught had the prop been required. It is not: extra props on a component with an
     // inline type are a compile error, but the test asserted on the phantom title's TEXT, so the failure read
     // as "content missing" rather than "test wrong".

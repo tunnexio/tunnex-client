@@ -8,14 +8,14 @@ import tokens from "../../../packages/shared/generated/tokens.palette.json";
  * ⛔ AN INVENTED TAILWIND COLOUR CLASS RENDERS NOTHING, SILENTLY, AND LOOKS LIKE A DESIGN CHOICE.
  *
  * Found the hard way: `bg-surface-1` is not a token. Tailwind emitted no rule for it, so a dropdown panel and
- * the DataTable's sticky header both rendered **fully transparent** — page content showing straight through
+ * the DataTable's sticky header both rendered **fully transparent**, page content showing straight through
  * them, text on text. It shipped, because:
  *
  *  · TypeScript cannot see inside a className string,
  *  · every test passed (jsdom does not apply a stylesheet),
- *  · and the build succeeded — an unknown utility is not an error, it is simply absent.
+ *  · and the build succeeded, an unknown utility is not an error, it is simply absent.
  *
- * > **THE FAILURE MODE OF A TYPO IN A CLASS NAME IS INVISIBILITY, NOT A CRASH** — and invisibility is the one
+ * > **THE FAILURE MODE OF A TYPO IN A CLASS NAME IS INVISIBILITY, NOT A CRASH**, and invisibility is the one
  * > outcome no automated check in this repo was looking for.
  *
  * This test reads the GENERATED palette and fails on any colour utility naming a family that does not exist
@@ -30,7 +30,7 @@ function files(dir: string): string[] {
   });
 }
 
-// ⚠ `border-b-2` is a WIDTH utility, not a colour — the segment after `border` is a direction. Listing them
+// ⚠ `border-b-2` is a WIDTH utility, not a colour, the segment after `border` is a direction. Listing them
 // keeps the census over its actual subject; without this it reports a false hit on correct code, and a census
 // that cries wolf is one people start ignoring.
 const BORDER_SIDES = new Set(["b", "t", "l", "r", "x", "y", "s", "e"]);
@@ -40,12 +40,12 @@ const BORDER_SIDES = new Set(["b", "t", "l", "r", "x", "y", "s", "e"]);
 
 describe("colour utilities name real tokens", () => {
   /**
-   * ⛔ THE FULL UTILITY, NOT THE FAMILY — and the first version of this test checked the family, which made
+   * ⛔ THE FULL UTILITY, NOT THE FAMILY, and the first version of this test checked the family, which made
    * it VACUOUS AGAINST THE VERY BUG THAT PROMPTED IT. `surface` is a real family, so `bg-surface-1` passed;
    * the shade is where the typo lived. Caught by mutating the fix back out and watching the census stay
    * green, which is the only reason it is not still wrong.
    *
-   * > **A GUARD WRITTEN FOR A HAZARD IS NOT A GUARD AGAINST THE HAZARD** — the same law the malformed-peer-key
+   * > **A GUARD WRITTEN FOR A HAZARD IS NOT A GUARD AGAINST THE HAZARD**, the same law the malformed-peer-key
    * > defect minted, reached from the CSS side.
    */
   const ourFamilies = new Set(Object.keys(tokens.colors));
@@ -70,14 +70,14 @@ describe("colour utilities name real tokens", () => {
       // enforces this, and caught it here.)
       const src = stripJsComments(readFileSync(f, "utf8"));
       // ⚠ THE LOOKAHEAD MUST EXCLUDE `-` TOO. Without it the pattern backtracks on `bg-ink-950/80`,
-      // matches the prefix `bg-ink`, and reports a false hit on correct code — which it did, on three files,
+      // matches the prefix `bg-ink`, and reports a false hit on correct code, which it did, on three files,
       // before this character was added.
       for (const m of src.matchAll(
         /\b(?:bg|text|border|ring|from|to|via|fill|stroke)-([a-z]+(?:-[a-z0-9]+)?)\b(?![\w/[-])/g,
       )) {
         const name = m[1];
         const family = name.split("-")[0];
-        // ⚠ ONLY UTILITIES WHOSE FAMILY IS OURS. `text-` is overloaded — `text-xl` is a font SIZE, and
+        // ⚠ ONLY UTILITIES WHOSE FAMILY IS OURS. `text-` is overloaded, `text-xl` is a font SIZE, and
         // `border-b` is a side. Validating everything named `text-*` reports 500 false hits, and a census
         // that cries wolf is one people stop reading. Ours is the exact set the palette defines.
         if (!ourFamilies.has(family)) continue;

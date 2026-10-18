@@ -10,7 +10,7 @@ import {
 } from "../src/lib/policyview";
 
 /**
- * ⛔ THE VALIDITY RULES, TESTED WITHOUT A DOM — which is why they are pure functions rather than logic inside
+ * ⛔ THE VALIDITY RULES, TESTED WITHOUT A DOM, which is why they are pure functions rather than logic inside
  * the picker. The matrix they implement is measured from the compiler (`docs/rule-validity-matrix.md`), never
  * from what the old form happened to offer.
  */
@@ -27,7 +27,7 @@ const A = [{ device_id: "d1", name: "mcp-agent", gateway_name: "gw-1" }];
 const R = [{ id: "r1", name: "gitlab" }];
 const K = [{ id: "k1", name: "payments" }];
 
-describe("rule option lists — one picker per side", () => {
+describe("rule option lists, one picker per side", () => {
   it("every source kind appears in ONE list, each carrying its kind as text", () => {
     // ⛔ THE TAG IS THE ONLY THING distinguishing a site named eu-lan from a group named eu-lan, and the two
     // behave completely differently in the compiler. It must be text, never a colour alone.
@@ -78,9 +78,9 @@ describe("rule option lists — one picker per side", () => {
     expect(o[0].detail).toBe("via gw-1");
   });
 
-  it("⭐ A SITE CANNOT REACH ITSELF — and the option is SHOWN, DISABLED, WITH THE REASON", () => {
+  it("⭐ A SITE CANNOT REACH ITSELF, and the option is SHOWN, DISABLED, WITH THE REASON", () => {
     // Hiding it would teach nothing: the operator changes the other side and an entry silently vanishes.
-    // Saying why teaches the rule. This mirrors the server's invalid_rule_self_site — the API is the guard.
+    // Saying why teaches the rule. This mirrors the server's invalid_rule_self_site, the API is the guard.
     const src = sourceOptions({
       groups: G,
       members: [],
@@ -112,7 +112,7 @@ describe("rule option lists — one picker per side", () => {
   });
 
   it("⚠ NOTHING IS DISABLED WHEN THE OTHER SIDE IS NOT A SITE", () => {
-    // Without this, "disable everything" would satisfy the assertions above and make the form unusable —
+    // Without this, "disable everything" would satisfy the assertions above and make the form unusable ,
     // the guard-that-is-an-outage shape.
     const dst = destinationOptions({
       groups: G,
@@ -141,7 +141,7 @@ describe("rule option lists — one picker per side", () => {
 });
 
 /**
- * ⛔ THE EFFECT SENTENCE — the form's answer to "why was I able to create that?"
+ * ⛔ THE EFFECT SENTENCE, the form's answer to "why was I able to create that?"
  *
  * `agent rajan → group Contractors` was creatable and looked ordinary. It grants one machine principal
  * unrestricted access to every device owned by every Contractor, because a group destination is port-unscoped
@@ -175,7 +175,7 @@ describe("rule effect summary", () => {
     ).toBe(true);
   });
 
-  it("⛔ AND A RESOURCE IS NOT — the distinction is the whole point", () => {
+  it("⛔ AND A RESOURCE IS NOT, the distinction is the whole point", () => {
     // Without this, marking everything `wide` would satisfy the assertions above and destroy the signal:
     // a warning that fires on every rule is one nobody reads.
     const e = ruleEffectSummary({
@@ -211,7 +211,7 @@ describe("rule effect summary", () => {
   });
 });
 
-describe("option sections — where port scope becomes visible", () => {
+describe("option sections, where port scope becomes visible", () => {
   it("⛔ THE TWO DESTINATION SECTIONS SAY WHICH IS UNBOUNDED", () => {
     const dst = destinationOptions({
       groups: G,

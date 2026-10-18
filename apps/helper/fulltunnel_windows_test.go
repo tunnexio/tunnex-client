@@ -8,7 +8,7 @@ import (
 )
 
 // TestWindowsFullTunnelRequiresDNS: a full tunnel that carries NO DNS server is refused
-// (full_tunnel_requires_dns) BEFORE any adapter/WFP state is created — otherwise the base WFP
+// (full_tunnel_requires_dns) BEFORE any adapter/WFP state is created, otherwise the base WFP
 // block would drop all port-53 with no tunnel resolver = a silent total resolution outage
 // (S6.10 review). Checked before CreateTUN so it needs no wintun driver.
 func TestWindowsFullTunnelRequiresDNS(t *testing.T) {

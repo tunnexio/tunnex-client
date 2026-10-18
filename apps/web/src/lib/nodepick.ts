@@ -5,13 +5,13 @@ import type { Node } from "./api";
  * census).
  *
  * WHY THIS IS A MODULE AND NOT `nodes[0]`. The device-create path used `nodes[0].id` directly, and the list it
- * indexes comes from `ListNodes` — every node in the org, revoked included, ordered by `created_at`. So on any
+ * indexes comes from `ListNodes`, every node in the org, revoked included, ordered by `created_at`. So on any
  * deployment whose OLDEST gateway had been revoked, every new device was homed on a dead gateway and issued a
  * config pointing at nothing. The EPIC 11 walk's own fleet was in exactly that state: `aws-gw-1` was revoked and
  * had the earliest `created_at`, so it WAS `nodes[0]`.
  *
- * The same page's sibling surfaces got it right — `Sites.tsx` filters `status === "active"` before offering a
- * gateway — which is the asymmetry class this epic keeps finding: two consumers of one list, one of them
+ * The same page's sibling surfaces got it right, `Sites.tsx` filters `status === "active"` before offering a
+ * gateway, which is the asymmetry class this epic keeps finding: two consumers of one list, one of them
  * remembering. Selection lives here now so there is one rule and it is testable.
  */
 
@@ -24,14 +24,14 @@ export function selectableNodes(nodes: Node[]): Node[] {
  * The gateway a new device should be homed on, or null when there is none.
  *
  * Returns null rather than falling back to a revoked gateway: homing a device on a dead gateway produces a
- * one-time config that can never connect, and a one-time secret cannot be re-issued — so the failure is not
+ * one-time config that can never connect, and a one-time secret cannot be re-issued, so the failure is not
  * merely inconvenient, it burns the artifact. Refusing is the recoverable direction.
  */
 export function defaultDeviceNode(nodes: Node[]): Node | null {
   const eligible = selectableNodes(nodes);
   // ⛔ ONE ELIGIBLE GATEWAY IS A DEFAULT. TWO IS A QUESTION (S14.21b).
   //
-  // This returned `eligible[0]` — the FIRST ACTIVE node in `created_at` order. On the live rig that homed a
+  // This returned `eligible[0]`, the FIRST ACTIVE node in `created_at` order. On the live rig that homed a
   // macOS laptop onto an in-cluster KUBERNETES gateway, because that node was enrolled four days earlier than
   // the general-purpose VM gateway sitting beside it. The device was minted, and the gateway it was homed on
   // has never recorded a handshake from any peer.
@@ -43,9 +43,9 @@ export function defaultDeviceNode(nodes: Node[]): Node | null {
   // ⛔ AND NOTHING IN THE PAYLOAD CAN DECIDE IT. Measured, not assumed: `Node` carries id · name · status ·
   // agent_version · enrolled_at · last_seen_at · policy_degraded · site_id · max_policy_version ·
   // ovpn_health · is_site_hub · policy_degraded_kind. `is_site_hub` is site TOPOLOGY. `capabilities` is not
-  // exposed, and would not help — a VM gateway and a cluster gateway carry the same keys. `endpoint` is not
+  // exposed, and would not help, a VM gateway and a cluster gateway carry the same keys. `endpoint` is not
   // in the payload at all. There is no kind or type field. The cluster linkage lives in `k8s_clusters`,
-  // keyed by `site_id`, which this path never fetches — and "belongs to a site" is not "cannot serve a
+  // keyed by `site_id`, which this path never fetches, and "belongs to a site" is not "cannot serve a
   // laptop" anyway.
   //
   // So the product CANNOT choose correctly from what it has, and a smarter sort would only hide that. The
@@ -72,7 +72,7 @@ export function requiresGatewayChoice(nodes: Node[]): boolean {
  * revoked gateways plus at most one active one. Any surface listing revoked rows can therefore show duplicate
  * labels, and a label alone stops identifying a gateway.
  *
- * The census decision for DISPLAYS: keep the name, and mark the revoked ones — the status is what disambiguates,
+ * The census decision for DISPLAYS: keep the name, and mark the revoked ones, the status is what disambiguates,
  * and it is information the operator needs anyway. (Surfaces that OFFER a gateway resolve it differently: they
  * filter to active via selectableNodes, so duplicates cannot arise there at all.)
  */

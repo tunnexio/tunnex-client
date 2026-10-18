@@ -29,7 +29,7 @@ vi.mock("../src/components/ui", () => {
       createElement(tag, props, children);
   return {
     // The page header is a real component now, not markup each page hand-rolls. Mocked to an h1 so the
-    // route's heading stays assertable — a `primitive("header")` would spread `title` onto the DOM node
+    // route's heading stays assertable, a `primitive("header")` would spread `title` onto the DOM node
     // and the text would vanish from the tree.
     PageHeader: ({
       title,

@@ -31,7 +31,7 @@ func createWfpSession() (uintptr, error) {
 	session := wtFwpmSession0{
 		displayData: *sessionDisplayData,
 		// S6.7 delta: NON-dynamic (dropped cFWPM_SESSION_FLAG_DYNAMIC) so BFE keeps the objects
-		// after this engine handle / the process closes — the kill-switch survives process death.
+		// after this engine handle / the process closes, the kill-switch survives process death.
 		txnWaitTimeoutInMSec: windows.INFINITE,
 	}
 
@@ -47,7 +47,7 @@ func createWfpSession() (uintptr, error) {
 
 func registerBaseObjects(session uintptr) (*baseObjects, error) {
 	bo := &baseObjects{}
-	// S6.7 delta: FIXED keys (was windows.GenerateGUID() — random per arm, which made a crashed
+	// S6.7 delta: FIXED keys (was windows.GenerateGUID(), random per arm, which made a crashed
 	// persistent block unfindable). These are the durable anchor CleanStale/--wfp-clean delete by.
 	bo.provider = tunnexProviderGUID
 	bo.filters = tunnexSublayerGUID
@@ -98,7 +98,7 @@ func registerBaseObjects(session uintptr) (*baseObjects, error) {
 
 func EnableFirewall(luid uint64, doNotRestrict bool, restrictToDNSServers []netip.Addr) error {
 	// S6.7 delta: a persistent block from a prior arm/crash would make our fixed-GUID provider
-	// Add fail ALREADY_EXISTS — so clean any stale Tunnex objects first (idempotent). This is
+	// Add fail ALREADY_EXISTS, so clean any stale Tunnex objects first (idempotent). This is
 	// also what makes a re-arm self-heal after an un-clean prior arm.
 	_ = removePersistentObjects()
 
@@ -174,7 +174,7 @@ func EnableFirewall(luid uint64, doNotRestrict bool, restrictToDNSServers []neti
 		return wrapErr(err)
 	}
 
-	// S6.7 delta: CLOSE the session now — the objects are non-dynamic, so they PERSIST in BFE
+	// S6.7 delta: CLOSE the session now, the objects are non-dynamic, so they PERSIST in BFE
 	// independent of this handle/process (that IS the point). Upstream kept the session open
 	// because DYNAMIC objects die when it closes; ours must survive death.
 	fwpmEngineClose0(session)
@@ -182,7 +182,7 @@ func EnableFirewall(luid uint64, doNotRestrict bool, restrictToDNSServers []neti
 }
 
 // DisableFirewall removes the persistent Tunnex WFP block (graceful teardown). Because the block
-// no longer auto-dies with the session, it must be explicitly deleted — the SAME enumerate-and-
+// no longer auto-dies with the session, it must be explicitly deleted, the SAME enumerate-and-
 // delete as CleanStale and the --wfp-clean escape hatch. Idempotent (nothing armed → no-op).
 func DisableFirewall() {
 	_ = removePersistentObjects()

@@ -6,11 +6,11 @@
 // cannot import from `apps/web/src/assets` the way every other surface does. The choices were: ship
 // the screen with no brand (it did, for months), redraw it by hand (a different logo wearing the
 // same name), or copy it and GUARD the copy. `brandmark.test.ts` compares this string to the asset
-// file — edit the asset and this file goes red, which is the only thing that makes a duplicate
+// file, edit the asset and this file goes red, which is the only thing that makes a duplicate
 // acceptable.
 //
 // ⛔ THE WORDMARK, NOT THE MARK. `tunnex-logo.svg` bakes in a `<rect fill="#0A0A0A">` plate and its
-// glyph runs corner to corner, so it renders as a dark tile with no breathing room at any size —
+// glyph runs corner to corner, so it renders as a dark tile with no breathing room at any size ,
 // which is what the client header was showing. The web shell's own brand block is wordmark +
 // tagline; both surfaces now use it, so the identity looks the same everywhere. The mark comes back
 // the day the asset ships with a margin.

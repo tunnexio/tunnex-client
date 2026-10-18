@@ -1,10 +1,10 @@
-// SSO form — what a control is allowed to ASSERT.
+// SSO form, what a control is allowed to ASSERT.
 //
 // ⛔ A CONTROL WHOSE DEFAULT READS AS A FACT.
 //
 // Found on the review stack: Google SSO showed **"Enabled" CHECKED** and a **dotted secret field**
 // on a provider the server answers `404 sso_not_configured` for. Microsoft showed the identical
-// checked box and identical dots — and IS configured. The two were visually indistinguishable, and
+// checked box and identical dots, and IS configured. The two were visually indistinguishable, and
 // one of them was asserting something false.
 //
 // MEASURED, all three halves:
@@ -31,7 +31,7 @@ export function enabledLabel(configured: boolean): string {
 /**
  * ⛔ THE DOTS ARE A CLAIM THAT A SECRET IS STORED, so they may only render when one is.
  *
- * On the configured arm the dots sit above a real `secret_fingerprint` — proof of storage. On the
+ * On the configured arm the dots sit above a real `secret_fingerprint`, proof of storage. On the
  * unconfigured arm they sat above nothing and meant nothing, while looking exactly the same.
  */
 export function secretPlaceholder(configured: boolean): string {
@@ -42,7 +42,7 @@ export function secretPlaceholder(configured: boolean): string {
  * Whether the panel may show the toggle as reflecting server state at all.
  *
  * Kept as its own predicate rather than inlined, because the assertion that matters is the
- * NEGATIVE one — and a boolean that is always true cannot be told from one that is correctly true.
+ * NEGATIVE one, and a boolean that is always true cannot be told from one that is correctly true.
  */
 export function toggleReflectsServer(configured: boolean): boolean {
   return configured;

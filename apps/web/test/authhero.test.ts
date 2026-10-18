@@ -14,9 +14,9 @@ import { stripJsComments } from "./support/source";
 
 // ⛔ THE WIREFRAME'S TRUST BADGES ASSERTED TWO THINGS WE DO NOT HAVE, ON THE MOST-VIEWED PAGE.
 //
-//   "SOC 2 Type II certified"  — MEASURED: zero mentions of SOC 2 anywhere in this repository
+//   "SOC 2 Type II certified" , MEASURED: zero mentions of SOC 2 anywhere in this repository
 //                                outside the wireframe. No audit, no report, no auditor.
-//   "SSO + SCIM enterprise ready" — SCIM is explicitly OUT of v1, deferred to S7.5.2b (D4).
+//   "SSO + SCIM enterprise ready", SCIM is explicitly OUT of v1, deferred to S7.5.2b (D4).
 //
 // A claim on a login page is a product surface, and the render floor applies to it: do not state
 // more than the system can support. This is the same test the epic applied to its own headline.
@@ -66,11 +66,11 @@ describe("TRUST_BADGES", () => {
       // ⛔ COMMENTS ARE STRIPPED, FILES ARE NOT EXEMPTED.
       //
       // This first ran and caught AuthLayout.tsx, on the comment EXPLAINING the cut. The tempting
-      // fix was another file exemption — and an exemption list is how a census quietly becomes the
+      // fix was another file exemption, and an exemption list is how a census quietly becomes the
       // codebase. A claim in a comment is not rendered and not a claim; a claim in a string is.
       // So strip comments and keep every file in scope, which leaves the census strict about the
       // thing that actually reaches a user.
-      // authhero.ts DECLARES the forbidden strings as data — the list cannot scan itself.
+      // authhero.ts DECLARES the forbidden strings as data, the list cannot scan itself.
       if (f.endsWith("authhero.ts")) continue;
       const body = stripJsComments(readFileSync(f, "utf8"));
       for (const c of FORBIDDEN_CLAIMS) {
@@ -97,9 +97,9 @@ describe("the hero copy", () => {
   });
 });
 
-// ⛔ CARDINALITY ONLY — the schema says "never the codes (nothing recoverable)".
+// ⛔ CARDINALITY ONLY, the schema says "never the codes (nothing recoverable)".
 describe("recoveryWarning", () => {
-  it("is silent above the threshold — a warning that always shows is not a warning", () => {
+  it("is silent above the threshold, a warning that always shows is not a warning", () => {
     expect(recoveryWarning(10)).toBeNull();
     expect(recoveryWarning(4)).toBeNull();
   });

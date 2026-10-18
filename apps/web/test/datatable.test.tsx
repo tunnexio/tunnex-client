@@ -53,10 +53,10 @@ const bodyNames = () =>
     .slice(1)
     .map((r) => within(r).getAllByRole("cell")[0].textContent);
 
-describe("DataTable — scannability", () => {
+describe("DataTable, scannability", () => {
   it("⛔ A SORTABLE HEADER'S NAME IS STILL ITS HEADER", () => {
     // The sort indicator is an SVG precisely so it contributes no text. A character glyph would make this
-    // column's name "Name↕" and silently break every query and test that names a column — which is how it
+    // column's name "Name↕" and silently break every query and test that names a column, which is how it
     // was caught: three existing suites went red at once.
     table();
     expect(screen.getByRole("columnheader", { name: "Name" })).toBeTruthy();
@@ -87,7 +87,7 @@ describe("DataTable — scannability", () => {
     ).toBe("descending");
   });
 
-  it("⚠ A COLUMN WITHOUT sortValue IS NOT SORTABLE — and is still a real header", () => {
+  it("⚠ A COLUMN WITHOUT sortValue IS NOT SORTABLE, and is still a real header", () => {
     // Without this, "every header is a button" would pass the test above while making an unsortable column
     // click to nothing, which is a control that lies about what it does.
     table();
@@ -123,7 +123,7 @@ describe("DataTable — scannability", () => {
 
   it("⛔ A FILTER THAT MATCHES NOTHING IS NOT THE SAME CLAIM AS HAVING NOTHING", () => {
     // THE WHOLE POINT. `empty` says none exist; a filter miss says none match. Rendering the second as the
-    // first tells an operator a resource does not exist when it is one keystroke away — a new way to
+    // first tells an operator a resource does not exist when it is one keystroke away, a new way to
     // manufacture the reassuring empty on a component whose `failed` prop exists because of that class.
     table();
     fireEvent.change(
@@ -134,14 +134,14 @@ describe("DataTable — scannability", () => {
     );
     expect(screen.queryByText("No widgets exist.")).toBeNull();
     expect(screen.getByText(/No widgets match/)).toBeTruthy();
-    // ⚠ And the way back is offered, with the true total — a dead end would leave the operator believing it.
+    // ⚠ And the way back is offered, with the true total, a dead end would leave the operator believing it.
     expect(screen.getByText(/see all 3/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Clear filter" }));
     expect(bodyNames()).toHaveLength(3);
   });
 
   it("genuinely zero rows renders the empty copy, and a FAILED load renders nothing at all", () => {
-    // The three states, asserted apart. A failed load must not borrow either emptiness — the page owns retry.
+    // The three states, asserted apart. A failed load must not borrow either emptiness, the page owns retry.
     const { unmount } = table([]);
     expect(screen.getByText("No widgets exist.")).toBeTruthy();
     unmount();
@@ -178,11 +178,11 @@ describe("DataTable — scannability", () => {
 
 /**
  * ⛔ PAGINATION IS THREE MORE WAYS TO RENDER AN EMPTY TABLE OVER A FULL DATA SET, and every one of them
- * arrives by arithmetic rather than by a failed load — which is what makes them easy to ship. Narrowing
+ * arrives by arithmetic rather than by a failed load, which is what makes them easy to ship. Narrowing
  * while deep in the list, resizing the page, and rows shrinking underneath all point the page index past
  * the end of the array.
  */
-describe("DataTable — pagination", () => {
+describe("DataTable, pagination", () => {
   const many = (n: number): Row[] =>
     Array.from({ length: n }, (_, i) => ({
       id: String(i),
@@ -238,7 +238,7 @@ describe("DataTable — pagination", () => {
         .getByRole("button", { name: "Page 3" })
         .getAttribute("aria-current"),
     ).toBe("page");
-    // ⚠ The last page is SHORT, and that is not an empty page — 60 rows over 25 leaves 10.
+    // ⚠ The last page is SHORT, and that is not an empty page, 60 rows over 25 leaves 10.
     expect(screen.getAllByRole("row")).toHaveLength(11);
     expect(
       screen
@@ -253,7 +253,7 @@ describe("DataTable — pagination", () => {
     ).toBe("page");
   });
 
-  it("⭐ FILTERING FROM A DEEP PAGE RETURNS TO PAGE ONE — the operator's own search must not read as empty", () => {
+  it("⭐ FILTERING FROM A DEEP PAGE RETURNS TO PAGE ONE, the operator's own search must not read as empty", () => {
     // Without the reset: page 3 of a 60-row list, filter down to 30 matches, and slice(50, 75) is EMPTY.
     // A full result set renders as nothing, and the thing that produced it was the search itself.
     paged(many(60));
@@ -275,7 +275,7 @@ describe("DataTable — pagination", () => {
   });
 
   it("⭐ ROWS SHRINKING UNDER A DEEP PAGE CLAMPS INSTEAD OF RENDERING NOTHING", () => {
-    // A revoke, a refetch, a sweep — the page index that was valid a moment ago now points past the end.
+    // A revoke, a refetch, a sweep, the page index that was valid a moment ago now points past the end.
     // Clamped at RENDER, so there is no frame in which the stale index is used.
     const { rerender } = paged(many(60));
     fireEvent.click(screen.getByRole("button", { name: "Next page" }));
@@ -310,14 +310,14 @@ describe("DataTable — pagination", () => {
     ).toBe("page");
   });
 
-  it("⚠ NO PAGER WHEN EVERYTHING ALREADY FITS — a control that can only no-op implies there is more", () => {
+  it("⚠ NO PAGER WHEN EVERYTHING ALREADY FITS, a control that can only no-op implies there is more", () => {
     paged(many(5));
     expect(screen.queryByRole("button", { name: "Next page" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Page 2" })).toBeNull();
     expect(screen.getAllByRole("row")).toHaveLength(6);
   });
 
-  it("⛔ pageSize={0} DISABLES PAGING ENTIRELY — for surfaces that already page server-side", () => {
+  it("⛔ pageSize={0} DISABLES PAGING ENTIRELY, for surfaces that already page server-side", () => {
     // AuditLog and AccessEvents fetch behind a keyset cursor. A second pager there would append rows the
     // operator cannot see and report a count describing neither the fetch nor the view.
     paged(many(60), 0);
@@ -342,7 +342,7 @@ describe("DataTable — pagination", () => {
  * and the set it applies to is whatever this component decided. Both ambiguities are resolved conservatively
  * and pinned here.
  */
-describe("DataTable — selection", () => {
+describe("DataTable, selection", () => {
   const many = (n: number): Row[] =>
     Array.from({ length: n }, (_, i) => ({
       id: String(i),
@@ -410,7 +410,7 @@ describe("DataTable — selection", () => {
   });
 
   it("⭐ A SELECTION HIDDEN BY A FILTER IS COUNTED AND SAID OUT LOUD", () => {
-    // Selection survives filtering on purpose — silently dropping rows would make the APPLIED set differ
+    // Selection survives filtering on purpose, silently dropping rows would make the APPLIED set differ
     // from the COUNTED set, which is worse than a warning. So the warning has to exist.
     sel(many(60));
     fireEvent.click(
@@ -435,7 +435,7 @@ describe("DataTable — selection", () => {
     expect(seen[seen.length - 1]).toEqual([]);
   });
 
-  it("⚠ THE BAR IS PRESENT AT ZERO — a footer that appears on first click moves the layout under the cursor", () => {
+  it("⚠ THE BAR IS PRESENT AT ZERO, a footer that appears on first click moves the layout under the cursor", () => {
     sel(many(10));
     expect(
       screen.getByText("Select one or more rows to act on them"),
@@ -448,7 +448,7 @@ describe("DataTable — selection", () => {
   });
 
   it("⛔ THE CHECKBOX IS NAMED BY THE ROW, NOT BY ITS DATABASE ID", () => {
-    // Without the derivation a screen-reader user hears "select 019fcda7-7718-77e3" — an unidentifiable
+    // Without the derivation a screen-reader user hears "select 019fcda7-7718-77e3", an unidentifiable
     // control on the one interaction whose next step is a bulk action.
     sel(many(3));
     const box = screen.getAllByRole("checkbox")[1];
@@ -473,12 +473,12 @@ describe("DataTable — selection", () => {
   });
 });
 
-describe("pageWindow — always first, last, and the neighbourhood", () => {
+describe("pageWindow, always first, last, and the neighbourhood", () => {
   it("lists every page when they fit", () => {
     expect(pageWindow(0, 3)).toEqual([0, 1, 2, 3]);
   });
 
-  it("⛔ KEEPS THE LAST PAGE VISIBLE — eliding it hides how much there is", () => {
+  it("⛔ KEEPS THE LAST PAGE VISIBLE, eliding it hides how much there is", () => {
     // "How much is there" is the question a pager exists to answer, so the far end is never the thing cut.
     const w = pageWindow(0, 20);
     expect(w[0]).toBe(0);
@@ -495,16 +495,16 @@ describe("pageWindow — always first, last, and the neighbourhood", () => {
 });
 
 /**
- * ⛔ ONE BAR INSTEAD OF THREE BUTTONS PER ROW — and the thing that makes it safe is `unavailable`.
+ * ⛔ ONE BAR INSTEAD OF THREE BUTTONS PER ROW, and the thing that makes it safe is `unavailable`.
  *
  * Moving verbs off the rows is a layout win. The RISK it introduces is that a selection is almost never
  * uniform: five rules where one is GitOps-managed, three devices where one is already revoked. A bulk verb
- * then has two bad options — silently skip the ineligible rows, or silently attempt them — and both leave
+ * then has two bad options, silently skip the ineligible rows, or silently attempt them, and both leave
  * the operator believing they did something they did not do.
  *
  * > **THE SET AN ACTION APPLIES TO MUST BE STATED BEFORE IT RUNS, NOT DISCOVERED AFTERWARDS.**
  */
-describe("DataTable — row actions in one bar", () => {
+describe("DataTable, row actions in one bar", () => {
   const ROWS3: Row[] = [
     { id: "1", name: "alpha", owner: "a@x.com", state: "active" },
     { id: "2", name: "bravo", owner: "b@x.com", state: "locked" },
@@ -552,7 +552,7 @@ describe("DataTable — row actions in one bar", () => {
   const pick = (name: string) =>
     fireEvent.click(screen.getByRole("checkbox", { name: `Select ${name}` }));
 
-  it("⚠ rowActions IMPLIES selectable — a set of verbs with no way to choose what they act on is not a feature", () => {
+  it("⚠ rowActions IMPLIES selectable, a set of verbs with no way to choose what they act on is not a feature", () => {
     acts();
     expect(screen.getAllByRole("checkbox").length).toBeGreaterThan(0);
     expect(
@@ -561,7 +561,7 @@ describe("DataTable — row actions in one bar", () => {
   });
 
   it("⛔ THE ACTION BAR SITS ABOVE THE TABLE, NOT BELOW IT", () => {
-    // The verbs are what the selection is FOR, so they belong where the eye already is — beside the rows
+    // The verbs are what the selection is FOR, so they belong where the eye already is, beside the rows
     // being ticked rather than past the end of them. Below, on a 25-row page, the operator selects at the
     // top and must then scroll away from their own selection to act on it.
     //
@@ -571,7 +571,7 @@ describe("DataTable — row actions in one bar", () => {
       .getByText("Select one or more rows to act on them")
       .closest("div")!;
     const table = screen.getByRole("table");
-    // DOCUMENT_POSITION_FOLLOWING (4) — the table comes AFTER the bar.
+    // DOCUMENT_POSITION_FOLLOWING (4), the table comes AFTER the bar.
     expect(
       bar.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
@@ -594,7 +594,7 @@ describe("DataTable — row actions in one bar", () => {
   it("⭐ A MIXED SELECTION SAYS HOW MANY THE VERB WILL ACTUALLY TOUCH, BEFORE THE CLICK", () => {
     acts();
     pick("alpha");
-    pick("bravo"); // locked — ineligible for Delete
+    pick("bravo"); // locked, ineligible for Delete
     expect(screen.getByText("1 of 2")).toBeTruthy();
     expect(screen.getByText("1 of 2").getAttribute("title")).toBe(
       "This widget is locked.",
@@ -619,7 +619,7 @@ describe("DataTable — row actions in one bar", () => {
     expect(del.getAttribute("title")).toBe("This widget is locked.");
   });
 
-  it("⚠ AND THE ORDINARY CASE STILL WORKS — an all-eligible selection shows no partial count", () => {
+  it("⚠ AND THE ORDINARY CASE STILL WORKS, an all-eligible selection shows no partial count", () => {
     // Without this, "always disabled" or "always warn" would satisfy every assertion above while making the
     // bar useless.
     acts();
@@ -635,11 +635,11 @@ describe("DataTable — row actions in one bar", () => {
  * ⛔ THE FOOTER MUST ONLY EXIST WHEN IT HAS SOMETHING TO SAY.
  *
  * The first version of "no pager when everything fits" hid the page BUTTONS and left the rows-per-page
- * control and the range behind — so a five-row table rendered "Rows per page [25]   1–5 of 5": a control
+ * control and the range behind, so a five-row table rendered "Rows per page [25]   1–5 of 5": a control
  * whose every value produces the same screen, and a range restating the obvious. On a page with three
  * tables that is more chrome than content, which is how the founder found it.
  */
-describe("DataTable — the footer earns its place", () => {
+describe("DataTable, the footer earns its place", () => {
   const rows = (n: number): Row[] =>
     Array.from({ length: n }, (_, i) => ({
       id: String(i),
@@ -673,7 +673,7 @@ describe("DataTable — the footer earns its place", () => {
     expect(screen.queryByLabelText("Rows per page")).toBeNull();
     expect(screen.queryByRole("button", { name: "Next page" })).toBeNull();
     expect(screen.queryByText(/of 5/)).toBeNull();
-    // ⚠ And the rows are all there — "hide the footer" must not have become "hide the table".
+    // ⚠ And the rows are all there, "hide the footer" must not have become "hide the table".
     expect(screen.getAllByRole("row")).toHaveLength(6);
   });
 
@@ -688,7 +688,7 @@ describe("DataTable — the footer earns its place", () => {
       },
     );
     expect(screen.getByText("2 of 5")).toBeTruthy();
-    // Still no paging controls — narrowing did not create a second page.
+    // Still no paging controls, narrowing did not create a second page.
     expect(screen.queryByLabelText("Rows per page")).toBeNull();
   });
 
@@ -700,9 +700,9 @@ describe("DataTable — the footer earns its place", () => {
     expect(screen.getByText("1–25 of 60")).toBeTruthy();
   });
 
-  it("the first column is inset from the table edge — in BOTH the header and the body", () => {
+  it("the first column is inset from the table edge, in BOTH the header and the body", () => {
     // ⚠ THE FOUNDER REPORTED THIS FIXED-BUT-INVISIBLE, AND THE CAUSE WAS A STALE SERVED BUNDLE, NOT A MISSING
-    // EDIT. A test cannot catch a stale deploy — but it can make the source side unambiguous, so the next
+    // EDIT. A test cannot catch a stale deploy, but it can make the source side unambiguous, so the next
     // time the screen and the code disagree, the code half is already answered.
     table();
     const th = screen.getByRole("columnheader", { name: /Name/ });
@@ -733,7 +733,7 @@ describe("DataTable — the footer earns its place", () => {
     const cells = screen.getAllByRole("row")[1].querySelectorAll("td");
     expect(cells[0].className).toContain("pl-3"); // the checkbox cell carries it
     expect(cells[1].className).not.toContain("pl-3"); // the name cell does not
-    // ⛔ AND THE HEADER IS ITS OWN EXPRESSION. Asserting only the <td>s left the <th> guard unchecked —
+    // ⛔ AND THE HEADER IS ITS OWN EXPRESSION. Asserting only the <td>s left the <th> guard unchecked ,
     // mutation MISSED it: weakening the header condition to a bare `i === 0` double-padded the header of
     // every selectable table while all three body assertions still passed.
     const heads = screen.getAllByRole("columnheader");

@@ -1,4 +1,4 @@
-// DESIGN TOKENS — the ONE authored form (S14.1, EPIC 14).
+// DESIGN TOKENS, the ONE authored form (S14.1, EPIC 14).
 //
 // Shared because Item A ruling A3 says the desktop client gets its OWN COMPONENTS but the SAME TOKENS: two
 // component sets that look like one product because they read the same values. This file is the source of
@@ -7,7 +7,7 @@
 // TWO EMITTERS, ONE SOURCE. `tailwindColors()` gives Tailwind a palette of `var(--tnx-*)` references so every
 // existing utility class keeps working unchanged; `themeCss()` emits the variables themselves, per theme.
 // Neither mechanism works alone: a Tailwind config bakes hex at BUILD time (so a theme swap would need a
-// rebuild or a `dark:`-variant on every element — the div-soup coupling this epic exists to remove), and CSS
+// rebuild or a `dark:`-variant on every element, the div-soup coupling this epic exists to remove), and CSS
 // variables alone would abandon every class in the app. Together, a theme swap is one attribute on <html>.
 //
 // N-THEME BY CONSTRUCTION, TWO SHIPPED. The founder ruled two for this slice: a third palette is churn inside
@@ -16,10 +16,10 @@
 export type Tone = "ok" | "warn" | "danger";
 
 /**
- * THE SEMANTIC RESERVATION, AS DATA — not as a comment.
+ * THE SEMANTIC RESERVATION, AS DATA, not as a comment.
  *
  * S4.4 decision f reserved `ok` for LIVENESS ONLY ("alive right now": an online peer, a healthy check) and
- * explicitly NOT for success feedback — "sent / saved / role changed" use the accent, so that green keeps
+ * explicitly NOT for success feedback, "sent / saved / role changed" use the accent, so that green keeps
  * meaning LIVE. That is a shipped decision about what a colour MEANS.
  *
  * It is carried here as data because a token migration is exactly how such a rule dies: `ok` drifts into a
@@ -31,7 +31,7 @@ export const RESERVATIONS: Record<
   { meaning: string; forbiddenUses: string[] }
 > = {
   ok: {
-    meaning: "LIVENESS ONLY — alive right now (online peer, healthy check).",
+    meaning: "LIVENESS ONLY, alive right now (online peer, healthy check).",
     // If any of these appear as a use-site for `ok`, the reservation has been broken.
     forbiddenUses: [
       "success",
@@ -46,11 +46,11 @@ export const RESERVATIONS: Record<
   danger: { meaning: "revoked / error.", forbiddenUses: [] },
 };
 
-/** Every token name the system defines. A theme MUST supply all of them — see `assertThemeComplete`. */
+/** Every token name the system defines. A theme MUST supply all of them, see `assertThemeComplete`. */
 export const TOKEN_NAMES = [
-  // surfaces — README "Color — dark (default)"
+  // surfaces, README "Color, dark (default)"
   "bg", // app background
-  // The two backdrops the glass refracts. NOT colours — CSS background shorthands, which custom properties
+  // The two backdrops the glass refracts. NOT colours, CSS background shorthands, which custom properties
   // carry perfectly well. They are tokens because the glass is meaningless without them.
   "bg-glow", // <body> ambient glow, fixed attachment
   "bg-page", // the content area's radial field
@@ -62,7 +62,7 @@ export const TOKEN_NAMES = [
   "border-inset", // inset border
   "divider", // row divider
   "divider-head", // header divider
-  // text ramp — EIGHT NAMED TONES (README), two of which are contrast-corrected below
+  // text ramp, EIGHT NAMED TONES (README), two of which are contrast-corrected below
   "text-heading",
   "text-primary",
   "text-emphasis",
@@ -71,7 +71,7 @@ export const TOKEN_NAMES = [
   "text-tertiary",
   "text-faint",
   "text-disabled",
-  // status — deliberately DESATURATED, never saturated alert colours
+  // status, deliberately DESATURATED, never saturated alert colours
   "ok",
   "warn",
   "danger",
@@ -86,11 +86,11 @@ export type Theme = Record<TokenName, string>;
 
 /**
  * `dark` is the CURRENT brand kit, value-for-value. S14.1 must not alter rendering, so these are copied from
- * the pre-existing tailwind config rather than re-picked — a re-pick would make the slice a visual change
+ * the pre-existing tailwind config rather than re-picked, a re-pick would make the slice a visual change
  * wearing an infrastructure slice's name.
  */
 /**
- * `mono` — THE DEFAULT, and the prototype's own default (`pal: 'mono'`).
+ * `mono`, THE DEFAULT, and the prototype's own default (`pal: 'mono'`).
  *
  * Every value cites the handoff README's token table (docs/wireframe-extract.md), except the TWO recorded
  * contrast corrections below. This is not a re-pick: the previous `dark` was the OLD APP'S palette, shipped
@@ -99,13 +99,13 @@ export type Theme = Record<TokenName, string>;
 const mono: Theme = {
   bg: "#0A0A0A",
   // The two backdrops the glass needs SOMETHING to refract. Without them a translucent card sits on a flat
-  // field and looks identical to an opaque one — the effect is in the CONTRAST BEHIND, not in the blur.
+  // field and looks identical to an opaque one, the effect is in the CONTRAST BEHIND, not in the blur.
   "bg-glow":
     "radial-gradient(1200px 700px at 80% -10%,rgba(255,255,255,.03),transparent 62%),#0A0A0A",
   "bg-page":
     "radial-gradient(130% 120% at 12% -5%,#1C1C1C 0%,#141414 48%,#0D0D0D 100%)",
   // ⛔ TRANSLUCENT, NOT COMPOSITED. A first pass set these to the composited hex (#1B1B1B) "because the alpha
-  // lives in the glass recipe" — which made every card OPAQUE, so `backdrop-filter` had nothing to see through
+  // lives in the glass recipe", which made every card OPAQUE, so `backdrop-filter` had nothing to see through
   // and the liquid glass rendered as flat plastic. The alpha IS the material.
   surface: "rgba(31,31,31,.72)",
   "surface-inset": "rgba(18,18,18,.72)",
@@ -124,13 +124,13 @@ const mono: Theme = {
   // ⛔ TWO CONTRAST CORRECTIONS, FOUNDER-RULED. The README's tertiary #5E5E5B (2.65:1) and faint #4A4A48
   // (1.94:1) FAIL the WCAG AA 4.5:1 floor that S14.1 built and mutation-proved. The minimum warm grey that
   // clears it on this surface is #838380, so both collapse to #858582 and the hierarchy is carried by WEIGHT
-  // and SIZE instead — which the README specifies in full.
+  // and SIZE instead, which the README specifies in full.
   //
   // Recorded rather than silently applied: the design sets its own honesty captions ("'Failed' is never
   // rendered as a reassuring empty state") in its least readable tone. A colour that cannot be read is a
   // value the interface claims to show and does not.
-  "text-tertiary": "#858582", // README: #5E5E5B — raised
-  "text-faint": "#858582", // README: #4A4A48 — raised
+  "text-tertiary": "#858582", // README: #5E5E5B, raised
+  "text-faint": "#858582", // README: #4A4A48, raised
   // Disabled is EXEMPT: WCAG does not require contrast for disabled controls, so this stays verbatim.
   "text-disabled": "#454542",
 
@@ -144,11 +144,11 @@ const mono: Theme = {
   focus: "#C9C9C4",
 };
 
-/** `mono` — the second theme, present to PROVE the mechanism is n-theme. Hue stripped, contrast preserved. */
+/** `mono`, the second theme, present to PROVE the mechanism is n-theme. Hue stripped, contrast preserved. */
 /**
- * `violet` — the prototype's SECOND palette. Same surfaces and ramp; the accent becomes the brand violet.
+ * `violet`, the prototype's SECOND palette. Same surfaces and ramp; the accent becomes the brand violet.
  *
- * The app shipped `#7c5cff` before the specification was read — ONE HEX DIGIT from the README's `#7C5CFC`.
+ * The app shipped `#7c5cff` before the specification was read, ONE HEX DIGIT from the README's `#7C5CFC`.
  * It was never a mistake; it was right by coincidence. The value now CITES the design rather than resembling it.
  */
 const violet: Theme = {
@@ -179,29 +179,29 @@ export const TYPOGRAPHY = {
   ],
 } as const;
 
-// ── S14.3 SLICE 0 — THE SCALES S14.1'S PAPER CLAIMED AND ITS ARTIFACT DID NOT CARRY ──────────────────────────
+// ── S14.3 SLICE 0, THE SCALES S14.1'S PAPER CLAIMED AND ITS ARTIFACT DID NOT CARRY ──────────────────────────
 //
 // ⚠ THIS IS A DEFECT BEING CORRECTED, NOT A GAP BEING FILLED (founder-ruled).
 //
-// S14.1's commit-one listed FIVE covered groups — colour, typography, spacing, radius/border/elevation, motion.
+// S14.1's commit-one listed FIVE covered groups, colour, typography, spacing, radius/border/elevation, motion.
 // The emitted set was THIRTEEN NAMES AND EVERY ONE WAS A COLOUR. Font FAMILIES shipped (TYPOGRAPHY above, into
 // the palette JSON); a size scale, a spacing scale, radius, elevation and motion did not.
 //
-// A PAPER VOUCHING FOR A PROPERTY THE ARTIFACT LACKS IS THE SAME CLASS AS A COMMENT VOUCHING FOR ABSENT CODE —
+// A PAPER VOUCHING FOR A PROPERTY THE ARTIFACT LACKS IS THE SAME CLASS AS A COMMENT VOUCHING FOR ABSENT CODE ,
 // and this repo has just paid for that class once, in S14.2's mutation 1.
 //
 // WHY S14.1'S OWN GATES MISSED IT, which is the part worth fixing: `tokens.test.ts` asserted theme
 // COMPLETENESS (every theme supplies every token NAME) and contrast and the `ok` reservation. NOTHING ASSERTED
 // THE EMITTED SET AGAINST THE CLAIMED COVERAGE. Every gate passed because every gate was aimed at the names
-// that existed, never at the ones the paper promised. See CLAIMED_COVERAGE below — that assertion now exists.
+// that existed, never at the ones the paper promised. See CLAIMED_COVERAGE below, that assertion now exists.
 
 /** Spacing scale. One scale, so a gap is a decision rather than a number someone typed. */
 export const SPACING = {
-  // The README's scale, VERBATIM and keyed by its own px values — 4 · 6 · 7 · 8 · 9 · 10 · 12 · 14 · 16 · 20 · 24.
+  // The README's scale, VERBATIM and keyed by its own px values, 4 · 6 · 7 · 8 · 9 · 10 · 12 · 14 · 16 · 20 · 24.
   //
   // Keyed by px rather than by a t-shirt or step index on purpose: the design is specified in px, and every
   // other naming scheme requires a translation table that nobody maintains. `--tnx-space-7` IS 7px.
-  // (A first attempt used fractional step keys, which emit `--tnx-space-1.5` — legal CSS, but the coverage
+  // (A first attempt used fractional step keys, which emit `--tnx-space-1.5`, legal CSS, but the coverage
   // census could not match it and went red. The census caught a naming choice, which is what it is for.)
   4: "4px",
   6: "6px",
@@ -216,7 +216,7 @@ export const SPACING = {
   24: "24px",
 } as const;
 
-/** Type scale. Sizes only — families are TYPOGRAPHY, and the two are separate so a theme may re-scale without re-picking a face. */
+/** Type scale. Sizes only, families are TYPOGRAPHY, and the two are separate so a theme may re-scale without re-picking a face. */
 export const TYPE_SCALE = {
   // The README's scale, in px, because the design is specified in px and a rem conversion would drift.
   badge: "8.5px",
@@ -241,7 +241,7 @@ export const RADIUS = {
 
 /**
  * Elevation. The wireframe's glassmorphism layer model lives HERE rather than as inline `backdrop-filter`
- * declarations across the app — the artifact carries 242 of those, which is 242 places for one of them to drift.
+ * declarations across the app, the artifact carries 242 of those, which is 242 places for one of them to drift.
  */
 /**
  * ⛔ LIQUID GLASS, NOT GLOSSY. The README is explicit: the inset white highlight lines were REMOVED, and
@@ -261,7 +261,7 @@ export const ELEVATION = {
  *
  * ⛔ `prefers-reduced-motion` IS A GATE, NOT A COURTESY (founder-ruled), and the CSS-first half of that gate is
  * emitted alongside these values: a media block that re-points every duration to `0ms`. That means the
- * REDUCTION IS UNCONDITIONAL AND NEEDS NO JAVASCRIPT — a component that forgets to check the preference still
+ * REDUCTION IS UNCONDITIONAL AND NEEDS NO JAVASCRIPT, a component that forgets to check the preference still
  * animates for zero milliseconds. The JS half (the pure `motionAllowed` decision) is slice B, and it gates the
  * animations CSS cannot reach.
  */
@@ -275,14 +275,14 @@ export const MOTION = {
 } as const;
 
 /**
- * THE CLAIM, AS DATA — hand-authored to mirror what the PAPER promises, and deliberately NOT derived from the
+ * THE CLAIM, AS DATA, hand-authored to mirror what the PAPER promises, and deliberately NOT derived from the
  * scales above.
  *
  * A derived list would compare the token set to itself and pass by construction: the fixture-restates-production
  * shape, which is exactly how S14.1's coverage claim survived unchallenged. This list is the CLAIM; the emitted
  * CSS is the ARTIFACT; the census in `tokens.test.ts` compares one to the other.
  *
- * ⛔ ADDING A CATEGORY HERE WITHOUT EMITTING IT GOES RED. That is the whole point — the failure mode being
+ * ⛔ ADDING A CATEGORY HERE WITHOUT EMITTING IT GOES RED. That is the whole point, the failure mode being
  * guarded is a paper (or this list) growing a promise the artifact never grew.
  */
 export const CLAIMED_COVERAGE: Array<{
@@ -358,7 +358,7 @@ export function tailwindColors() {
     neutral: ref("neutral"),
     accent: {
       DEFAULT: ref("accent"),
-      // ⛔ MIGRATION BRIDGE — the OLD token names, kept alive so the sixteen screens that have not had their
+      // ⛔ MIGRATION BRIDGE, the OLD token names, kept alive so the sixteen screens that have not had their
       // section pass yet keep rendering. Tailwind DROPS unknown classes SILENTLY: removing these names would
       // not fail the build, it would blank half the product's surfaces and nothing would go red.
       //
@@ -388,7 +388,7 @@ export function tailwindColors() {
 }
 
 /**
- * The non-colour scales, emitted as `:root` variables — plus the reduced-motion media block.
+ * The non-colour scales, emitted as `:root` variables, plus the reduced-motion media block.
  *
  * Colour is per-theme; these are NOT. A theme changes what the product looks like, never how far apart things
  * sit or how long a transition runs; making spacing themeable would let a theme change layout, which is a
@@ -427,7 +427,7 @@ export function themeCss(): string {
   ].join("\n");
 }
 
-// ── contrast, computed — so the accessibility floor is a TEST, not a review ──────────────────────────────────
+// ── contrast, computed, so the accessibility floor is a TEST, not a review ──────────────────────────────────
 
 function srgbToLinear(c: number): number {
   const s = c / 255;
@@ -439,7 +439,7 @@ function srgbToLinear(c: number): number {
  * The solid colour a TRANSLUCENT surface composites to over the page background.
  *
  * ⛔ CONTRAST IS COMPUTED AGAINST THIS, NOT AGAINST THE `rgba()` STRING. A ratio computed from an alpha value
- * is `NaN`, and `NaN >= 4.5` is FALSE — so the gate fails loudly rather than certifying an unreadable pair.
+ * is `NaN`, and `NaN >= 4.5` is FALSE, so the gate fails loudly rather than certifying an unreadable pair.
  * That is the safe direction, and it is why the resolver lives here rather than in the test: a consumer that
  * needs "what colour is this really" must not each invent its own answer.
  */
@@ -500,18 +500,18 @@ export const CONTRAST_PAIRS: Array<{
   { fg: "text-body", bg: "surface", floor: 4.5, why: "body text on a card" },
   { fg: "text-secondary", bg: "surface", floor: 4.5, why: "labels on a card" },
   // The two CORRECTED tones. They are asserted at the SAME floor as body text precisely because the README's
-  // originals failed it — if a future edit re-points them at the design's literal values, this goes red.
+  // originals failed it, if a future edit re-points them at the design's literal values, this goes red.
   {
     fg: "text-tertiary",
     bg: "surface",
     floor: 4.5,
-    why: "sub-lines — README's #5E5E5B failed at 2.65:1",
+    why: "sub-lines, README's #5E5E5B failed at 2.65:1",
   },
   {
     fg: "text-faint",
     bg: "surface",
     floor: 4.5,
-    why: "explainer captions — README's #4A4A48 failed at 1.94:1",
+    why: "explainer captions, README's #4A4A48 failed at 1.94:1",
   },
   {
     fg: "text-secondary",
@@ -523,7 +523,7 @@ export const CONTRAST_PAIRS: Array<{
     fg: "ok",
     bg: "surface",
     floor: 3,
-    why: "liveness badge — a UI boundary, not body text",
+    why: "liveness badge, a UI boundary, not body text",
   },
   { fg: "warn", bg: "surface", floor: 3, why: "caution badge" },
   { fg: "danger", bg: "surface", floor: 3, why: "error badge" },

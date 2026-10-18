@@ -18,13 +18,13 @@ const node = (
     "status" | "policy_degraded" | "policy_degraded_kind"
   >;
 
-describe("policyHealthBadge — bool primary, kind refines, never less alarmed", () => {
+describe("policyHealthBadge, bool primary, kind refines, never less alarmed", () => {
   it("not degraded → NO badge (healthy)", () => {
     expect(policyHealthBadge(node(false, "healthy"))).toBeNull();
     expect(policyHealthBadge(node(false))).toBeNull();
   });
 
-  it("converging → subtle 'syncing…' (warn, not danger — a normal push must not alarm loudly)", () => {
+  it("converging → subtle 'syncing…' (warn, not danger, a normal push must not alarm loudly)", () => {
     const b = policyHealthBadge(node(true, "converging"));
     expect(b).toEqual({ label: "syncing…", tone: "warn" });
   });
@@ -78,7 +78,7 @@ describe("policyHealthBadge — bool primary, kind refines, never less alarmed",
     const b = policyHealthBadge(node(true, "hub_forwarding_not_reconciling"));
     expect(b?.tone).toBe("danger"); // stale enforcement is serious, never a soft warn
     expect(b?.label).toMatch(/forward/i); // lies in neither direction: it IS forwarding ...
-    expect(b?.label).toMatch(/agent|restart/i); // ... but the agent is down — restart it
+    expect(b?.label).toMatch(/agent|restart/i); // ... but the agent is down, restart it
   });
 
   it("forward-compat: an unknown future kind falls through to the 'degraded' default (never null while degraded)", () => {
@@ -89,7 +89,7 @@ describe("policyHealthBadge — bool primary, kind refines, never less alarmed",
     expect(b).toEqual({ label: "degraded", tone: "warn" });
   });
 });
-describe("siteLinkNote — WF-B subordinate line, independent of the headline badge", () => {
+describe("siteLinkNote, WF-B subordinate line, independent of the headline badge", () => {
   const n = (peer?: string | null, demoted?: boolean) =>
     ({
       site_link_note_peer: peer ?? null,
@@ -108,7 +108,7 @@ describe("siteLinkNote — WF-B subordinate line, independent of the headline ba
     });
   });
 
-  it("the note is INDEPENDENT of policy_degraded_kind — a healthy headline can still carry it (the walk's state)", () => {
+  it("the note is INDEPENDENT of policy_degraded_kind, a healthy headline can still carry it (the walk's state)", () => {
     // The CP only sets the note when the headline is NOT site_link_down; the render shows both truths distinct.
     const healthyHeadline = {
       status: "active",
@@ -120,17 +120,17 @@ describe("siteLinkNote — WF-B subordinate line, independent of the headline ba
   });
 });
 
-// ⛔ THE DEFECT THIS FILE EXISTS TO PREVENT RECURRING — a FOURTH time.
+// ⛔ THE DEFECT THIS FILE EXISTS TO PREVENT RECURRING, a FOURTH time.
 //
 // A revoked gateway rendered the literal word "healthy", in green, on the deployed dashboard. Fixed in
-// Gateways.tsx at EPIC 11 and in sitesview.ts at S13.1 — both at the site where it was SEEN, so it kept
+// Gateways.tsx at EPIC 11 and in sitesview.ts at S13.1, both at the site where it was SEEN, so it kept
 // coming back at the next consumer. The verdict is formed here; the guard belongs here.
-describe("⛔ a revoked gateway gets NO health verdict — not a healthy one, not a degraded one", () => {
+describe("⛔ a revoked gateway gets NO health verdict, not a healthy one, not a degraded one", () => {
   it("revoked + not degraded → null (this is the one that rendered as green 'healthy')", () => {
     expect(policyHealthBadge(node(false, undefined, "revoked"))).toBeNull();
   });
 
-  it("revoked + degraded → STILL null — revoked outranks every kind", () => {
+  it("revoked + degraded → STILL null, revoked outranks every kind", () => {
     // "site link down" on a deliberately-revoked node instructs an operator to repair something that was
     // decommissioned on purpose. The state IS revoked; a degradation badge beside it describes a machine
     // that is no longer meant to work.
@@ -140,7 +140,7 @@ describe("⛔ a revoked gateway gets NO health verdict — not a healthy one, no
     expect(policyHealthBadge(node(true, undefined, "revoked"))).toBeNull();
   });
 
-  it("an ACTIVE gateway is unaffected — the guard must not swallow real verdicts", () => {
+  it("an ACTIVE gateway is unaffected, the guard must not swallow real verdicts", () => {
     expect(
       policyHealthBadge(node(true, "site_link_down", "active")),
     ).not.toBeNull();
@@ -152,11 +152,11 @@ describe("⛔ a revoked gateway gets NO health verdict — not a healthy one, no
 
 // ⛔ THE LAST VERDICT THAT LIVED OUTSIDE THIS MODULE.
 //
-// The Dashboard panel read `b ? b.label : "healthy"` — turning "no badge" into the CLAIM "healthy". That is
+// The Dashboard panel read `b ? b.label : "healthy"`, turning "no badge" into the CLAIM "healthy". That is
 // how a revoked gateway rendered green on the deployed dashboard, and the widened signature could not have
 // stopped it: policyHealthBadge correctly returned null, and the CALLER invented the verdict from the absence.
-describe("⛔ gatewayHealthRow — 'no badge' is not 'healthy'", () => {
-  it("a revoked gateway reads REVOKED, neutral — never healthy, never degraded", () => {
+describe("⛔ gatewayHealthRow, 'no badge' is not 'healthy'", () => {
+  it("a revoked gateway reads REVOKED, neutral, never healthy, never degraded", () => {
     expect(gatewayHealthRow(node(false, undefined, "revoked"))).toEqual({
       label: "revoked",
       tone: "neutral",
@@ -168,7 +168,7 @@ describe("⛔ gatewayHealthRow — 'no badge' is not 'healthy'", () => {
     });
   });
 
-  it("an active, undegraded gateway is healthy — the guard must not swallow the ordinary case", () => {
+  it("an active, undegraded gateway is healthy, the guard must not swallow the ordinary case", () => {
     expect(gatewayHealthRow(node(false))).toEqual({
       label: "healthy",
       tone: "ok",

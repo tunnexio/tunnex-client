@@ -77,7 +77,7 @@ func TestIPCSetResolversRoutesAndLeavesTunnelUntouched(t *testing.T) {
 }
 
 // TestIPCSetResolversErrorIsTypedTunnelUntouched: a reconcile failure returns the
-// typed code and leaves the tunnel UP — fail-static, DNS forwarding is never
+// typed code and leaves the tunnel UP, fail-static, DNS forwarding is never
 // load-bearing for the tunnel.
 func TestIPCSetResolversErrorIsTypedTunnelUntouched(t *testing.T) {
 	srv, sup := newServer(t, &fakeBackend{}, trustedResolver)
@@ -122,7 +122,7 @@ func TestIPCResolversRejectedOnOtherVerbs(t *testing.T) {
 	}
 }
 
-// TestIPCSetAllowedIPsRoutesAndTunnelUntouched (S8.5 Slice 2a) — set_allowed_ips reaches the live-apply
+// TestIPCSetAllowedIPsRoutesAndTunnelUntouched (S8.5 Slice 2a), set_allowed_ips reaches the live-apply
 // with the desired set and NEVER changes tunnel state or ownership (the kill-switch-untouched probe).
 func TestIPCSetAllowedIPsRoutesAndTunnelUntouched(t *testing.T) {
 	srv, sup := newServer(t, &fakeBackend{}, trustedResolver)
@@ -149,7 +149,7 @@ func TestIPCSetAllowedIPsRoutesAndTunnelUntouched(t *testing.T) {
 	}
 }
 
-// TestIPCAllowedIPsRejectedOnOtherVerbs (S8.5 Slice 2a) — an allowed_ips payload smuggled onto a non-
+// TestIPCAllowedIPsRejectedOnOtherVerbs (S8.5 Slice 2a), an allowed_ips payload smuggled onto a non-
 // set_allowed_ips verb is rejected by the envelope validator (no routing change on tunnel_down).
 func TestIPCAllowedIPsRejectedOnOtherVerbs(t *testing.T) {
 	srv, _ := newServer(t, &fakeBackend{}, trustedResolver)
@@ -170,7 +170,7 @@ func TestIPCAllowedIPsRejectedOnOtherVerbs(t *testing.T) {
 	}
 }
 
-// TestIPCSetGatewayPeerRoutesAndTunnelUntouched (WF-A) — set_gateway_peer reaches the swap with the new
+// TestIPCSetGatewayPeerRoutesAndTunnelUntouched (WF-A), set_gateway_peer reaches the swap with the new
 // peer + endpoint and NEVER changes tunnel state or ownership (the kill-switch-untouched probe).
 func TestIPCSetGatewayPeerRoutesAndTunnelUntouched(t *testing.T) {
 	srv, sup := newServer(t, &fakeBackend{}, trustedResolver)
@@ -200,7 +200,7 @@ func TestIPCSetGatewayPeerRoutesAndTunnelUntouched(t *testing.T) {
 	}
 }
 
-// TestIPCGatewayPeerRejectedOnOtherVerbs (WF-A) — a gateway_peer smuggled onto a non-set_gateway_peer verb
+// TestIPCGatewayPeerRejectedOnOtherVerbs (WF-A), a gateway_peer smuggled onto a non-set_gateway_peer verb
 // is rejected by the envelope validator (no peer swap on tunnel_down).
 func TestIPCGatewayPeerRejectedOnOtherVerbs(t *testing.T) {
 	srv, _ := newServer(t, &fakeBackend{}, trustedResolver)
@@ -221,7 +221,7 @@ func TestIPCGatewayPeerRejectedOnOtherVerbs(t *testing.T) {
 	}
 }
 
-// TestIPCGatewayPeerRequiredAndValidated (WF-A) — set_gateway_peer with no peer is rejected
+// TestIPCGatewayPeerRequiredAndValidated (WF-A), set_gateway_peer with no peer is rejected
 // (gateway_peer_required); a bad key / unsafe endpoint is rejected as strictly as a tunnel_up peer.
 func TestIPCGatewayPeerRequiredAndValidated(t *testing.T) {
 	srv, _ := newServer(t, &fakeBackend{}, trustedResolver)
@@ -291,7 +291,7 @@ func TestIPCBadConfigRejectedNoTunnel(t *testing.T) {
 
 func TestIPCNonOwnerCloseKeepsTunnel(t *testing.T) {
 	// Connection A owns the tunnel; a benign connection B closing must NOT tear it
-	// down (the owner-tracking fix — any-close-fails-closed was the reported bug).
+	// down (the owner-tracking fix, any-close-fails-closed was the reported bug).
 	srv, sup := newServer(t, &fakeBackend{}, trustedResolver)
 	ca1, ca2 := net.Pipe()
 	go srv.handle(ca2)
@@ -369,7 +369,7 @@ func TestIPCClosedSocketIsDefinitive(t *testing.T) {
 }
 
 // TestIPCReadTimeoutIsNotDefinitive: a wedged-but-connected owner trips the read
-// deadline WITHOUT closing the socket — it must fail closed but NOT be orphaned, so it
+// deadline WITHOUT closing the socket, it must fail closed but NOT be orphaned, so it
 // keeps the conservative full window (the fail-open the review flagged as #1).
 func TestIPCReadTimeoutIsNotDefinitive(t *testing.T) {
 	be := &fakeBackend{fc: make(chan struct{}, 1)}
@@ -391,12 +391,12 @@ func TestIPCReadTimeoutIsNotDefinitive(t *testing.T) {
 		t.Fatalf("timeout must fail closed, got %s", sup.State())
 	}
 	if sup.orphanedForTest() {
-		t.Fatal("a read-timeout (socket still open) must NOT be orphaned — keep the full window")
+		t.Fatal("a read-timeout (socket still open) must NOT be orphaned, keep the full window")
 	}
 }
 
 // TestIPCFailedUpOwnsConnection: a bring-up that FAILS still arms the kill-switch, so the
-// attempting connection must be OWNED — a later force-quit (socket close) then gets the
+// attempting connection must be OWNED, a later force-quit (socket close) then gets the
 // short orphan window instead of blackholing for the full window (review #3).
 func TestIPCFailedUpOwnsConnection(t *testing.T) {
 	be := &fakeBackend{upErr: &ProtocolError{Code: "x", Msg: "endpoint down"}}

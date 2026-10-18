@@ -2,7 +2,7 @@ import type { BeamSharedView, BeamAction, BeamCreate, BeamTarget, BeamView, Beam
 import { contextBridge, ipcRenderer } from "electron";
 
 // The ONLY privileged surface exposed to the renderer (contextIsolation on,
-// nodeIntegration off, sandbox on). VERB-SPECIFIC + promise-based — NO generic
+// nodeIntegration off, sandbox on). VERB-SPECIFIC + promise-based, NO generic
 // invoke(channel, args) passthrough, which would make the allowlist decorative.
 // The raw bearer token is NEVER exposed here (no getToken). Managed control-plane
 // calls stay in main behind these verb-specific IPC methods. tunnel.* is reserved
@@ -53,12 +53,12 @@ const api = {
     getServerUrl: (): Promise<string> => ipcRenderer.invoke("config:getServerUrl"),
     setServerUrl: (url: string): Promise<{ url: string; reloginRequired: boolean }> => ipcRenderer.invoke("config:setServerUrl", url),
   },
-  // S6.3 tunnel control. Verb-specific like the rest — up/down/status only. The
+  // S6.3 tunnel control. Verb-specific like the rest, up/down/status only. The
   // renderer holds NO tunnel secret: main resolves the WG config (bearer-fetched)
   // and forwards it to the privileged helper; the renderer only sees status.
   tunnel: {
     // fullTunnel is the split-tunnel toggle INTENT (S6.4); it only takes effect when
-    // a device is minted (get-or-create) — an existing config is reused as-is.
+    // a device is minted (get-or-create), an existing config is reused as-is.
     up: (fullTunnel = false): Promise<TunnelStatus> => ipcRenderer.invoke("tunnel:up", fullTunnel),
     down: (): Promise<void> => ipcRenderer.invoke("tunnel:down"),
     status: (): Promise<TunnelStatus> => ipcRenderer.invoke("tunnel:status"),
@@ -106,10 +106,10 @@ const api = {
   },
 };
 
-// TunnelStatus mirrors apps/helper (no secrets — never carries key material).
+// TunnelStatus mirrors apps/helper (no secrets, never carries key material).
 // "revoked" is CLIENT-synthesized (the helper never emits it): main sets it when the
 // proactive revocation monitor detects this device was revoked/deleted server-side.
-/** What main reports about an imported profile — never the key material. */
+/** What main reports about an imported profile, never the key material. */
 export interface ImportedProfile {
   id: string;
   name: string;
@@ -153,7 +153,7 @@ export interface TunnelStatus {
   rx_bytes?: number;
   tx_bytes?: number;
   // ⛔ THE TYPE OMITTED A FIELD THAT WAS ALREADY BEING SENT. `TunnelController.withAddress`
-  // decorates every status with the device's tunnel address, and this mirror never declared it —
+  // decorates every status with the device's tunnel address, and this mirror never declared it ,
   // so the renderer received the value and TypeScript said it did not exist. A type that
   // under-describes the wire is the same defect as one that over-describes it, just quieter: the
   // data is there, and the only thing missing is permission to use it.
