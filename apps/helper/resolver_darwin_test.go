@@ -260,3 +260,34 @@ func TestReconcileRejectsBadInput(t *testing.T) {
 		})
 	}
 }
+
+func TestManagedPrivateDNSLifecycleRestoresScopedResolution(t *testing.T) {
+	dir := t.TempDir()
+	foreign := filepath.Join(dir, "office.example")
+	original := "nameserver 192.168.1.1\n"
+	if err := os.WriteFile(foreign, []byte(original), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	profiles := []ResolverForward{{Domain: "aws.tunnex.app", ResolverIP: "10.99.0.1"}, {Domain: "static.internal", ResolverIP: "10.99.0.1"}}
+	for cycle := 0; cycle < 2; cycle++ {
+		if err := reconcileResolvers(dir, profiles); err != nil {
+			t.Fatal(err)
+		}
+		if err := reconcileResolvers(dir, profiles[1:]); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := os.Stat(filepath.Join(dir, "aws.tunnex.app")); !os.IsNotExist(err) {
+			t.Fatalf("withdrawn profile still installed: %v", err)
+		}
+		if err := reconcileResolvers(dir, nil); err != nil {
+			t.Fatal(err)
+		}
+		entries, err := os.ReadDir(dir)
+		if err != nil || len(entries) != 1 || entries[0].Name() != "office.example" {
+			t.Fatalf("disconnect did not restore original resolver directory: %v %v", entries, err)
+		}
+		if got := readFile(t, foreign); got != original {
+			t.Fatalf("office DNS changed: %q", got)
+		}
+	}
+}

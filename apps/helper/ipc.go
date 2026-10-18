@@ -113,6 +113,10 @@ type Server struct {
 // the verifier itself (path_check now; code_signing at S6.5b) — there is no
 // separate knob to drift out of sync with the real check.
 func NewServer(sup *Supervisor, verify CallerVerifier, resolve PeerResolver) *Server {
+	resolverApply := setResolvers
+	if backend, ok := sup.be.(interface{ SetResolvers([]ResolverForward) error }); ok {
+		resolverApply = backend.SetResolvers
+	}
 	return &Server{
 		sup:            sup,
 		verify:         verify,
@@ -121,7 +125,7 @@ func NewServer(sup *Supervisor, verify CallerVerifier, resolve PeerResolver) *Se
 		writeTimeout:   defaultWriteTimeout,
 		sem:            make(chan struct{}, defaultMaxConns),
 		posture:        collectPosture,
-		resolvers:      setResolvers,
+		resolvers:      resolverApply,
 		setAllowedIPs:  sup.UpdateAllowedIPs,
 		setGatewayPeer: sup.UpdateGatewayPeer,
 	}

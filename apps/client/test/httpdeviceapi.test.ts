@@ -576,3 +576,45 @@ test("updateDeviceMode rejects malformed 2xx bodies before returning config fact
     );
   }
 });
+
+test("routed config carries gateway private DNS and authorized cloud routes in the existing contract", async () => {
+  let requested = "";
+  stubFetch([{ match: "/routed-ranges", body: {
+    ranges: ["10.180.0.0/16", "10.180.0.0/16"],
+    forwards: [
+      { domain: "AWS.TUNNEX.APP.", resolver_ip: "10.99.0.1" },
+      { domain: "aws.tunnex.app", resolver_ip: "10.99.0.1" },
+      { domain: "_msdcs.corp", resolver_ip: "10.99.0.1" },
+    ],
+    dial_endpoint: "gateway.example:51820", dial_pubkey: PUBLIC_KEY,
+  } }], (url) => { requested = url; });
+  assert.deepEqual(await api().routedConfig(ORG_ID, DEVICE_ID), {
+    ranges: ["10.180.0.0/16"],
+    forwards: [
+      { domain: "_msdcs.corp", resolver_ip: "10.99.0.1" },
+      { domain: "aws.tunnex.app", resolver_ip: "10.99.0.1" },
+    ],
+    dial: { endpoint: "gateway.example:51820", pubkey: PUBLIC_KEY },
+  });
+  assert.ok(requested.endsWith(`/routed-ranges?device_id=${DEVICE_ID}`));
+});
+
+test("malformed routed snapshots never masquerade as route or DNS withdrawal", async () => {
+  const malformed = [null, {}, [], { ranges: null }, { ranges: ["10.180.0.0/33"] },
+    { ranges: [], forwards: null }, { ranges: [], forwards: [null] },
+    { ranges: [], forwards: [{ domain: "aws.tunnex.app", resolver_ip: "not-an-ip" }] },
+    { ranges: [], forwards: [{ domain: "../resolver", resolver_ip: "10.99.0.1" }] },
+    { ranges: [], forwards: [{ domain: "aws.tunnex.app", resolver_ip: "10.99.0.1" },
+      { domain: "AWS.TUNNEX.APP.", resolver_ip: "10.99.0.2" }] },
+    { ranges: [], dial_endpoint: "gateway.example:51820" },
+    { ranges: [], dial_endpoint: "gateway.example:51820", dial_pubkey: "bad" },
+  ];
+  for (const body of malformed) {
+    stubFetch([{ match: "/routed-ranges", body }]);
+    await assert.rejects(api().routedConfig(ORG_ID, DEVICE_ID), /routed_ranges_failed: invalid_response/);
+  }
+  for (const body of [{ ranges: [] }, { ranges: [], forwards: [], dial_endpoint: null, dial_pubkey: null }]) {
+    stubFetch([{ match: "/routed-ranges", body }]);
+    assert.deepEqual(await api().routedConfig(ORG_ID, DEVICE_ID), { ranges: [], forwards: [], dial: null });
+  }
+});

@@ -116,8 +116,8 @@ export interface DeviceApi {
   // createDevice sends a client public key and returns public identity facts
   // only. A private key or config in the HTTP response is invalid.
   createDevice(intent: ManagedEnrollmentCreate): Promise<ManagedEnrollmentDevice>;
-  // Update routing mode in-place. The server preserves device identity and returns
-  // mutable config facts; the locally-held private key is never re-issued.
+  // Update routing mode in-place, or refresh mutable config with the same mode.
+  // The server preserves device identity; the local private key is never re-issued.
   updateDeviceMode?(deviceId: string, orgId: string, fullTunnel: boolean): Promise<DeviceModeConfig>;
   // revokeDevice revokes a bound device against its recorded organization. A
   // legacy record without orgId uses the separate complete-scan proof below.
@@ -294,6 +294,46 @@ function validEndpoint(value: unknown): value is string {
   if (!/^\d+$/.test(portText)) return false;
   const port = Number(portText);
   return port >= 1 && port <= 65535 && validEndpointHost(host);
+}
+
+// A successful routed-ranges response is a complete desired snapshot. Reject a
+// malformed response before either tier changes; explicit [] is withdrawal.
+// Forward records deliberately retain the existing domain/IP contract: static
+// and IPsec profiles both point at the gateway's WireGuard DNS listener.
+export function parseRoutedConfig(value: unknown): RoutedConfig {
+  const invalid = (): never => { throw new Error("routed_ranges_failed: invalid_response"); };
+  if (!value || typeof value !== "object" || Array.isArray(value)) return invalid();
+  const body = value as Record<string, unknown>;
+  if (!Array.isArray(body.ranges) || !body.ranges.every(validCIDR)) return invalid();
+  const ranges = [...new Set((body.ranges as string[]).map((range) => range.trim()))].sort();
+  // Servers predating split DNS omitted forwards; null or another malformed
+  // value is not an authoritative empty set.
+  const rawForwards = body.forwards === undefined ? [] : body.forwards;
+  if (!Array.isArray(rawForwards)) return invalid();
+  const byDomain = new Map<string, string>();
+  for (const raw of rawForwards) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return invalid();
+    const entry = raw as Record<string, unknown>;
+    if (typeof entry.domain !== "string" || typeof entry.resolver_ip !== "string") return invalid();
+    const domain = entry.domain.trim().replace(/\.$/, "").toLowerCase();
+    const resolver = entry.resolver_ip.trim();
+    // Mirror the helper's path-safe suffix floor, including AD underscores
+    // and single-label zones. Shape authority remains in the control plane.
+    if (!domain || domain.length > 253 || domain.startsWith(".") || domain.endsWith(".")
+      || domain.includes("..") || /[\/\\\u0000-\u0020\u007f-\u009f]/.test(domain)
+      || resolver.includes("%") || isIP(resolver) === 0) return invalid();
+    const previous = byDomain.get(domain);
+    if (previous !== undefined && previous !== resolver) return invalid();
+    byDomain.set(domain, resolver);
+  }
+  let dial: DialTarget | null = null;
+  if (body.dial_endpoint != null || body.dial_pubkey != null) {
+    if (!validEndpoint(body.dial_endpoint) || !validWireGuardKey(body.dial_pubkey)) return invalid();
+    dial = { endpoint: body.dial_endpoint.trim(), pubkey: body.dial_pubkey.trim() };
+  }
+  const forwards = [...byDomain.entries()].sort(([a], [b]) => a.localeCompare(b))
+    .map(([domain, resolver_ip]) => ({ domain, resolver_ip }));
+  return { ranges, forwards, dial };
 }
 
 function validStringArray(value: unknown, item: (candidate: unknown) => boolean, requireOne = false): boolean {
@@ -1175,7 +1215,9 @@ export async function resolveTunnelConfig(
   enrollmentOrganizationId?: string,
   authenticatedUserId?: string,
   enrollmentRecovery?: ManagedEnrollmentRecoveryContext,
+  assertCurrent?: () => void,
 ): Promise<TunnelConfig> {
+  assertCurrent?.();
   // WF-A: for a FULL tunnel, attach the CP endpoint so the helper carves the kill-switch to it (the control
   // channel must survive the tunnel going down to re-home). NEVER persisted — it's an origin-derived routing
   // fact, re-attached each connect on top of the stored identity-only config. Split → no carve-out.
@@ -1219,6 +1261,7 @@ export async function resolveTunnelConfig(
       // An inconclusive read must not turn a pending credential into a new enrollment.
       throw new PendingApprovalError(existing.deviceId);
     }
+    assertCurrent?.();
     if (status === "pending") throw new PendingApprovalError(existing.deviceId);
     if (status === "gone") {
       markDeviceRevoked(existing, store);
@@ -1228,9 +1271,10 @@ export async function resolveTunnelConfig(
       store.put(existing);
     }
   }
-  if (existing && existing.config.full_tunnel !== fullTunnel) {
-    // MODE CHANGED (split↔full): mutate the existing device identity in place. The API
-    // returns route/config facts only; preserve the locally-held private key atomically.
+  if (existing) {
+    // Every managed connect refreshes mutable facts, including the gateway's
+    // applied MTU. A same-mode request is an idempotent read-through; it does not
+    // toggle routing mode or mint a new identity.
     if (existing.pending) throw new PendingApprovalError(existing.deviceId);
     // Verify terminal existence before asking that device to change mode. A 404
     // means the control plane revoked/deleted that identity; it must NEVER turn
@@ -1242,17 +1286,27 @@ export async function resolveTunnelConfig(
     } catch {
       stillThere = true;
     }
+    assertCurrent?.();
     if (!stillThere) {
       markDeviceRevoked(existing, store);
       throw new DeviceRevokedError(existing.deviceId);
     }
   }
-  if (existing && existing.config.full_tunnel !== fullTunnel) {
-    // MODE CHANGED (split↔full): mutate the existing device identity in place. The API
-    // returns route/config facts only; preserve the locally-held private key atomically.
+  if (existing) {
+    // Refresh failures are inconclusive: retain the encrypted identity for retry,
+    // but never hand stale configuration to the helper for a new connection.
     if (!api.updateDeviceMode) throw new Error("device_mode_update_unsupported");
     const mode = await api.updateDeviceMode(existing.deviceId, existing.orgId, fullTunnel);
-    if (mode.fullTunnel !== fullTunnel) throw new Error("update_device_mode_failed: invalid_response");
+    assertCurrent?.();
+    if (
+      mode.deviceId !== existing.deviceId
+      || mode.ownerUserId !== existing.ownerUserId
+      || !isCanonicalUuid(mode.nodeId)
+      || mode.publicKey !== deriveWireGuardPublicKey(existing.config.private_key)
+      || mode.address !== existing.config.address
+      || (mode.status !== "active" && mode.status !== "pending")
+      || mode.fullTunnel !== fullTunnel
+    ) throw new Error("update_device_mode_failed: invalid_response");
     const config: TunnelConfig = {
       ...existing.config,
       address: mode.address,
@@ -1271,20 +1325,12 @@ export async function resolveTunnelConfig(
     if (!isValidManagedTunnelConfig(config)) {
       throw new Error("update_device_mode_failed: invalid_response");
     }
+    if (mode.status === "pending") {
+      store.put({ ...existing, pending: true });
+      throw new PendingApprovalError(existing.deviceId);
+    }
     store.put({ ...existing, config, pending: false });
     return withCP(config);
-  } else if (existing) {
-    // Same mode: a definitive missing device is terminal, not an invitation to
-    // mint another credential. A transient read error keeps the config intact.
-    let stillThere = true;
-    try {
-      stillThere = await api.deviceExists(existing.deviceId, existing.orgId);
-    } catch {
-      stillThere = true;
-    }
-    if (stillThere) return withCP(existing.config);
-    markDeviceRevoked(existing, store);
-    throw new DeviceRevokedError(existing.deviceId);
   }
 
   if (!enrollmentOrganizationId) throw new OrganizationSelectionRequiredError();
