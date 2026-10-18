@@ -8,7 +8,7 @@ import {
 //
 // Revoking a gateway cascaded to every device homed on it, so "they stop connecting immediately" was
 // accurate and this test asserted it. The revoke now REFUSES while any device is homed there, which makes
-// the old sentence a warning about something that cannot happen — and, worse, silence about the thing that
+// the old sentence a warning about something that cannot happen, and, worse, silence about the thing that
 // will: the operator has work to do first. The assertions moved in the same commit as the behaviour, which
 // is the whole discipline: copy describing a flow the product does not have is the defect docs/laws.md
 // records twice this cycle.

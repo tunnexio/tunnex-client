@@ -29,14 +29,14 @@ describe("CLIENT_STATES", () => {
     ] as const) {
       expect(CLIENT_STATES).toContain(s);
     }
-    // Ours. A design's missing state is usually the FAILURE state — a designer drawing a healthy
+    // Ours. A design's missing state is usually the FAILURE state, a designer drawing a healthy
     // product has nothing to look at when drawing it.
     expect(CLIENT_STATES).toContain("failed");
     expect(CLIENT_STATES).toContain("signed_out");
     expect(CLIENT_STATES).toHaveLength(13);
   });
 
-  it("every state has a view — the switch is exhaustive", () => {
+  it("every state has a view, the switch is exhaustive", () => {
     for (const s of CLIENT_STATES) {
       const v = stateView(s);
       expect(v.label.length).toBeGreaterThan(3);
@@ -47,7 +47,7 @@ describe("CLIENT_STATES", () => {
   });
 });
 
-// ⛔ "THE ICON IS NEVER GREEN WHILE THE TUNNEL IS DEAD" — the block's own rule, and the only one it
+// ⛔ "THE ICON IS NEVER GREEN WHILE THE TUNNEL IS DEAD", the block's own rule, and the only one it
 // states outright. Everything that is not a live tunnel is grey or red.
 describe("trayAppearance", () => {
   it("⛔ is solid ONLY for connected", () => {
@@ -82,7 +82,7 @@ describe("notifications", () => {
 });
 
 // ⛔ NULL ACTION MEANS NO BUTTON. Offering "Connect" on a revoked device is a control that cannot
-// work — worse than none.
+// work, worse than none.
 describe("the primary verb", () => {
   it("is absent where the user genuinely cannot act", () => {
     for (const s of [
@@ -109,7 +109,7 @@ describe("the primary verb", () => {
     }
   });
 
-  it("⛔ expired creds sends the user to the BROWSER — never an in-app password field", () => {
+  it("⛔ expired creds sends the user to the BROWSER, never an in-app password field", () => {
     // The block: "MFA touches the client only via browser re-auth … NEVER an in-app password field."
     const a = stateView("expired_creds").action!;
     expect(a).toMatch(/browser/i);
@@ -117,7 +117,7 @@ describe("the primary verb", () => {
   });
 
   it("⛔ the kill-switch verb RESTORES ROUTING, and the surface must still SAY so", () => {
-    // The label is now one word by founder rule, so the fact cannot live there — but it is not
+    // The label is now one word by founder rule, so the fact cannot live there, but it is not
     // optional. On this state "Disconnect" does NOT mean "drop the tunnel": the tunnel is already
     // down and the button lifts a BLOCK. A user who reads the button alone would think pressing it
     // makes things worse. The explanation moved into `detail`; it did not disappear.
@@ -129,7 +129,7 @@ describe("the primary verb", () => {
 });
 
 describe("formatting", () => {
-  it("⛔ renders n/a for unknown, never 0 — a zero nobody measured is a claim", () => {
+  it("⛔ renders n/a for unknown, never 0, a zero nobody measured is a claim", () => {
     expect(formatBytes(null)).toBe("n/a");
     expect(formatRate(undefined)).toBe("n/a");
     expect(formatDuration(null)).toBe("n/a");
@@ -173,7 +173,7 @@ describe("parsePreviewState", () => {
 
 // ⛔ THE MESH IS CUT (founder-directed); THE PLOT STAYED AND ITS SAMPLES ARE NOW REAL.
 //
-// The old graph was fed by `pushSample`, which invented values from `Math.random` — a 14% chance of
+// The old graph was fed by `pushSample`, which invented values from `Math.random`, a 14% chance of
 // a burst, otherwise a low idle band. Beside it every stat field read `n/a`. A plot of invented data
 // next to an honest `n/a` is worse than either alone: the `n/a` says "not measured", the curve says
 // "measured", and the one that looks like evidence is the one that is lying.
@@ -185,7 +185,7 @@ import {
 } from "../src/client/throughput";
 
 describe("throughput samples are measured, not generated", () => {
-  it("⛔ a rate is a DELTA between two counter readings — no source reports bytes/sec", () => {
+  it("⛔ a rate is a DELTA between two counter readings, no source reports bytes/sec", () => {
     const r = rateBetween(
       { bytes: 1000, at: 1_000 },
       { bytes: 3000, at: 3_000 },
@@ -252,7 +252,7 @@ describe("⛔ every byte value carries exactly two decimals", () => {
   it("no unit and no magnitude is an exception", () => {
     // The first attempt scaled precision to magnitude (2 decimals under 10, 1 under 100, none
     // above) and left raw BYTES returning the number verbatim. A rate is a division, so it is
-    // almost never integral, and 256 B/s rendered as `256.2562562562563 B/s` — sixteen significant
+    // almost never integral, and 256 B/s rendered as `256.2562562562563 B/s`, sixteen significant
     // figures, wide enough to push the row off a 440px card.
     //
     // > **A FORMATTING RULE WITH AN EXCEPTION WILL BE BROKEN BY WHICHEVER VALUE TAKES THE
@@ -269,7 +269,7 @@ describe("⛔ every byte value carries exactly two decimals", () => {
     }
   });
 
-  it("absent is still n/a, never 0 — a zero nobody measured is a claim", () => {
+  it("absent is still n/a, never 0, a zero nobody measured is a claim", () => {
     expect(formatBytes(null)).toBe("n/a");
     expect(formatRate(undefined)).toBe("n/a");
   });

@@ -8,7 +8,7 @@ import (
 )
 
 // collectPosture reads Windows posture facts (S7.5.3). BitLocker state for the
-// SYSTEM drive comes from the Win32_EncryptableVolume WMI class (needs admin —
+// SYSTEM drive comes from the Win32_EncryptableVolume WMI class (needs admin ,
 // which this SCM service is). The NUMERIC ProtectionStatus is read deliberately:
 // manage-bde prose is localized and unparseable across locales. Any failure or
 // unrecognized output yields a nil fact: reported absent upstream, never guessed.

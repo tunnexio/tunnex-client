@@ -15,7 +15,7 @@ const members = [
 //
 // The shipped cell was `a.actor_id ? actorName(members, a.actor_id) : "system"`. Measured across
 // 100 served rows: 40 carried actor_id, 26 carried a NAMED actor_system, and 34 carried NEITHER.
-// The last two groups rendered identically — so the name was discarded, and discarding it hid an
+// The last two groups rendered identically, so the name was discarded, and discarding it hid an
 // attribution gap behind the word already used for "known, and here is its name".
 describe("resolveActor", () => {
   it("⛔ renders a NAMED system actor by its name, never as the generic word", () => {
@@ -23,7 +23,7 @@ describe("resolveActor", () => {
     expect(a.kind).toBe("system");
     expect(a.label).toBe("idp-sync");
     expect(a.label).not.toBe("system");
-    expect(a.gap).toBe(false); // fully attributed — not a fallback
+    expect(a.gap).toBe(false); // fully attributed, not a fallback
   });
 
   it("⛔ an UNATTRIBUTED row is its own state, and is flagged as a gap", () => {
@@ -52,7 +52,7 @@ describe("resolveActor", () => {
     expect(a.gap).toBe(false);
   });
 
-  it("⛔ a departed human is ATTRIBUTED but unnamed — not a gap", () => {
+  it("⛔ a departed human is ATTRIBUTED but unnamed, not a gap", () => {
     // We know WHO acted, we just cannot name them. Folding this into "unattributed" would
     // overstate the defect and make the gap count wrong.
     const a = resolveActor({ actor_id: "deadbeef-1111", action: "x" }, members);
@@ -71,7 +71,7 @@ describe("resolveActor", () => {
   });
 
   // ⛔ THE CROSS-TENANT ACTOR (S12.11). A deployment administrator can change a role in an
-  // organization they are not a member of — so their id is not on the roster this screen resolves
+  // organization they are not a member of, so their id is not on the roster this screen resolves
   // against, and every other arm would have called them a FORMER MEMBER of a tenant they were never
   // in. It is attached to the one event class an org's owners most need to read correctly: someone
   // from outside their tenant changed a privilege inside it.
@@ -88,12 +88,12 @@ describe("resolveActor", () => {
     expect(a.label).toContain("admin@tunnex.local");
     expect(a.label).toMatch(/deployment admin/i);
     expect(a.label).not.toMatch(/former member/i);
-    expect(a.gap).toBe(false); // fully attributed — the row says who
+    expect(a.gap).toBe(false); // fully attributed, the row says who
   });
 
   it("⛔ a cp_admin row with no email is still not a former member", () => {
     // The metadata is written by us; if the email were ever missing, the honest answer is "we know
-    // what kind of actor this was and not their name" — never a false claim about membership.
+    // what kind of actor this was and not their name", never a false claim about membership.
     const a = resolveActor(
       { actor_id: "cafe-0000", action: "x", details: { actor_kind: "cp_admin" } },
       members,
@@ -103,7 +103,7 @@ describe("resolveActor", () => {
   });
 
   it("does not treat ordinary metadata as an actor claim", () => {
-    // Only `actor_kind: "cp_admin"` opens this arm — a row whose details merely mention a role must
+    // Only `actor_kind: "cp_admin"` opens this arm, a row whose details merely mention a role must
     // resolve through the roster like any other.
     const a = resolveActor(
       { actor_id: "u1", action: "x", details: { role: { to: "owner" } } },
@@ -143,7 +143,7 @@ describe("unattributedCount", () => {
 
 describe("systemActors", () => {
   it("derives the names from the rows rather than hardcoding them", () => {
-    // Hardcoding would go stale the moment a new writer is added — S14.15 added one.
+    // Hardcoding would go stale the moment a new writer is added, S14.15 added one.
     const rows = [
       { actor_system: "idp-sync", action: "a" },
       { actor_system: "device-health", action: "b" },
@@ -164,11 +164,11 @@ describe("UNATTRIBUTED_NOTE", () => {
 
 // ⛔ "NOT ON THE ROSTER" AND "NO ROSTER" ARE DIFFERENT FACTS.
 //
-// With an empty roster every human actor resolved to "former member 019fc421" — a false statement
+// With an empty roster every human actor resolved to "former member 019fc421", a false statement
 // about a person, asserted confidently, about someone who may be a current member. The Overview
 // feed hits this exactly: /overview serves `members` as a COUNT, so the roster is a separate
 // second-class read that can be slow or fail.
-describe("resolveActor — rosterKnown", () => {
+describe("resolveActor, rosterKnown", () => {
   it("⛔ never asserts FORMER when the roster was never loaded", () => {
     const a = resolveActor(
       { actor_id: "019fc421-aaaa", action: "x" },
@@ -178,7 +178,7 @@ describe("resolveActor — rosterKnown", () => {
     expect(a.kind).toBe("unknown_human");
     expect(a.label).not.toMatch(/former/i);
     expect(a.label).toMatch(/^member 019fc421/);
-    expect(a.gap).toBe(false); // still attributed — we know WHO, not WHETHER they left
+    expect(a.gap).toBe(false); // still attributed, we know WHO, not WHETHER they left
   });
 
   it("does assert FORMER when we actually looked and they were absent", () => {

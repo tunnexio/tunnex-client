@@ -33,36 +33,36 @@ import {
   type SubnetFetch,
 } from "../lib/routedrangesview";
 
-// ── S14.7 — ROUTED RANGES ───────────────────────────────────────────────────────────────────────────────
+// ── S14.7, ROUTED RANGES ───────────────────────────────────────────────────────────────────────────────
 //
 // The answer to "what LAN traffic goes down the tunnel", read from the SAME endpoint a device reads. That is
 // the screen's whole value: not a reconstruction of what should be pushed, but the served projection itself.
 //
 // ⛔ TWO PANELS FROM THE HANDOFF ARE CUT, both recorded in docs/CUT-REGISTER.md before this file existed.
 //
-//   ADDRESS-SPACE HEATMAP — two independent reasons. A /24 lights a whole /16 cell, so the picture is
+//   ADDRESS-SPACE HEATMAP, two independent reasons. A /24 lights a whole /16 cell, so the picture is
 //   coarser than every range it draws; and the grid's domain is 10.0.0.0/8 while real customers use
 //   172.16/12 and 192.168/16, which get NO CELLS AT ALL. A map that cannot draw two of the three private
 //   blocks is not a map.
 //
-//   PENDING QUEUE — lives on Sites, because that is where the MUTATION ENDPOINT is: /site-subnets/pending
+//   PENDING QUEUE, lives on Sites, because that is where the MUTATION ENDPOINT is: /site-subnets/pending
 //   and /approve are `site:manage`, while /routed-ranges is `org:view` with no approve verb. (Its first
 //   recorded reason was "the grid was cut, so this is read-only", which was DEPENDENT on the other cut and
-//   would evaporate if the grid ever came back. THE GRID HAS SINCE COME BACK, and the reason held — which is
+//   would evaporate if the grid ever came back. THE GRID HAS SINCE COME BACK, and the reason held, which is
 //   the whole argument for recording an INDEPENDENT reason at the time of the cut.)
 //
-// ⛔ THE HEATMAP WAS CUT AND IS NOW FOUNDER-RULED BACK IN — built with BOTH cut reasons closed rather than
+// ⛔ THE HEATMAP WAS CUT AND IS NOW FOUNDER-RULED BACK IN, built with BOTH cut reasons closed rather than
 // reproduced. See `mapAddressSpace`. The pending CELLS are legitimate here even though the pending QUEUE is
 // not: the per-site fan-out this screen already issues for attribution returns pending subnets too, so they
 // are real served data, and showing a withheld range as a dashed cell is the opposite of offering an
 // approve control we have no permission for.
 //
-// SCALE: one row per range, constant height. N=many here is a /8 fully allocated — 256 /16s, or thousands of
-// /24s — so there is nothing per-row that grows, and the teaching text renders once.
+// SCALE: one row per range, constant height. N=many here is a /8 fully allocated, 256 /16s, or thousands of
+// /24s, so there is nothing per-row that grows, and the teaching text renders once.
 
 // ⛔ THE `STATUS` COLUMN IS CUT AS A CONSTANT COLUMN, and that is a statement about the endpoint.
 // `/routed-ranges` is APPROVED-ONLY. A status column here would have exactly one value in every row of every
-// org forever, which is not information — it is a column that teaches the reader the wrong thing, namely
+// org forever, which is not information, it is a column that teaches the reader the wrong thing, namely
 // that some other value is possible on this screen.
 
 // Legend rows, in the same order the eye meets them on the grid.
@@ -105,11 +105,11 @@ export default function RoutedRangesPage() {
   const [ranges, setRanges] = useState<string[] | null>(null);
   const [forwards, setForwards] = useState<DNSForward[] | null>(null);
   const [sites, setSites] = useState<Site[]>([]);
-  // `null` = the fan-out has not resolved. NOT `[]` — see the four-armed union in the view model. This is the
+  // `null` = the fan-out has not resolved. NOT `[]`, see the four-armed union in the view model. This is the
   // state that keeps an in-flight SITE cell from reading as "no site owns this".
   const [fanOut, setFanOut] = useState<SubnetFetch[] | null>(null);
   // ⛔ THE OTHER ALLOCATION CLASSES. `subnetguard` refuses a collision with site subnets, the DEVICE POOL and
-  // K8s VIP RANGES (its fourth class, `reserved`, is measured DEAD — `WithReserved` has no callers). A map
+  // K8s VIP RANGES (its fourth class, `reserved`, is measured DEAD, `WithReserved` has no callers). A map
   // that draws only site subnets renders the pool's cell DARK, i.e. "yours to take", and the server refuses
   // it. `null` = not yet known, which is why "free" is qualified until every class has answered.
   const [vipRanges, setVipRanges] = useState<Array<{
@@ -125,7 +125,7 @@ export default function RoutedRangesPage() {
     // ⛔ THE ORG COMES FROM THE SEAM, NOT FROM INDEX ZERO (S12.5). This used to fetch the org list here and
     // take `[0]`, which meant a user in two organizations could reach only one of them and the switcher in
     // the header would have had nothing to switch.
-    // ⛔ LOADING IS NOT ABSENCE (S12.5). See the note in Dashboard.tsx — three states, not two: still
+    // ⛔ LOADING IS NOT ABSENCE (S12.5). See the note in Dashboard.tsx, three states, not two: still
     // loading (say nothing), the read failed (say THAT), genuinely no membership (say that).
     if (orgLoading) return;
     const first = currentOrg;
@@ -157,7 +157,7 @@ export default function RoutedRangesPage() {
     )) as Loaded<Site[]>;
     if (!sRes.ok) {
       // We do not know the site list, so we cannot even enumerate who to ask. One synthetic failure marks the
-      // census incomplete, which is exactly what it is — every unmatched row becomes `unknown`, not "no site".
+      // census incomplete, which is exactly what it is, every unmatched row becomes `unknown`, not "no site".
       setSites([]);
       setFanOut([{ ok: false, siteId: "" }]);
       return;
@@ -200,7 +200,7 @@ export default function RoutedRangesPage() {
         : null,
     );
     // ⚠ currentOrg IS A DEPENDENCY, AND THAT IS THE HALF THAT MAKES THE SWITCHER WORK. Without it the
-    // page keeps rendering the org it mounted with — the control moves, the data does not, and the user is
+    // page keeps rendering the org it mounted with, the control moves, the data does not, and the user is
     // looking at one tenant's screen labelled with another's name.
   }, [currentOrg, orgLoading, orgFailed]);
 
@@ -248,7 +248,7 @@ export default function RoutedRangesPage() {
   const spaceMap = useMemo(() => mapAddressSpace(allocations), [allocations]);
 
   // ⛔ "FREE" IS ONLY KNOWABLE WHEN EVERY CLASS HAS ANSWERED. A failed fan-out or an unread cluster list means
-  // some space we would draw dark might be taken — so the suggestion is WITHHELD rather than guessed. The
+  // some space we would draw dark might be taken, so the suggestion is WITHHELD rather than guessed. The
   // same census discipline as the SITE column, applied to a number an admin would act on.
   const spaceComplete =
     fanOut !== null && fanOut.every((f) => f.ok) && vipRanges !== null;
@@ -259,7 +259,7 @@ export default function RoutedRangesPage() {
     const at16 = nextFreeRange(allocations, primary.block, 16);
     if (at24 === null && at16 === null) return null;
     // ⛔ THE /16 IS SHOWN ONLY WHEN IT IS A DIFFERENT ANSWER. When the first free /24 and the first free /16
-    // start at the same address — the common case on a fresh block — printing both rendered
+    // start at the same address, the common case on a fresh block, printing both rendered
     // "10.0.0.0/24 · 10.0.0.0/16", which reads as a duplicate or a bug rather than as two options.
     const base = (c: string | null) => (c === null ? null : c.split("/")[0]);
     return {
@@ -300,7 +300,7 @@ export default function RoutedRangesPage() {
       cell: () => (
         // ⛔ CONSTANT BY CONSTRUCTION, AND SAID ONCE PER ROW ANYWAY, because it is the answer to the question
         // that brings people here. The handoff shows "split-tunnel AllowedIPs · 126 devices"; THE DEVICE
-        // COUNT IS NOT SERVED — same class as the gateway peer count — and is absent with its reason below
+        // COUNT IS NOT SERVED, same class as the gateway peer count, and is absent with its reason below
         // rather than invented from the device list, which would count devices that never fetched this.
         <span className="text-micro text-ink-tertiary">
           split-tunnel AllowedIPs
@@ -370,7 +370,7 @@ export default function RoutedRangesPage() {
 
                 {/* ⛔ THE ANSWER, NOT JUST THE PICTURE. An address map is read to decide what to use next, and
                     a /16 cell cannot say which /24s inside it are free. This line is interval arithmetic over
-                    EVERY allocation class, so it stays exact where the grid is too coarse — and it is
+                    EVERY allocation class, so it stays exact where the grid is too coarse, and it is
                     WITHHELD entirely when any class failed to load, because a confident wrong range is worse
                     than no suggestion. */}
                 {suggestion !== null && (
@@ -392,7 +392,7 @@ export default function RoutedRangesPage() {
                     )}
                     <span className="text-ink-faint">
                       {" "}
-                      — clear of every routed subnet, the device pool and
+                     , clear of every routed subnet, the device pool and
                       cluster VIPs, so the disjointness check will accept it.
                     </span>
                   </p>
@@ -405,7 +405,7 @@ export default function RoutedRangesPage() {
                 )}
                 {spaceMap.blocks.some((m) => m.lit.length > MAP_LIST_MAX) && (
                   // A SILENT CAP IS A LIE ABOUT COVERAGE. Past six lit cells the connector fan is unreadable,
-                  // so the labelled list is dropped — and said so, with the complete list named.
+                  // so the labelled list is dropped, and said so, with the complete list named.
                   <p className="text-micro text-ink-faint">
                     Some blocks have more than {MAP_LIST_MAX} lit cells, so
                     their labelled call-outs are omitted as unreadable. Every

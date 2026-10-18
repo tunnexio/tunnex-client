@@ -3,7 +3,7 @@
 // It is a SEPARATE privileged process (not Electron, not Node) that owns the one
 // operation the desktop app cannot do unprivileged: bring a WireGuard tunnel
 // up/down and configure its interface. The app (Electron main) drives it over a
-// local IPC channel using the typed protocol in this file — a fixed verb set, no
+// local IPC channel using the typed protocol in this file, a fixed verb set, no
 // generic passthrough (same allowlist posture as the S6.1 preload). The verb set
 // IS the privileged attack surface; keep it minimal.
 package helper
@@ -47,19 +47,19 @@ func authRank(m AuthMode) int {
 // an error if the client cannot meet the helper's enforced minimum.
 //
 // The helper enforces exactly the mode it has a verifier compiled for (`enforced`)
-// — today path_check, at S6.5b code_signing. `clientMax` is the strongest mode the
+//, today path_check, at S6.5b code_signing. `clientMax` is the strongest mode the
 // app supports. If the app is too weak for the helper's enforced mode we REFUSE
 // (no silent downgrade): once the helper is signed and enforces code_signing, a
 // stale path_check-only app is rejected and must update. That one-way ratchet is
 // the whole point of carrying auth_mode from day one.
 // NegotiateVersion checks wire-protocol compatibility and, on mismatch, names WHICH
 // side is stale so the app can act. The helper is the long-lived root daemon; the app
-// upgrades it (a new app version installs its bundled helper via the lifecycle —
+// upgrades it (a new app version installs its bundled helper via the lifecycle ,
 // SMAppService / the Windows service). So:
 //   - client > helper → the installed helper is OLD (app upgraded, helper didn't):
-//     "helper_outdated" — the app should (re)install its bundled helper via the
+//     "helper_outdated", the app should (re)install its bundled helper via the
 //     lifecycle, then retry. This is the NORMAL upgrade path.
-//   - client < helper → the app is OLD relative to a newer helper: "client_outdated" —
+//   - client < helper → the app is OLD relative to a newer helper: "client_outdated" ,
 //     REFUSE (a stale app must not drive a newer helper; a downgrade-refused ratchet,
 //     mirroring the auth-mode ratchet in Negotiate). Update the app.
 //
@@ -69,9 +69,9 @@ func NegotiateVersion(client, helper int) error {
 	case client == helper:
 		return nil
 	case client > helper:
-		return &ProtocolError{Code: "helper_outdated", Msg: "the Tunnex helper is older than this app — reinstall to upgrade it"}
+		return &ProtocolError{Code: "helper_outdated", Msg: "the Tunnex helper is older than this app, reinstall to upgrade it"}
 	default:
-		return &ProtocolError{Code: "client_outdated", Msg: "this app is older than the installed Tunnex helper — update the app"}
+		return &ProtocolError{Code: "client_outdated", Msg: "this app is older than the installed Tunnex helper, update the app"}
 	}
 }
 
@@ -98,40 +98,40 @@ const (
 	VerbStatus     Verb = "status"      // read-only handshake/transfer stats
 	// VerbPostureStatus (S7.5.3) reads device posture facts the app cannot read
 	// unprivileged (FileVault/BitLocker state). STRICTLY READ-ONLY: no config, no
-	// state change, no ownership — the privileged surface grows by reads only.
+	// state change, no ownership, the privileged surface grows by reads only.
 	// ADDITIVE at ProtocolVersion 1: an older helper answers unknown_verb and the
-	// app degrades to reporting the fact ABSENT (never guessed) — a version bump
+	// app degrades to reporting the fact ABSENT (never guessed), a version bump
 	// would instead refuse ALL verbs from a paired old helper, including tunnel_up.
 	VerbPostureStatus Verb = "posture_status"
 	// VerbSetResolvers (S8.4) installs domain-scoped resolvers so cross-site names
 	// resolve to a remote site's internal DNS over the tunnel. The Resolvers list is
 	// the COMPLETE desired set (full-sweep): the helper reconciles its OWNED resolver
-	// files to match exactly — writes/updates the desired, removes owned-but-absent,
+	// files to match exactly, writes/updates the desired, removes owned-but-absent,
 	// and NEVER touches foreign resolver files. An empty/nil list clears all owned
 	// resolvers (the inert steady state). ADDITIVE at ProtocolVersion 1 like posture:
 	// an old helper answers unknown_verb and the app fail-STATIC (tunnel stays up,
-	// cross-site names just don't resolve) — DNS forwarding is never load-bearing for
+	// cross-site names just don't resolve), DNS forwarding is never load-bearing for
 	// the tunnel. macOS-only in v1 (/etc/resolver); Windows NRPT is S8.4b.
 	VerbSetResolvers Verb = "set_resolvers"
 	// VerbSetAllowedIPs (S8.5) LIVE-updates the tunnel peer's AllowedIPs to a COMPLETE desired set
-	// (baked-stable ∪ current-declared-ranges, computed client-side) — the open-edition routed-subnets
+	// (baked-stable ∪ current-declared-ranges, computed client-side), the open-edition routed-subnets
 	// push. Applied via a wireguard-go uapi update (update_only + replace_allowed_ips: the peer's keys +
 	// endpoint are UNTOUCHED, no handshake reset, no tunnel bounce) plus an OS-route full-sweep. STATE-
 	// CHANGING but NOT tunnel-owning (same class as set_resolvers): it never touches tunnel state, the
-	// owner connection, or the kill-switch. Split-tunnel ONLY by structure — the kill-switch exists only
+	// owner connection, or the kill-switch. Split-tunnel ONLY by structure, the kill-switch exists only
 	// in full-tunnel, and a full-tunnel base (0.0.0.0/0) already subsumes every range, so the verb no-ops
 	// there. ADDITIVE at ProtocolVersion 1 like posture/set_resolvers: an old helper answers unknown_verb
 	// and the client fail-STATIC (routes just don't push).
 	VerbSetAllowedIPs Verb = "set_allowed_ips"
-	// VerbSetGatewayPeer (WF-A re-homing) LIVE-swaps the tunnel's gateway peer to a new active hub —
-	// public key + endpoint — WITHOUT a bounce. A re-home is a peer SWAP (WG keys a peer by pubkey, and
+	// VerbSetGatewayPeer (WF-A re-homing) LIVE-swaps the tunnel's gateway peer to a new active hub ,
+	// public key + endpoint, WITHOUT a bounce. A re-home is a peer SWAP (WG keys a peer by pubkey, and
 	// the active hub's key differs from a standby's), so the helper adds the new peer with the CURRENT
-	// peer's allowed_ips (routing preserved) and removes the old — the DEVICE IDENTITY (own key, address,
+	// peer's allowed_ips (routing preserved) and removes the old, the DEVICE IDENTITY (own key, address,
 	// enrollment) and the kill-switch are UNTOUCHED. The dial is a routing FACT about the network, never
-	// device identity — it rides the volatile channel, the never-re-fetch identity invariant holds. STATE-
+	// device identity, it rides the volatile channel, the never-re-fetch identity invariant holds. STATE-
 	// CHANGING but NOT tunnel-owning (same class as set_allowed_ips): never touches the owner connection.
 	// SPLIT-TUNNEL ONLY in v1: a full tunnel's endpoint host-route + kill-switch pass rule must move WITH
-	// the peer, which is the D-WFA-4 carve-out (a separate slice) — the Supervisor refuses full-tunnel here.
+	// the peer, which is the D-WFA-4 carve-out (a separate slice), the Supervisor refuses full-tunnel here.
 	// ADDITIVE at ProtocolVersion 1 like posture/set_resolvers/set_allowed_ips: an old helper answers
 	// unknown_verb and the client fail-STATIC (keeps its current peer; the re-home just doesn't apply).
 	VerbSetGatewayPeer Verb = "set_gateway_peer"
@@ -145,7 +145,7 @@ func validVerb(v Verb) bool {
 }
 
 // Request is one app→helper message. Config is REQUIRED for tunnel_up and must be
-// nil otherwise (a config on a down/status request is rejected — no smuggling).
+// nil otherwise (a config on a down/status request is rejected, no smuggling).
 type Request struct {
 	RelayPrepare *RelayPreparation `json:"relay_prepare,omitempty"`
 	RelayRemote  string            `json:"relay_remote,omitempty"`
@@ -156,16 +156,16 @@ type Request struct {
 	Config       *TunnelConfig     `json:"config,omitempty"`
 	// Resolvers is the full-sweep desired set for VerbSetResolvers only (nil elsewhere).
 	Resolvers []ResolverForward `json:"resolvers,omitempty"`
-	// AllowedIPs is the COMPLETE desired peer AllowedIPs set for VerbSetAllowedIPs only (nil elsewhere) —
+	// AllowedIPs is the COMPLETE desired peer AllowedIPs set for VerbSetAllowedIPs only (nil elsewhere) ,
 	// the full baked-stable ∪ declared-ranges set, applied as a full-sweep (replace_allowed_ips).
 	AllowedIPs []string `json:"allowed_ips,omitempty"`
-	// GatewayPeer is the new active-hub peer for VerbSetGatewayPeer only (nil elsewhere) — the re-home
+	// GatewayPeer is the new active-hub peer for VerbSetGatewayPeer only (nil elsewhere), the re-home
 	// target (WF-A). The helper preserves the current peer's allowed_ips onto it; identity is untouched.
 	GatewayPeer *GatewayPeer `json:"gateway_peer,omitempty"`
 }
 
 // GatewayPeer names a gateway to re-home onto (WF-A): its WireGuard public key and host:port endpoint.
-// It carries NO key material of the device's own — only the peer's PUBLIC routing facts.
+// It carries NO key material of the device's own, only the peer's PUBLIC routing facts.
 type GatewayPeer struct {
 	PeerPublicKey string `json:"peer_public_key"`
 	Endpoint      string `json:"endpoint"`
@@ -190,7 +190,7 @@ type Response struct {
 	Posture    *PostureStatus `json:"posture,omitempty"`
 }
 
-// TunnelStatus is read-only live state (no secrets — never echoes keys).
+// TunnelStatus is read-only live state (no secrets, never echoes keys).
 type TunnelStatus struct {
 	ConnectionPath   string `json:"connection_path,omitempty"`
 	State            string `json:"state"` // "down" | "up" | "failed"
@@ -202,7 +202,7 @@ type TunnelStatus struct {
 
 // PostureStatus is read-only, locally-read device posture (S7.5.3). No secrets.
 // A nil field means the helper COULD NOT DETERMINE that fact (query failed /
-// unparseable output): it is reported absent upstream, never guessed — the
+// unparseable output): it is reported absent upstream, never guessed, the
 // server's absence-never-blocks taxonomy depends on this honesty.
 type PostureStatus struct {
 	DiskEncrypted *bool `json:"disk_encrypted"` // FileVault (macOS) / BitLocker system drive (Windows)
@@ -242,16 +242,16 @@ func ValidateRequest(r *Request) error {
 	if r.Verb != VerbTunnelUp && r.Config != nil {
 		return &ProtocolError{Code: "unexpected_config", Msg: "config is only valid on tunnel_up"}
 	}
-	// Resolvers ride ONLY on set_resolvers — no smuggling a resolver write onto another
+	// Resolvers ride ONLY on set_resolvers, no smuggling a resolver write onto another
 	// verb. An empty list on set_resolvers is legal (it means sweep to zero).
 	if r.Verb != VerbSetResolvers && r.Resolvers != nil {
 		return &ProtocolError{Code: "unexpected_resolvers", Msg: "resolvers are only valid on set_resolvers"}
 	}
-	// AllowedIPs ride ONLY on set_allowed_ips — no smuggling a routing change onto another verb.
+	// AllowedIPs ride ONLY on set_allowed_ips, no smuggling a routing change onto another verb.
 	if r.Verb != VerbSetAllowedIPs && r.AllowedIPs != nil {
 		return &ProtocolError{Code: "unexpected_allowed_ips", Msg: "allowed_ips are only valid on set_allowed_ips"}
 	}
-	// GatewayPeer rides ONLY on set_gateway_peer — no smuggling a peer swap onto another verb; and it is
+	// GatewayPeer rides ONLY on set_gateway_peer, no smuggling a peer swap onto another verb; and it is
 	// REQUIRED there (a re-home with no target is nonsense). Its fields are validated as strictly as a
 	// tunnel_up peer: a base64/32-byte key and a safe host:port (validEndpoint bars loopback/link-local/
 	// metacharacters), so a typo can never steer the root helper's dial.

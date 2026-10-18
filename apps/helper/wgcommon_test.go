@@ -7,9 +7,9 @@ import (
 	"testing"
 )
 
-// TestAllowedIPsUAPINoBounce (S8.5 Slice 2a) — the live-apply uapi carries NO private_key / replace_peers /
-// endpoint (so the device + peer identity + the session/handshake SURVIVE — no bounce, by construction) and
-// DOES carry update_only=true (an absent peer is never CREATED — a typo can't conjure a phantom peer) +
+// TestAllowedIPsUAPINoBounce (S8.5 Slice 2a), the live-apply uapi carries NO private_key / replace_peers /
+// endpoint (so the device + peer identity + the session/handshake SURVIVE, no bounce, by construction) and
+// DOES carry update_only=true (an absent peer is never CREATED, a typo can't conjure a phantom peer) +
 // replace_allowed_ips=true (full-sweep) + the allowed_ip lines. Lives in a darwin||windows-tagged file
 // because allowedIPsUAPI (wgcommon.go) is only compiled on the real-backend platforms.
 func TestAllowedIPsUAPINoBounce(t *testing.T) {
@@ -25,15 +25,15 @@ func TestAllowedIPsUAPINoBounce(t *testing.T) {
 	}
 	for _, forbidden := range []string{"private_key=", "replace_peers=", "endpoint="} {
 		if strings.Contains(uapi, forbidden) {
-			t.Errorf("uapi MUST NOT contain %q (would reset the peer/session — a bounce):\n%s", forbidden, uapi)
+			t.Errorf("uapi MUST NOT contain %q (would reset the peer/session, a bounce):\n%s", forbidden, uapi)
 		}
 	}
 }
 
-// TestGatewayPeerSwapUAPI (WF-A) — the re-home uapi is a peer SWAP that PRESERVES the device identity: it
+// TestGatewayPeerSwapUAPI (WF-A), the re-home uapi is a peer SWAP that PRESERVES the device identity: it
 // ADDS the new peer (its key + endpoint + keepalive + the CURRENT allowed_ips) BEFORE it REMOVES the old
 // (add-before-remove so the routing is never momentarily unowned), and carries NO private_key / replace_peers
-// (the device's own key + the interface + the kill-switch are untouched — the session survives, no
+// (the device's own key + the interface + the kill-switch are untouched, the session survives, no
 // re-enrollment). The old peer's key appears with remove=true; the new peer inherits the allowed_ips.
 func TestGatewayPeerSwapUAPI(t *testing.T) {
 	const oldKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
@@ -58,7 +58,7 @@ func TestGatewayPeerSwapUAPI(t *testing.T) {
 			t.Errorf("swap uapi missing %q:\n%s", must, uapi)
 		}
 	}
-	// Identity is UNTOUCHED — no device key, no whole-peer-table replace.
+	// Identity is UNTOUCHED, no device key, no whole-peer-table replace.
 	for _, forbidden := range []string{"private_key=", "replace_peers="} {
 		if strings.Contains(uapi, forbidden) {
 			t.Errorf("swap uapi MUST NOT contain %q (would touch device identity / bounce):\n%s", forbidden, uapi)
@@ -71,7 +71,7 @@ func TestGatewayPeerSwapUAPI(t *testing.T) {
 	}
 }
 
-// TestGatewayPeerSwapUAPISameKeyNoRemove (WF-A) — re-homing to the SAME key (or a first apply where old==new)
+// TestGatewayPeerSwapUAPISameKeyNoRemove (WF-A), re-homing to the SAME key (or a first apply where old==new)
 // must NOT emit remove=true, or it would delete the peer it just installed. A no-op-safe swap.
 func TestGatewayPeerSwapUAPISameKeyNoRemove(t *testing.T) {
 	const key = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="

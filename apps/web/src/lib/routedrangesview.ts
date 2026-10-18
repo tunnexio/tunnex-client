@@ -1,32 +1,32 @@
 import type { DNSForward, Site, SiteSubnet } from "./api";
 
-// ── S14.7 — ROUTED RANGES, THE VIEW MODEL ───────────────────────────────────────────────────────────────
+// ── S14.7, ROUTED RANGES, THE VIEW MODEL ───────────────────────────────────────────────────────────────
 //
 // `/routed-ranges` serves a DEVICE-FACING projection: approved CIDRs, canonical + sorted, and the DNS
 // forwards reachable through them. It does NOT serve `site_id`. Attribution is therefore JOINED CLIENT-SIDE
-// from a per-site `listSiteSubnets` fan-out — see `attributionState` for what that costs and when it stops
+// from a per-site `listSiteSubnets` fan-out, see `attributionState` for what that costs and when it stops
 // being acceptable.
 //
 // Everything here is pure. The screen does the fetching; this file decides what the screen is allowed to
-// claim, and — more to the point — what it must NOT claim while the answer is still in flight.
+// claim, and, more to the point, what it must NOT claim while the answer is still in flight.
 
 // ⛔ THE IN-FLIGHT STATE IS A FIRST-CLASS VALUE, NOT A FALSY DEFAULT.
 //
 // The ranges table renders IMMEDIATELY from one request; the SITE column fills in as the N-site fan-out
-// lands. If in-flight rendered as blank it would be indistinguishable from "we looked and found no site" —
+// lands. If in-flight rendered as blank it would be indistinguishable from "we looked and found no site" ,
 // the reassuring-empty shape, at row level, on the column the screen exists to add.
 //
 // So the union has four arms and NONE of them is the absence of the others.
 export type Attribution =
   | { kind: "site"; siteId: string; siteName: string }
   | { kind: "loading" }
-  // The fan-out failed for the site that would have owned this row. NOT "no site" — "we could not ask".
+  // The fan-out failed for the site that would have owned this row. NOT "no site", "we could not ask".
   | { kind: "unknown" }
   // We asked every site, every answer came back, and no approved subnet matches this range.
   | { kind: "unmatched" };
 
 export type RangeRow = {
-  /** The canonical CIDR exactly as the API sorted and emitted it — the string a device receives. */
+  /** The canonical CIDR exactly as the API sorted and emitted it, the string a device receives. */
   range: string;
   attribution: Attribution;
 };
@@ -34,7 +34,7 @@ export type RangeRow = {
 // canonicalCidr masks host bits off an IPv4 CIDR, or returns null if it is not one.
 //
 // ⛔ WHY THIS EXISTS WHEN THE JOIN IS ALREADY SAFE. `site_subnets.cidr` is the POSTGRES `cidr` type, which
-// REJECTS host bits at the column — measured in S14.7 §2 with a real INSERT into the real table, not with a
+// REJECTS host bits at the column, measured in S14.7 §2 with a real INSERT into the real table, not with a
 // cast. So both sides are already canonical and a naive string join would work today.
 //
 // It exists because the REASON it works lives in a column type two layers away, in a different language, in
@@ -80,7 +80,7 @@ export type SubnetFetch =
 /**
  * attributeRanges joins served ranges to the sites that advertise them.
  *
- * `fanOut === null` means the fan-out has not resolved yet — every row is `loading`. That is distinct from
+ * `fanOut === null` means the fan-out has not resolved yet, every row is `loading`. That is distinct from
  * `fanOut === []`, which means there are no sites at all, and every row is genuinely `unmatched`.
  */
 export function attributeRanges(
@@ -96,7 +96,7 @@ export function attributeRanges(
   // ⛔ ANY failed site poisons the whole NEGATIVE answer, not just its own rows.
   //
   // A range's owner is discovered by finding it in some site's subnet list. If ANY site's list is missing, a
-  // range we did not match might be owned by exactly that site — so "no match" is not knowable. `unmatched`
+  // range we did not match might be owned by exactly that site, so "no match" is not knowable. `unmatched`
   // is a claim about every site having been asked; degrade to `unknown` if even one was not.
   const anyFailed = fanOut.some((f) => !f.ok);
 
@@ -105,7 +105,7 @@ export function attributeRanges(
     if (!fetched.ok) continue;
     for (const subnet of fetched.subnets) {
       // Pending subnets are NOT routed. `/routed-ranges` is approved-only, so a pending subnet can never be
-      // the owner of a served range — and attributing one would claim traffic flows where it does not.
+      // the owner of a served range, and attributing one would claim traffic flows where it does not.
       if (subnet.status !== "approved") continue;
       const key = canonicalCidr(subnet.cidr) ?? subnet.cidr;
       // First writer wins; a duplicate CIDR across sites is refused by the disjointness validator at both
@@ -155,7 +155,7 @@ export function attributionClass(a: Attribution): string {
 }
 
 // ⛔ THE FAN-OUT TRIPWIRE. N sites = N+1 requests, parallel, once per visit. Fine at 20. At ~50 it is nine
-// sequential waves against the browser's ~6-per-origin cap — noticeable, still one page load. At 200 it is
+// sequential waves against the browser's ~6-per-origin cap, noticeable, still one page load. At 200 it is
 // not acceptable.
 //
 // THE REAL FIX IS `site_id` ON `RoutedRange`, AND IT IS NOT THIS SCREEN'S TO MAKE: `/routed-ranges` is a
@@ -172,7 +172,7 @@ export function fanOutExceedsTripwire(siteCount: number): boolean {
 // ── DNS FORWARDS: THE GATED EMPTY STATE ─────────────────────────────────────────────────────────────────
 //
 // ⛔ `forwards` IS GATED, AND ITS EMPTINESS MEANS SOMETHING NARROWER THAN IT LOOKS. A forward is returned
-// only when its `resolver_ip` falls INSIDE a routed range — the control plane never hands a device a
+// only when its `resolver_ip` falls INSIDE a routed range, the control plane never hands a device a
 // resolver it cannot reach (S8.4: "never a SERVFAIL generator").
 //
 // So empty means "none REACHABLE". It does NOT mean "none configured", and copy that says the latter would
@@ -205,12 +205,12 @@ export function sortForwards(forwards: DNSForward[]): DNSForward[] {
 //     has content, plus an explicit OFF-MAP list.
 //
 // ⛔ AND A THIRD DEFECT, FOUND BY ASKING WHAT THE PANEL IS FOR. A map of allocated space is read to answer
-// "what can I use next" — so a DARK CELL IS A CLAIM THAT THE SPACE IS FREE. The server refuses an
+// "what can I use next", so a DARK CELL IS A CLAIM THAT THE SPACE IS FREE. The server refuses an
 // overlapping range by checking FOUR classes (`subnetguard`: site_subnet, pool, vip_range, reserved) and the
 // first build drew ONE of them. The live device pool is 10.99.0.0/24; cell 99 rendered dark, i.e. "yours to
 // take", and the server would refuse it.
 //
-//   `reserved` is measured as DEAD — `WithReserved` has no callers outside its own definition — so the
+//   `reserved` is measured as DEAD, `WithReserved` has no callers outside its own definition, so the
 //   reachable set is THREE: site subnets, the device pool, and K8s VIP ranges. That is what is drawn.
 //
 // THE PRINCIPLE: THE MAP MUST DRAW EVERYTHING THE VALIDATOR ENFORCES, OR ITS EMPTY SPACE IS A LIE.
@@ -221,7 +221,7 @@ export type AllocKind = "approved" | "pending" | "pool" | "vip";
 export type Allocation = {
   cidr: string;
   kind: AllocKind;
-  /** Who owns it — a site name, "device pool", a cluster name. The map's most useful label. */
+  /** Who owns it, a site name, "device pool", a cluster name. The map's most useful label. */
   label: string;
 };
 
@@ -236,7 +236,7 @@ export type Block = {
 };
 
 // ⛔ `cols` IS SQUARE, NOT 32-WIDE, AND THAT IS A LAYOUT FIX WITH A REASON. The handoff drew 256 cells as
-// 32x8 — a 4:1 letterbox 108px tall — beside a call-out list that grows 40px PER RANGE. At the handoff's
+// 32x8, a 4:1 letterbox 108px tall, beside a call-out list that grows 40px PER RANGE. At the handoff's
 // three ranges the two were roughly level; at our eight the list is 320px and the grid still 108px, so the
 // connectors trailed 250px into empty space and read as OVERFLOWING the drawing.
 //
@@ -287,7 +287,7 @@ export type BlockMap = {
   lit: Cell[];
   /** Fraction of the block's addresses occupied by ROUTED traffic (approved subnets only). */
   utilised: number;
-  /** Fraction occupied by ANYTHING — the number that matters when picking a new range. */
+  /** Fraction occupied by ANYTHING, the number that matters when picking a new range. */
   claimed: number;
   counts: Record<AllocKind, number>;
 };
@@ -415,12 +415,12 @@ function upsert(
 //
 // ⛔ THE ANSWER IS COMPUTED BY INTERVAL ARITHMETIC, NOT FROM THE GRID, and that difference is the point.
 //
-// A /16 cell cannot say which /24s inside it are free — the grid is one zoom level too coarse for the size
+// A /16 cell cannot say which /24s inside it are free, the grid is one zoom level too coarse for the size
 // most customers actually deploy. Arithmetic has no resolution limit, so this stays exact where the picture
 // cannot: it will happily suggest a /24 inside a half-used /16 and be right.
 //
 // AND IT IS COMPUTED AGAINST EVERY ALLOCATION CLASS. A suggestion derived from site subnets alone would
-// confidently name ranges the server rejects — worse than no feature, because it comes with a number.
+// confidently name ranges the server rejects, worse than no feature, because it comes with a number.
 
 /**
  * The first free, correctly-aligned block of the requested prefix, or null if the block is full.
@@ -453,7 +453,7 @@ export function nextFreeRange(
     else merged.push([lo, hi]);
   }
 
-  // Walk the gaps, snapping each candidate UP to its own alignment — a CIDR must start on a multiple of its
+  // Walk the gaps, snapping each candidate UP to its own alignment, a CIDR must start on a multiple of its
   // own size, so the first free address is usually not a legal network address.
   let cursor = block.base;
   for (const [lo, hi] of [
@@ -477,14 +477,14 @@ function toDotted(addr: number): string {
   ].join(".");
 }
 
-/** "0.4% of /8" — computed, and never a bare "0.0%" for a real allocation. */
+/** "0.4% of /8", computed, and never a bare "0.0%" for a real allocation. */
 export function utilisationLabel(m: BlockMap): string {
   const pct = m.utilised * 100;
   const shown = pct === 0 ? "0" : pct < 0.1 ? "<0.1" : pct.toFixed(1);
   return `${shown}% of /${m.block.prefix}`;
 }
 
-/** "6 routed · 2 pending · 1 pool" — only the kinds actually present. */
+/** "6 routed · 2 pending · 1 pool", only the kinds actually present. */
 export function allocationLabel(m: BlockMap): string {
   const NAMES: Array<[AllocKind, string]> = [
     ["approved", "routed"],

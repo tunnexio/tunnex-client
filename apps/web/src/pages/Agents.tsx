@@ -341,16 +341,16 @@ function AgentAssignmentEditor({
 }
 
 /**
- * AI agents — S15.3. A top-level destination in NETWORK, beside Kubernetes.
+ * AI agents, S15.3. A top-level destination in NETWORK, beside Kubernetes.
  *
  * ⛔ AN AGENT IS A PEER HOMED ON A GATEWAY. It is enrolled the way any device is: it holds its own /32, it
- * dials the gateway with a WireGuard config, and its traffic is FORWARDED through that gateway — which is
+ * dials the gateway with a WireGuard config, and its traffic is FORWARDED through that gateway, which is
  * what puts it in front of the policy chain. A grant then names that one device.
  *
  * ⛔ THE RENDER FLOOR GOVERNS EVERY STRING HERE (see lib/agentview.ts, tests enforce it): no DETECTION
  * language, no PER-TOOL claim. The honest verb is REACH.
  *
- * ⛔ ENTERPRISE. The open edition gets 403 edition_required — a SUCCESSFUL refusal — and this screen renders
+ * ⛔ ENTERPRISE. The open edition gets 403 edition_required, a SUCCESSFUL refusal, and this screen renders
  * ABSENCE, never an error.
  */
 export default function Agents() {
@@ -412,7 +412,7 @@ export default function Agents() {
       );
       if (!cancelled && n.ok) {
         // ⛔ A GATEWAY WITH NO ENDPOINT CANNOT SERVE A PEER. Issuing a config for one emits
-        // `Endpoint = ` and wg-quick refuses it — so the operator would be handed a command that can
+        // `Endpoint = ` and wg-quick refuses it, so the operator would be handed a command that can
         // never work. Excluded here rather than surfaced as a choice: a control that can only fail is
         // worse than a control that is absent.
         const live = n.data.filter(
@@ -427,7 +427,7 @@ export default function Agents() {
         { params: { path: { orgId: id } } },
       );
       if (cancelled) return;
-      // ⛔ 403 IS NOT A FAILURE — it is the server correctly stating an edition boundary. A 401 is likewise
+      // ⛔ 403 IS NOT A FAILURE, it is the server correctly stating an edition boundary. A 401 is likewise
       // an auth-router refusal: unauthenticated users must not receive an error-shaped Agents surface or facts.
       // Any OTHER error is real and must not render as "no agents": a failed load shown as emptiness is a zero
       // nobody measured.
@@ -483,7 +483,7 @@ export default function Agents() {
     return () => {
       cancelled = true;
     };
-    // ⚠ currentOrg IS A DEPENDENCY — without it the switcher moves and the page keeps showing the org it
+    // ⚠ currentOrg IS A DEPENDENCY, without it the switcher moves and the page keeps showing the org it
     // mounted with.
   }, [reload, currentOrg, currentUserId]);
 
@@ -671,11 +671,11 @@ export default function Agents() {
             <Field label="Connects through gateway">
               <Select value={gw} onChange={(e) => setGw(e.target.value)}>
                 {/* ⚠ THE ENDPOINT IS SHOWN, NOT JUST THE NAME. The agent will dial this address from its
-                    own host — an operator choosing between gateways by name alone cannot tell a reachable
+                    own host, an operator choosing between gateways by name alone cannot tell a reachable
                     one from a demo fixture, and the command only fails later, on someone else's machine. */}
                 {gateways.map((n) => (
                   <option key={n.id} value={n.id}>
-                    {n.name} — {n.endpoint}
+                    {n.name}, {n.endpoint}
                   </option>
                 ))}
               </Select>
@@ -689,7 +689,7 @@ export default function Agents() {
           </Button>
         </div>
         {/* ⚠ SAID PLAINLY RATHER THAN DISCOVERED ON THE AGENT HOST. If no gateway can serve a peer, the
-            reason is a missing endpoint — not a missing gateway — and the operator needs to know which. */}
+            reason is a missing endpoint, not a missing gateway, and the operator needs to know which. */}
         {gateways.length === 0 && (
           <p className="mt-2 text-xs text-warn">
             No gateway can accept a peer yet: a gateway needs a reachable public
@@ -711,7 +711,7 @@ export default function Agents() {
           <Link to="/access" className="text-slate-300 underline">
             Access Policies
           </Link>{" "}
-          — choose <span className="font-mono text-[11px]">AI agent</span> as
+         , choose <span className="font-mono text-[11px]">AI agent</span> as
           the source. <strong>An agent with no grant reaches nothing.</strong>
         </p>
         {rows === null ? (
@@ -821,7 +821,7 @@ export default function Agents() {
                   key: "owner",
                   header: "Authorised by",
                   // ⚠ THE UNATTRIBUTABLE STATE IS SEARCHABLE BY THE WORD THE BADGE USES, not only by an
-                  // email that does not exist — otherwise the one row an operator most needs to find is the
+                  // email that does not exist, otherwise the one row an operator most needs to find is the
                   // one row no search term reaches.
                   sortValue: (a: AgentRow) =>
                     profiles[a.device_id]?.owner_email ?? a.owner_email ?? "unattributable no owner recorded",
@@ -847,7 +847,7 @@ export default function Agents() {
                   sortValue: (a) => livenessLabel(a).label,
                   cell: (a) => {
                     const live = livenessLabel(a);
-                    // The liveness word carries its own explanation on hover — an operator seeing
+                    // The liveness word carries its own explanation on hover, an operator seeing
                     // "liveness unknown" must be able to learn WHY without leaving the row.
                     return (
                       <span title={live.detail}>
@@ -926,7 +926,7 @@ export default function Agents() {
               Run this on the machine that runs your AI agent. It generates the
               private key locally, bootstraps the managed tunnel, and brings the
               interface up. Shown{" "}
-              <span className="font-semibold">exactly once</span> — it contains
+              <span className="font-semibold">exactly once</span>, it contains
               a single-use bootstrap token; the private key never leaves the
               agent host. {AGENT_PREREQ} Also requires curl and jq.
             </>

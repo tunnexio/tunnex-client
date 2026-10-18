@@ -13,7 +13,7 @@ import (
 // ── S6.7 delta: FIXED provider + sublayer GUIDs ──────────────────────────────────────────
 //
 // These REPLACE upstream registerBaseObjects' random windows.GenerateGUID() (see blocker.go).
-// A persistent block armed under a RANDOM key is unfindable after the process dies — the whole
+// A persistent block armed under a RANDOM key is unfindable after the process dies, the whole
 // reason the Windows kill-switch leaked on crash. These fixed keys are the durable anchor that
 // CleanStale / --wfp-clean enumerate + delete by. NEVER change them: a changed GUID orphans
 // blocks a prior build armed (removable only by the old build or a reboot with old CleanStale).
@@ -26,7 +26,7 @@ var (
 // providerRecoveryHint is the provider's WFP display DESCRIPTION. It shows in
 // `netsh wfp show state`, so a locked-out operator inspecting WFP sees the exact recovery
 // command ON the box (S6.7 discoverability requirement).
-const providerRecoveryHint = "Tunnex full-tunnel kill-switch — to remove, run as admin: tunnex-helper.exe --wfp-clean"
+const providerRecoveryHint = "Tunnex full-tunnel kill-switch, to remove, run as admin: tunnex-helper.exe --wfp-clean"
 
 // ── S6.7 delta: enumerate-and-delete cleanup + the FWPM delete/enum syscalls upstream lacked ─
 
@@ -46,7 +46,7 @@ var (
 	procFwpmProviderDeleteByKey0     = modfwpuclnt.NewProc("FwpmProviderDeleteByKey0")
 )
 
-// isWfpNotFound reports whether err is a WFP "object not found" status — the idempotent case
+// isWfpNotFound reports whether err is a WFP "object not found" status, the idempotent case
 // (already deleted / never existed), which is SUCCESS for cleanup. Any other delete error means
 // the object is still present (e.g. still referenced) → cleanup must surface it, not swallow it.
 func isWfpNotFound(err error) bool {
@@ -61,7 +61,7 @@ func isWfpNotFound(err error) bool {
 }
 
 // fwpmFilterCreateEnumHandle0 is called only with a NIL template (enumerate ALL filters; we match
-// our provider in Go — see collectTunnexFilterIDs), so template is a raw pointer (0 = NULL).
+// our provider in Go, see collectTunnexFilterIDs), so template is a raw pointer (0 = NULL).
 func fwpmFilterCreateEnumHandle0(engine, template uintptr, enumHandle *uintptr) error {
 	r1, _, e1 := syscall.SyscallN(procFwpmFilterCreateEnumHandle0.Addr(), engine, template, uintptr(unsafe.Pointer(enumHandle)))
 	if r1 != 0 {
@@ -112,14 +112,14 @@ func fwpmProviderDeleteByKey0(engine uintptr, key *windows.GUID) error {
 
 // Clean removes the persistent Tunnex WFP kill-switch objects, surfacing any hard error (engine
 // open / transaction). This is the exported entry for the startup CleanStale and the
-// `tunnex-helper --wfp-clean` escape hatch — the SAME code path, so the hatch is exactly what
+// `tunnex-helper --wfp-clean` escape hatch, the SAME code path, so the hatch is exactly what
 // startup self-heal does. Idempotent (nothing armed → nil).
 func Clean() error { return removePersistentObjects() }
 
 // removePersistentObjects is the crash-safe cleanup: it deletes EVERY WFP object under the
-// Tunnex fixed provider/sublayer — our filters (enumerated by provider), then the sublayer and
+// Tunnex fixed provider/sublayer, our filters (enumerated by provider), then the sublayer and
 // provider by key. It opens its OWN engine, so it works with no live session (after the arming
-// process died) — this is BOTH DisableFirewall (graceful) and CleanStale (startup + the
+// process died), this is BOTH DisableFirewall (graceful) and CleanStale (startup + the
 // --wfp-clean escape hatch). Idempotent: nothing armed → the deletes no-op. Returns an error
 // only if it can't even open the engine / run the transaction (so callers can log it).
 func removePersistentObjects() error {
@@ -130,11 +130,11 @@ func removePersistentObjects() error {
 	}
 	defer fwpmEngineClose0(engine)
 
-	// Phase 1 (read): collect our filter IDs via an enum handle (no txn — enumeration is a read).
+	// Phase 1 (read): collect our filter IDs via an enum handle (no txn, enumeration is a read).
 	ids := collectTunnexFilterIDs(engine)
 
 	// Phase 2 (write): delete filters, then sublayer, then provider, in one transaction. Order
-	// matters — WFP refuses to delete a sublayer/provider still referenced by filters. Errors
+	// matters, WFP refuses to delete a sublayer/provider still referenced by filters. Errors
 	// are TRACKED (not swallowed): "not found" is idempotent success, but any OTHER error means
 	// an object is still present (e.g. the sublayer is still referenced because a filter delete
 	// failed) → the block is NOT fully removed and the caller must know (else a silent strand /
@@ -164,7 +164,7 @@ func removePersistentObjects() error {
 }
 
 // collectTunnexFilterIDs returns the runtime IDs of every filter under the Tunnex provider. It
-// enumerates ALL filters with a NIL template and matches our provider IN GO — deliberately
+// enumerates ALL filters with a NIL template and matches our provider IN GO, deliberately
 // avoiding the FWPM_FILTER_ENUM_TEMPLATE0 layout (an OVERLAPPING template with a null layer
 // returned nothing in testing, so cleanup deleted nothing). Best-effort: an enum failure returns
 // what was collected so far.

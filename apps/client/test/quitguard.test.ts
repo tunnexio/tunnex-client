@@ -4,8 +4,8 @@ import assert from "node:assert/strict";
 import { gracefulQuit } from "../src/main/quitguard";
 
 // gracefulQuit lives in an electron-free module so it imports cleanly in CI (where
-// require("electron") throws). It must ALWAYS quit — after a clean disconnect, after a
-// disconnect error, and after a hung disconnect (via the timeout) — so a teardown
+// require("electron") throws). It must ALWAYS quit, after a clean disconnect, after a
+// disconnect error, and after a hung disconnect (via the timeout), so a teardown
 // problem can never wedge the app's exit.
 
 test("gracefulQuit: disconnects then quits on the happy path", async () => {

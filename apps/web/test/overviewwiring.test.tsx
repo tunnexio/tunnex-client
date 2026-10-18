@@ -10,7 +10,7 @@ import {
   within,
 } from "@testing-library/react";
 
-// S14.4 — OVERVIEW. THE FAILURE PATHS ARE THE TEST; the happy path is the easy half.
+// S14.4, OVERVIEW. THE FAILURE PATHS ARE THE TEST; the happy path is the easy half.
 //
 // This screen's whole thesis is that "we have not learned this" and "the answer is zero" are different
 // statements. Every assertion below is about which one gets rendered.
@@ -59,7 +59,7 @@ vi.mock("../src/lib/api", async () => {
         if (path.endsWith("/devices/pending")) return { data: [] };
         if (path.endsWith("/devices")) return { data: [] };
         // The hub-set endpoint returns an OBJECT, not a list. The catch-all `{ data: [] }` below fed an array
-        // into hubSetView and threw — which surfaced as "cannot find Members", i.e. the whole page failing to
+        // into hubSetView and threw, which surfaced as "cannot find Members", i.e. the whole page failing to
         // render. A catch-all mock is a fixture that answers questions it was never asked.
         if (path.endsWith("/hub-set"))
           return {
@@ -98,7 +98,7 @@ import Dashboard from "../src/pages/Dashboard";
 import { AuthProvider } from "../src/lib/auth";
 
 // MemoryRouter is required: the get-started panel links to /devices, and a bare render throws
-// "Cannot destructure property 'basename'" — which surfaced as an UNHANDLED ERROR rather than a clean
+// "Cannot destructure property 'basename'", which surfaced as an UNHANDLED ERROR rather than a clean
 // failure, so the visible symptom ("could not find Get started") pointed away from the cause.
 const show = () =>
   render(
@@ -119,7 +119,7 @@ beforeEach(() => {
   empty = false;
 });
 
-describe("the six cards resolve INDEPENDENTLY — one failure degrades one card", () => {
+describe("the six cards resolve INDEPENDENTLY, one failure degrades one card", () => {
   it("a failed /sites leaves the other five intact and marks only Sites unavailable", async () => {
     // The argument against an aggregated endpoint, asserted rather than argued: an API change driven by a
     // layout would convert three independent failures into one blast radius.
@@ -143,15 +143,15 @@ describe("⛔ A FAILED COUNT NEVER RENDERS AS ZERO", () => {
 
     // ⚠ THE ASSERTION HAD TO BE SHARPENED, AND THE FIRST VERSION WAS WRONG IN AN INSTRUCTIVE WAY.
     //
-    // It was `expect(screen.queryByText("0")).toBeNull()` — "no card shows 0" — and it failed, correctly:
+    // It was `expect(screen.queryByText("0")).toBeNull()`, "no card shows 0", and it failed, correctly:
     // /devices/pending returned [] and the Pending-approvals card rendered a TRUE ZERO. We DID learn there
     // are none. That zero is honest and must render.
     //
-    // The rule is not "never show 0". It is "NEVER SHOW 0 FOR SOMETHING WE DID NOT LEARN" — and a page-wide
+    // The rule is not "never show 0". It is "NEVER SHOW 0 FOR SOMETHING WE DID NOT LEARN", and a page-wide
     // text query cannot tell those apart, because on screen they are the same character. So the assertion is
     // scoped to the FAILED card, which is the only place the distinction lives.
     const sitesCard = screen.getByText("Sites").closest("div")!.parentElement!;
-    // (copy changed with the design pass; the ASSERTION is unchanged — a failed card must not show a number)
+    // (copy changed with the design pass; the ASSERTION is unchanged, a failed card must not show a number)
     expect(within(sitesCard).queryByText("0")).toBeNull();
   });
 
@@ -172,11 +172,11 @@ describe("the gateway health list uses the ONE health interpreter", () => {
       screen.getByRole("list", { name: "Gateway health" }),
     );
     // `silent_desync` -> "silent desync" comes from lib/healthview.ts. If this screen grew its own mapping,
-    // the two would drift and BOTH would still render — which is why there is exactly one interpreter.
+    // the two would drift and BOTH would still render, which is why there is exactly one interpreter.
     expect(within(list).getByText("silent desync")).toBeTruthy();
   });
 
-  it("a failed /nodes says unavailable — never an empty 'all healthy' list", async () => {
+  it("a failed /nodes says unavailable, never an empty 'all healthy' list", async () => {
     // "Nothing is wrong" and "we could not check" are opposite claims about a fleet.
     nodesFail = true;
     show();
@@ -201,7 +201,7 @@ describe("the get-started state appears only when the org is KNOWN to be empty",
     expect(screen.queryByText("Get started")).toBeNull();
   });
 
-  it("a FAILED overview shows no get-started panel — a failure is not an empty org", async () => {
+  it("a FAILED overview shows no get-started panel, a failure is not an empty org", async () => {
     // Showing onboarding because a fetch failed would tell a founder with a working fleet that they have
     // nothing: the reassuring-empty defect wearing an onboarding hat.
     overviewFail = true;
@@ -217,7 +217,7 @@ describe("the CUT panels are ABSENT, not hidden", () => {
   it("no throughput chart, no fleet-risk plot, no date picker", async () => {
     show();
     await waitFor(() => expect(screen.getByText("Members")).toBeTruthy());
-    // `hidden: true` searches the whole DOM regardless of visibility — the S14.2 lesson: a plain query would
+    // `hidden: true` searches the whole DOM regardless of visibility, the S14.2 lesson: a plain query would
     // pass against a `display:none` implementation and certify absence it never checked.
     expect(
       screen.queryByRole("figure", { name: /throughput/i, hidden: true }),
@@ -230,14 +230,14 @@ describe("the CUT panels are ABSENT, not hidden", () => {
     ).toBeNull();
   });
 
-  it("⛔ THE FORBIDDEN LIVENESS LABEL APPEARS NOWHERE IN THE APP — the ruling outlived its card", () => {
+  it("⛔ THE FORBIDDEN LIVENESS LABEL APPEARS NOWHERE IN THE APP, the ruling outlived its card", () => {
     // A render-floor violation in a WORD: `online` is last-handshake RECENCY, not a live session, and the
     // wireframe's own caption says "never green-while-dead" under a label claiming exactly that. The
     // founder ruled the qualification belongs IN THE LABEL, and this test guarded the one card that
-    // carried it — "Seen in last 3 min".
+    // carried it, "Seen in last 3 min".
     //
     // ⛔ THAT CARD WAS REMOVED (replaced by AI Agents), WHICH LEFT THE GUARD WITH NO SUBJECT. Deleting it
-    // would have retired a founder ruling as a side effect of a layout change — the ruling was about how
+    // would have retired a founder ruling as a side effect of a layout change, the ruling was about how
     // liveness may be NAMED, not about which card names it, and liveness still renders (Peer Connection
     // Status, and the Devices surfaces).
     //
@@ -260,13 +260,13 @@ describe("the CUT panels are ABSENT, not hidden", () => {
   });
 });
 
-describe("⛔ EDITION IS A FOURTH STATE — an enterprise-only card is ABSENT, never an error", () => {
+describe("⛔ EDITION IS A FOURTH STATE, an enterprise-only card is ABSENT, never an error", () => {
   // The defect this fixes: `/devices/pending` is enterprise-only, so the OPEN edition gets
-  // `403 edition_required` — a SUCCESSFUL REFUSAL. Read through loadOne alone it became `failed`, and the
+  // `403 edition_required`, a SUCCESSFUL REFUSAL. Read through loadOne alone it became `failed`, and the
   // card rendered a red "could not load" for a feature the org was never sold.
   //
   // A design that carefully enumerates states pushes the danger onto the state nobody enumerated, and it gets
-  // absorbed by whichever existing state is nearest — which is almost never the harmless one.
+  // absorbed by whichever existing state is nearest, which is almost never the harmless one.
   it("[open edition] the Pending-approvals card is not rendered at all", async () => {
     edition = "open";
     show();
@@ -284,7 +284,7 @@ describe("⛔ EDITION IS A FOURTH STATE — an enterprise-only card is ABSENT, n
     );
   });
 
-  it("[edition still unknown] the card is absent — absent-until-known, never a flash", async () => {
+  it("[edition still unknown] the card is absent, absent-until-known, never a flash", async () => {
     // A slow /meta must not briefly render an enterprise surface to an open-edition org.
     edition = null;
     show();

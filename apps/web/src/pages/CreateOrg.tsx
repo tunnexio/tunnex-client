@@ -21,11 +21,11 @@ function slugify(s: string): string {
  * CreateOrg is the explicit create-organization step in the onboarding funnel
  * (S4.7): a freshly-verified user with zero memberships lands here (routed by
  * RequireOrg) instead of a dead-end dashboard. The SSO-JIT and invite paths never
- * reach here — they already produce a membership.
+ * reach here, they already produce a membership.
  *
  * Two refusals are surfaced honestly rather than hidden:
  *  - Unverified email: create-org is verified-gated server-side (requireVerifiedUser),
- *    so we route to /verify-pending up front — the refusal is structural, not a
+ *    so we route to /verify-pending up front, the refusal is structural, not a
  *    surprise 403 after the user fills in the form.
  *  - Single-org cap (Community licence): the server owns the limit (org_limit_reached);
  *    on that code we swap the form for an invitation-only message. The UI mirrors
@@ -43,7 +43,7 @@ export default function CreateOrg() {
   // ⚠ Distinguishes the two audiences of one refusal: a zero-org visitor (who cannot install anything and
   // needs an invitation) from a capability holder already inside (who can, and should be offered the route).
   const [ceilingMsg, setCeilingMsg] = useState<string | null>(null);
-  // ⚠ A HOLDER ALREADY INSIDE vs A ZERO-ORG VISITOR — one refusal, two audiences. The visitor cannot
+  // ⚠ A HOLDER ALREADY INSIDE vs A ZERO-ORG VISITOR, one refusal, two audiences. The visitor cannot
   // install a licence (no org, no settings screen, no owner role) and needs an invitation; the holder can,
   // and gets the route. `cp_admin` is the honest discriminator: only a holder reaches this page
   // with an organization already in hand.
@@ -63,7 +63,7 @@ export default function CreateOrg() {
 
   function onSlug(v: string) {
     // Lowercase and collapse invalid runs to a single hyphen, but do NOT trim a
-    // trailing hyphen here — that would delete the '-' the instant it's typed, so
+    // trailing hyphen here, that would delete the '-' the instant it's typed, so
     // "acme-corp" couldn't be entered left-to-right. Trailing hyphens are trimmed
     // by slugify() at submit. An emptied field unlatches back to name-derived.
     const cleaned = v.toLowerCase().replace(/[^a-z0-9-]+/g, "-");
@@ -83,13 +83,13 @@ export default function CreateOrg() {
         // Cap reached: before showing the dead-end, RE-CHECK membership. Between
         // the funnel routing us here (0 orgs) and this refusal, the user may have
         // gained a membership (an invite accepted in another tab, JIT-join, or an
-        // admin adding them) — that user belongs in the dashboard, not a dead-end.
+        // admin adding them), that user belongs in the dashboard, not a dead-end.
         // Only a still-0-membership user sees the invitation-only card (branch 3).
         // ⛔ THE FUNNEL SENDS EVERY 0-MEMBERSHIP USER HERE, AND MOST OF THEM MAY NOT CREATE ANYTHING.
         //
         // Signing up creates an ACCOUNT, never an organization: a stranger with a verified email is
         // refused `invitation_required` by the server. Without this branch they met a bare red error on a
-        // form the funnel had just routed them to — told no, with no idea why, and no way forward.
+        // form the funnel had just routed them to, told no, with no idea why, and no way forward.
         //
         // ⚠ SAME CARD AS THE CEILING CASE, because the user's situation is identical: they cannot proceed
         // and somebody already inside has to admit them. Only the reason differs, and the server states it.
@@ -97,7 +97,7 @@ export default function CreateOrg() {
           return setCapped(true);
         }
         // ⭐ THE ORG CEILING NOTICE FINALLY HAS A CALLER AN OWNER CAN REACH. Until the switcher's "+ New",
-        // this branch was only reachable by a ZERO-ORG visitor — never by the person who would actually
+        // this branch was only reachable by a ZERO-ORG visitor, never by the person who would actually
         // pay. A holder hitting the ceiling here gets the route, not a dead end.
         if (apiErrorCode(error) === "org_limit_reached" && hasOrg) {
           return setCeilingMsg(
@@ -126,7 +126,7 @@ export default function CreateOrg() {
 
   // ⛔ THE FORM IS NEVER OFFERED TO SOMEONE WHO CANNOT USE IT.
   //
-  // RequireNoOrg asks one question — "do you have an organization?" — and a brand-new account has none, so
+  // RequireNoOrg asks one question, "do you have an organization?", and a brand-new account has none, so
   // it routes here. That account does not hold `cp_admin`, so submitting hit a refusal.
   //
   // ⚠ A FORM OFFERED TO SOMEONE WHO CANNOT USE IT IS WORSE THAN NO FORM: it costs them an attempt to learn
@@ -140,7 +140,7 @@ export default function CreateOrg() {
         </h1>
         <p className="mt-2 text-sm text-slate-400">
           This {PRODUCT_NAME} deployment is already set up. Accounts join by
-          invitation — ask an administrator to invite you, and the invitation
+          invitation, ask an administrator to invite you, and the invitation
           link will bring you straight in.
         </p>
         <button
@@ -176,7 +176,7 @@ export default function CreateOrg() {
           licence allows a single one. Ask an administrator to invite you, then
           sign in to accept.
         </p>
-        {/* ⚠ THE ROUTE IS FOR THE ADMINISTRATOR, NOT THIS VISITOR — and saying so is the point.
+        {/* ⚠ THE ROUTE IS FOR THE ADMINISTRATOR, NOT THIS VISITOR, and saying so is the point.
             Whoever is reading this cannot install a licence: they have no organization, so they have no
             settings screen and no owner role anywhere. Offering them an "install a licence" button would
             be a route to a 403. What they CAN do is tell the person who runs the deployment which limit
@@ -184,7 +184,7 @@ export default function CreateOrg() {
             product they cannot yet enter. */}
         <p className="mt-2 text-sm text-slate-400">
           If you run this deployment, its organization limit is raised by
-          installing a licence —{" "}
+          installing a licence ,{" "}
           <a
             href="https://tunnex.io/trial"
             target="_blank"
@@ -195,7 +195,7 @@ export default function CreateOrg() {
           </a>
           .
         </p>
-        {/* ⛔ SIGN OUT, NOT "back to sign in" — AND THE DIFFERENCE WAS AN INFINITE LOOP.
+        {/* ⛔ SIGN OUT, NOT "back to sign in", AND THE DIFFERENCE WAS AN INFINITE LOOP.
             A link to /login for a user who is ALREADY signed in bounces straight back: /login sees an
             authed session and forwards to /dashboard, RequireOrg finds no membership and forwards to
             /create-org, which lands here again. The only exit was closing the tab.
@@ -221,7 +221,7 @@ export default function CreateOrg() {
         Create your organization
       </h1>
       <p className="mt-1 text-sm text-slate-400">
-        One more step — name the organization that will own your gateways,
+        One more step, name the organization that will own your gateways,
         devices, and members.
       </p>
       <form onSubmit={submit} className="mt-5 space-y-4">

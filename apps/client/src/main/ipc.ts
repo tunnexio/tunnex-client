@@ -56,16 +56,16 @@ import {
   runTerminalRevocationFlow,
   type FixedManagedConnectContext,
 } from "./managedlifecycleflows";
-import { projectTransportStatus, SingleFlightStatusReader } from "./statusreader";
+import { HelperAccessStatusReader, projectTransportStatus, SingleFlightStatusReader } from "./statusreader";
 import { isCanonicalUuid } from "./uuid";
 import { BeamRuntime } from "./beamruntime";
 import { notificationScope, type NotificationInbox } from "./notificationinbox";
 import type { BeamAction, BeamCreate, BeamGrantsPreview } from "./beamtypes";
 
 // ClientTunnelStatus is what main forwards: the helper's TunnelStatus plus the
-// client-synthesized states the helper never emits — "revoked", "pending_approval",
+// client-synthesized states the helper never emits, "revoked", "pending_approval",
 // (S7.3: enrolled but awaiting admin approval; the helper is never armed for it), and
-// "migrate_failed" (S7.3: a legacy-config replacement didn't complete — the ONE bounded
+// "migrate_failed" (S7.3: a legacy-config replacement didn't complete, the ONE bounded
 // failure outcome of the migration path, made legible in the window/tray so it never
 // reads as a bare "Disconnected"; the helper is never armed for it).
 type ClientTunnelStatus =
@@ -86,7 +86,7 @@ type ManagedRemoveContext =
   | { readonly kind: "anchor"; readonly proof: ManagedEnrollmentAbandonProof; readonly api: HttpDeviceApi };
 
 // TunnelControls is what registerIpc returns so the tray (built in index.ts) can drive
-// the SAME connect/disconnect path the renderer uses — no duplicated tunnel logic, one
+// the SAME connect/disconnect path the renderer uses, no duplicated tunnel logic, one
 // source of truth for monitor + notification + state emission.
 export interface TunnelControls {
   beam: BeamRuntime;
@@ -96,7 +96,7 @@ export interface TunnelControls {
   subscribe(cb: (s: TrayState) => void): () => void;
 }
 
-// The IPC handlers behind the preload allowlist. VERB-SPECIFIC — there is no generic
+// The IPC handlers behind the preload allowlist. VERB-SPECIFIC, there is no generic
 // invoke(channel,args); each channel validates its own inputs in main (never trust the
 // renderer). Registered ONCE at app ready (ipcMain is app-global). `getWindow` resolves
 // the CURRENT window (or null when closed) so the tunnel + monitor outlive any window.
@@ -239,7 +239,7 @@ export function registerIpc(
     }
   };
   // pushRenderer sends to the live window's onStatusChanged channel. GUARDED: a closed/
-  // destroyed window is a no-op (never throws) — so callers' tray + notification side
+  // destroyed window is a no-op (never throws), so callers' tray + notification side
   // effects always run, they don't ride behind a throwing send.
   const pushRenderer = (s: ClientTunnelStatus): void => {
     const w = getWindow();
@@ -247,7 +247,7 @@ export function registerIpc(
     try {
       w.webContents.send("tunnel:status-changed", s);
     } catch {
-      /* webContents torn down mid-send — the tray/notification path still runs */
+      /* webContents torn down mid-send, the tray/notification path still runs */
     }
   };
   // A tray connect has no caller surface for a rejected Promise. Missing tenant
@@ -327,7 +327,7 @@ export function registerIpc(
     await runTerminalRevocationFlow({
       stopMonitors: () => {
         stopMonitor();
-        stopHealthMonitor(); // the device is gone — nothing left to report on
+        stopHealthMonitor(); // the device is gone, nothing left to report on
       },
       downTunnel: () => tunnel.down(),
       forceFailClosed: () => tunnel.failClosed(),
@@ -369,7 +369,7 @@ export function registerIpc(
     });
   };
 
-  // --- awaiting-approval poll (S7.3 — sibling of the revocation monitor) ----------
+  // --- awaiting-approval poll (S7.3, sibling of the revocation monitor) ----------
   // App-level SINGLETON (never per-window, the S6.4 root-fix class). Runs only while a
   // pending device is awaiting approval for the current origin; stops on resolution.
   let approvalMonitor: ApprovalMonitor | null = null;
@@ -379,7 +379,7 @@ export function registerIpc(
   };
   // onApproved: the admin approved the device. Clear the pending flag so a user-initiated
   // connect reuses the SAME stored config (no re-mint), surface it, notify. Deliberately
-  // does NOT auto-connect — a background poll must never arm the kill-switch / trigger the
+  // does NOT auto-connect, a background poll must never arm the kill-switch / trigger the
   // helper privilege flow; the human clicks Connect.
   const onApproved = (lease: ManagedLease, deviceId: string): void => {
     stopApprovalMonitor();
@@ -397,7 +397,7 @@ export function registerIpc(
     emit({ state: "down" }); // now connectable
     notifyTunnel("approved");
   };
-  // onRejected: the pending device was rejected/deleted — a genuine revocation. Route
+  // onRejected: the pending device was rejected/deleted, a genuine revocation. Route
   // through the ONE teardown path (onRevoked): clear the dead config + best-effort revoke
   // + the loud revoked notification. (No tunnel is up; tunnel.down is a no-op.)
   const onRejected = async (lease: ManagedLease, deviceId: string): Promise<void> => {
@@ -405,7 +405,7 @@ export function registerIpc(
     await onRevoked(lease, deviceId);
   };
 
-  // --- device-health report monitor (S7.5.3 — sibling of the revocation monitor) --
+  // --- device-health report monitor (S7.5.3, sibling of the revocation monitor) --
   // App-level SINGLETON. Runs while connected; self-reports posture facts on the
   // 10-min jittered cadence. Stops on disconnect / logout / origin change, and
   // stops ITSELF on a terminal server answer (403 open-edition / 404 gone).
@@ -440,7 +440,7 @@ export function registerIpc(
   };
   // collectHealthFacts gathers what main can read directly (platform, OS product
   // version) + the privileged fact via the helper's read-only posture verb. A fact
-  // that can't be determined (helper old/unreachable, query failed) is OMITTED —
+  // that can't be determined (helper old/unreachable, query failed) is OMITTED ,
   // reported absent, never guessed (the taxonomy's absence class).
   const collectHealthFacts = async (): Promise<HealthFacts> => {
     const platform =
@@ -451,7 +451,7 @@ export function registerIpc(
       const p = await tunnel.posture();
       if (typeof p.disk_encrypted === "boolean") facts.disk_encrypted = p.disk_encrypted;
     } catch {
-      /* helper old (unknown_verb) or unreachable — the fact stays absent */
+      /* helper old (unknown_verb) or unreachable, the fact stays absent */
     }
     return facts;
   };
@@ -627,7 +627,7 @@ export function registerIpc(
           () => lifecycle.assertCurrent(activeLease),
         );
         notifyTunnel("migrated");
-        return down; // terminal — next connect is an ordinary fresh create
+        return down; // terminal, next connect is an ordinary fresh create
       } catch {
         // The helper is already truthfully down. Keep the encrypted recovery
         // handle and surface one bounded retry state for revoke/clear failure.
@@ -812,9 +812,9 @@ export function registerIpc(
           );
           monitor.start();
           // S8.5 routed-subnets push (#5: runs in BOTH modes): poll the org's declared ranges + reachable DNS
-          // forwards and live-apply each tier via the helper — ranges → set_allowed_ips, forwards →
+          // forwards and live-apply each tier via the helper, ranges → set_allowed_ips, forwards →
           // set_resolvers. The ROUTES tier is enabled only for SPLIT-tunnel (a full tunnel's 0.0.0.0/0 subsumes
-          // every range — no route calls). The RESOLVER tier runs in BOTH: full-tunnel's baked DNS (1.1.1.1)
+          // every range, no route calls). The RESOLVER tier runs in BOTH: full-tunnel's baked DNS (1.1.1.1)
           // cannot answer internal cross-site zones, so it needs the forwards just as split-tunnel does.
           routedRangesMonitor = new RoutedRangesMonitor(
             sc.orgId,
@@ -1042,7 +1042,12 @@ export function registerIpc(
   // --- tunnel (S6.3 control + S6.4 UX) -----------------------------------------
   ipcMain.handle("tunnel:up", (_e, fullTunnel: unknown) => connect(fullTunnel === true));
   ipcMain.handle("tunnel:down", () => disconnect());
-  ipcMain.handle("tunnel:status", () => statusReader.read());
+  const helperAccessReader = new HelperAccessStatusReader(
+    () => statusReader.read(),
+    Date.now,
+    () => console.warn("Helper access blocked: this app executable is outside the trusted install location. Open the installed Tunnex app or repair the helper installation. Retrying in 30 seconds."),
+  );
+  ipcMain.handle("tunnel:status", () => helperAccessReader.read());
   ipcMain.handle("tunnel:managedOrganizations", () => lifecycle.serial(async () => {
     const lease = await captureManagedLease();
     const context = await organizationContext(lease);
@@ -1091,7 +1096,7 @@ export function registerIpc(
   ipcMain.handle("config:getServerUrl", () => config.getServerUrl());
 
   /**
-   * ⛔ IMPORT A `.conf` — parsed in MAIN, never in the renderer.
+   * ⛔ IMPORT A `.conf`, parsed in MAIN, never in the renderer.
    *
    * The file contains a WireGuard PRIVATE KEY. `parseWgConf` already runs in main for exactly this
    * reason, and the same rule holds here: the renderer asks for a file to be imported and is told
@@ -1223,10 +1228,10 @@ export function registerIpc(
       organizationSelectionRequiredPending = false;
       publishConfirmedDown();
       owner.invalidate();
-      // Stop BOTH monitors + tunnel (they belong to the OLD origin) — the awaiting-approval
+      // Stop BOTH monitors + tunnel (they belong to the OLD origin), the awaiting-approval
       // poll must also stop, else it keeps polling the old origin with a stale bearer
       // (finding #5: origin-lifecycle stop). Per the signed-off amendment we do NOT
-      // auto-revoke the old-origin device/config — it stays origin-keyed for the UI.
+      // auto-revoke the old-origin device/config, it stays origin-keyed for the UI.
       stopMonitor();
       stopApprovalMonitor();
       stopHealthMonitor();
@@ -1236,11 +1241,11 @@ export function registerIpc(
       organizationSelectionRequiredPending = false;
     }
     config.commitServerUrl(accepted);
-    // First run (unset → set) must LOAD the renderer — reload() would re-load the
+    // First run (unset → set) must LOAD the renderer, reload() would re-load the
     // current (setup data:) URL and cannot change origin. Otherwise a plain
     // reload picks up the new auth/config state.
     //
-    // ⛔ THIS LINE STILL SAID `index.html` AFTER STEP 3 — so the FIRST RUN, the one path every new
+    // ⛔ THIS LINE STILL SAID `index.html` AFTER STEP 3, so the FIRST RUN, the one path every new
     // install takes, landed on the web dashboard and only a second launch reached the client. One
     // constant now, in entry.ts, because two literals in two files are two constants.
     const w = getWindow();

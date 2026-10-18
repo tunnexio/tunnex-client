@@ -5,7 +5,7 @@ import { stripJsComments } from "./support/source";
 
 // ⛔ THE CENSUS OVER THE CENSUSES.
 //
-// The rule — *a census over source strips comments first* — was learned three times this epic and
+// The rule, *a census over source strips comments first*, was learned three times this epic and
 // applied three times by hand, AFTER each check had already been reported green. A rule enforced by
 // remembering it is a rule that fails on the fourth instance, and this file exists because there was
 // going to be a fourth.
@@ -15,12 +15,12 @@ import { stripJsComments } from "./support/source";
 //
 //     "the route is guarded by an env flag, NOT BY A COMMENT"
 //
-// and which read `App.tsx` raw — so a comment mentioning the flag satisfied it. **The test named the
+// and which read `App.tsx` raw, so a comment mentioning the flag satisfied it. **The test named the
 // exact failure mode it was open to.** Naming a hazard in prose is not a defence against it; that is
 // the same shape as writing "I could not reproduce this" in the commit that ships the remedy.
 //
 // So: any test that reads app source must read it through `./support/source`, or be REGISTERED here
-// with a reason. The register is the escape hatch and it is deliberately narrow — an exemption costs
+// with a reason. The register is the escape hatch and it is deliberately narrow, an exemption costs
 // a sentence that someone else can disagree with.
 
 const TEST_DIR = __dirname;
@@ -33,9 +33,9 @@ const TEST_DIR = __dirname;
  */
 const EXEMPT: Record<string, string> = {
   "screencensus.test.ts":
-    "reads DIRECTORY ENTRIES only (readdirSync over pages/) and never opens a file — there is no body to carry a comment.",
+    "reads DIRECTORY ENTRIES only (readdirSync over pages/) and never opens a file, there is no body to carry a comment.",
   "censuscensus.test.ts":
-    "this file — it reads the test tree itself, and stripping comments from a test would hide the very import it is checking for.",
+    "this file, it reads the test tree itself, and stripping comments from a test would hide the very import it is checking for.",
 };
 
 function testFiles(): string[] {
@@ -53,7 +53,7 @@ describe("⛔ every census over source strips comments first", () => {
   const files = testFiles();
 
   it("finds the test files at all (vacuity floor)", () => {
-    // Without this, a broken glob makes every assertion below pass over an empty list — the exact
+    // Without this, a broken glob makes every assertion below pass over an empty list, the exact
     // failure this repo has now filed five times.
     expect(files.length).toBeGreaterThanOrEqual(20);
   });
@@ -114,7 +114,7 @@ describe("the strippers do what they claim", () => {
   it("⛔ a `/*` INSIDE a line comment does not open a phantom block and eat the code below", () => {
     // The exact shape that bit on day two: entry.ts documents itself with the glob
     // `app://tunnex/` + star + `.html` in a `//` comment. Block-first stripping treated that as a
-    // block opener, ran to the next close, and swallowed the constant underneath — so a census
+    // block opener, ran to the next close, and swallowed the constant underneath, so a census
     // searching for the constant found ZERO in a file that plainly contains one.
     const src = [
       "// scans for app://tunnex/" + "*" + ".html across the tree",

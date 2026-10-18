@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import logoUrl from "../assets/tunnex-logo.svg";
 
 /**
- * AuthMesh — the login hero, TRANSCRIBED from the wireframe rather than re-imagined.
+ * AuthMesh, the login hero, TRANSCRIBED from the wireframe rather than re-imagined.
  *
  * ⛔ THE FIRST ATTEMPT WAS A THUMBNAIL OF THE DESIGN, NOT THE DESIGN. It drew six plain circles at
  * 300x264 with monospace labels, no provider marks, no animation, and put the hero beside the form
@@ -11,7 +11,7 @@ import logoUrl from "../assets/tunnex-logo.svg";
  * > **WHEN THE SOURCE SHIPS THE ARTEFACT, TRANSCRIBE IT. Re-deriving a picture from a screenshot
  * > reproduces what you noticed about it, which is never the whole of it.**
  *
- * viewBox 0 0 480 300, hub at (240,150) — the design's coordinates, unscaled. `preserveAspectRatio`
+ * viewBox 0 0 480 300, hub at (240,150), the design's coordinates, unscaled. `preserveAspectRatio`
  * does the fitting, so the geometry cannot be stretched by a container the way S14.7's flow graph
  * was when a viewBox met `w-full`.
  *
@@ -56,7 +56,7 @@ export function AuthMesh() {
   }, []);
 
   // ⛔ AN INFERENCE, LABELLED AS ONE. `.tnx-afloat` / `.tnx-afloat2` are DEFINED in the handoff's
-  // CSS and applied to NOTHING — dead rules in the source. The names ("auth float", two phases
+  // CSS and applied to NOTHING, dead rules in the source. The names ("auth float", two phases
   // .6s apart) say plainly what they were written for, so the node clusters carry them on
   // alternating phases. Recorded as a decision rather than passed off as transcription: the rest
   // of this file is the designer's markup verbatim, and this line is not.

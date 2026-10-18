@@ -17,11 +17,11 @@ const post: Poster = (url, body) =>
 
 // runLogin drives the desktop reuse of the S5.1 flow: PKCE + state, a single-shot
 // loopback listener, the SYSTEM browser opened to /cli-auth (the human
-// checkpoint — never an embedded webview), then code→credential exchange into
+// checkpoint, never an embedded webview), then code→credential exchange into
 // the keychain. Refuses if the store can't persist securely (unless opted in).
 export async function runLogin(server: string, store: CredentialStore): Promise<{ fingerprint: string; expiresAt: string }> {
   if (!store.available()) {
-    throw new Error("no OS keychain available — re-run with --allow-insecure-credential-storage, or use device-code login");
+    throw new Error("no OS keychain available, re-run with --allow-insecure-credential-storage, or use device-code login");
   }
   const { verifier, challenge } = generatePkce();
   const state = randomState();
@@ -62,7 +62,7 @@ export async function runLogout(store: CredentialStore): Promise<void> {
         },
       );
     } catch {
-      /* server unreachable — still clear locally */
+      /* server unreachable, still clear locally */
     }
   }
   store.clear();

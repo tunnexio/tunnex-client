@@ -34,7 +34,7 @@ const SVC = (
     fqdn,
   }) as K8sService;
 
-describe("k8sGate — CORE (no edition bit): org:view reads, k8s:manage + verified email mutates", () => {
+describe("k8sGate, CORE (no edition bit): org:view reads, k8s:manage + verified email mutates", () => {
   it("a member reads but cannot manage", () => {
     const g = k8sGate({ role: "member", emailVerified: true });
     expect(g.canView).toBe(true);
@@ -57,7 +57,7 @@ describe("k8sGate — CORE (no edition bit): org:view reads, k8s:manage + verifi
   });
 });
 
-describe("portLabel — the wire port_low/port_high projection", () => {
+describe("portLabel, the wire port_low/port_high projection", () => {
   it("both null/absent = any", () => {
     expect(portLabel(null, null)).toBe("any");
     expect(portLabel(undefined, undefined)).toBe("any");
@@ -71,7 +71,7 @@ describe("portLabel — the wire port_low/port_high projection", () => {
   });
 });
 
-describe("assembleClusters — group Services under their cluster (the wire-truth join)", () => {
+describe("assembleClusters, group Services under their cluster (the wire-truth join)", () => {
   it("services attach to their own cluster; the FQDN is READ, never constructed", () => {
     const clusters = [CL("c1", "prod"), CL("c2", "staging")];
     const services = [
@@ -91,7 +91,7 @@ describe("assembleClusters — group Services under their cluster (the wire-trut
   });
 });
 
-describe("serviceFqdnById — the grant-picker label source", () => {
+describe("serviceFqdnById, the grant-picker label source", () => {
   const svc = [SVC("k1", "c1", "api", "api.prod.svc.prod.k8s.acme.com")];
   it("resolves a live id to its fqdn", () => {
     expect(serviceFqdnById(svc, "k1")).toBe("api.prod.svc.prod.k8s.acme.com");
@@ -123,7 +123,7 @@ describe("managed-by-operator ownership surface (S10.2 D2 cond 1)", () => {
   });
 });
 
-describe("objectControls — the withhold decision (M3)", () => {
+describe("objectControls, the withhold decision (M3)", () => {
   it("withholds the destructive control on a managed object, offers it otherwise", () => {
     expect(objectControls(true).withheld).toBe(true);
     expect(objectControls(false).withheld).toBe(false);
@@ -161,7 +161,7 @@ const card = (name: string, services: number, siteId = "s1") =>
   }) as ReturnType<typeof statTiles> extends never ? never : any;
 
 describe("statTiles", () => {
-  it("is THREE tiles — the operator version is cut because it is not served", () => {
+  it("is THREE tiles, the operator version is cut because it is not served", () => {
     const t = statTiles([card("a", 2), card("b", 1)], 1);
     expect(t).toHaveLength(3);
     expect(t.map((x) => x.label)).toEqual([
@@ -178,7 +178,7 @@ describe("statTiles", () => {
     expect(statTiles([card("a", 2), card("b", 1)], 0)[1].value).toBe(3);
   });
 
-  it("⛔ null and 0 are DIFFERENT for machine credentials — both arms", () => {
+  it("⛔ null and 0 are DIFFERENT for machine credentials, both arms", () => {
     // 0 means "we looked, there are none"; null means "we could not look". A zero standing in for unknown is
     // the reassuring-empty defect in numeric form.
     const zero = statTiles([], 0)[2];
@@ -194,7 +194,7 @@ describe("statTiles", () => {
   });
 });
 
-describe("clusterReachability — D9", () => {
+describe("clusterReachability, D9", () => {
   const gw = (id: string, endpointsUnavailable = false, revoked = false) => ({
     id,
     endpointsUnavailable,
@@ -212,10 +212,10 @@ describe("clusterReachability — D9", () => {
     ).toBe(false);
   });
 
-  it("NEVER blames the cluster — the kind has three causes and only one is 'cluster down'", () => {
+  it("NEVER blames the cluster, the kind has three causes and only one is 'cluster down'", () => {
     const r = clusterReachability({ connectorNodeId: "connector", gateways: [gw("connector", true)] });
     expect(r.why).toMatch(/no endpoint view/i);
-    // Measured at dnat_linux.go:174 — the kind is also true for RBAC denial and an unsynced watch.
+    // Measured at dnat_linux.go:174, the kind is also true for RBAC denial and an unsynced watch.
     expect(r.why).not.toMatch(
       /cluster is down|cluster down|unreachable cluster/i,
     );
@@ -233,7 +233,7 @@ describe("clusterReachability — D9", () => {
     expect(none.why).toMatch(/no in-cluster connector is selected/i);
   });
 
-  it("ignores an unselected gateway — another same-site gateway's blindness is not this cluster's problem", () => {
+  it("ignores an unselected gateway, another same-site gateway's blindness is not this cluster's problem", () => {
     expect(
       clusterReachability({
         connectorNodeId: "connector",
@@ -242,7 +242,7 @@ describe("clusterReachability — D9", () => {
     ).toBe(true);
   });
 
-  it("a revoked or absent selected connector is unavailable — never substitute another gateway", () => {
+  it("a revoked or absent selected connector is unavailable, never substitute another gateway", () => {
     expect(
       clusterReachability({
         connectorNodeId: "connector",

@@ -1,6 +1,6 @@
 // relativeAge renders a compact "42s ago" / "3m ago" / "2h ago" / "5d ago" from
 // an ISO timestamp. Shared by the dashboard activity feed and the device list so
-// the two surfaces format recency identically (WireGuard has no live state — the
+// the two surfaces format recency identically (WireGuard has no live state, the
 // UI only ever shows honest last-seen recency, never a fabricated live claim).
 export function relativeAge(iso: string): string {
   const s = Math.max(
@@ -22,7 +22,7 @@ export function relativeAge(iso: string): string {
 // both produced "Could not reach the API.." in shipping copy; appending to neither leaves server
 // messages unterminated mid-sentence.
 //
-// ⚠ Trailing whitespace is trimmed first — " already ends." with a space would otherwise be read as
+// ⚠ Trailing whitespace is trimmed first, " already ends." with a space would otherwise be read as
 // unpunctuated and get a second stop.
 export function endSentence(message: string): string {
   const m = message.trim();

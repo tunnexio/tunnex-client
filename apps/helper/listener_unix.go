@@ -13,7 +13,7 @@ import (
 func DefaultSocketPath() string { return "/var/run/tunnex/helper.sock" }
 
 // NewListener creates the helper's local IPC endpoint. The helper runs as ROOT
-// (a LaunchDaemon), but the desktop app connecting to it is UNPRIVILEGED — so the
+// (a LaunchDaemon), but the desktop app connecting to it is UNPRIVILEGED, so the
 // socket must be reachable by a normal user. It is therefore world-connectable
 // (0666 in a traversable 0755 dir), and CALLER IDENTITY is enforced by the
 // PeerResolver + CallerVerifier (LOCAL_PEERPID → exe-inside-install-dir), NOT by

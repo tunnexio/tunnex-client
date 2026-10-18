@@ -51,7 +51,7 @@ export default function App() {
       <Routes>
         {/* The visual gallery is BUILD-FLAGGED OFF. `VITE_VISUAL_GALLERY` is unset in every production build,
             so Vite's dead-code elimination drops the route and the import. Only the visual-regression job
-            builds with it on, and `test/visualgallery.test.ts` asserts the flag defaults off — an unshipped
+            builds with it on, and `test/visualgallery.test.ts` asserts the flag defaults off, an unshipped
             surface must be PROVEN unshipped, not assumed.
             Deliberately OUTSIDE RequireAuth: the gallery renders primitives with fixture data and touches no
             API, so a login would add a dependency the snapshot does not need. */}
@@ -99,7 +99,7 @@ export default function App() {
               </RequireNoOrg>
             }
           />
-          {/* ⛔ THE FORCED PASSWORD CHANGE. Org-independent by construction — the bootstrap admin belongs
+          {/* ⛔ THE FORCED PASSWORD CHANGE. Org-independent by construction, the bootstrap admin belongs
               to no organization, so this cannot live inside the shell. */}
           <Route path="/change-password" element={<ChangePassword />} />
           <Route path="/verify-pending" element={<VerifyPending />} />
@@ -108,7 +108,7 @@ export default function App() {
           <Route path="/cli-auth" element={<CliAuth />} />
           <Route path="/cli-device" element={<CliDevice />} />
           {/* S7.5.5 D8: a MFA-enforcement-gated user (org requires 2FA, none set up) is routed here
-              by RequireAuth — enrollment only, until they confirm a TOTP. Org-independent. */}
+              by RequireAuth, enrollment only, until they confirm a TOTP. Org-independent. */}
           <Route path="/enroll-mfa" element={<ForcedEnroll />} />
           <Route
             element={
@@ -152,14 +152,14 @@ function RequireAuth() {
   const location = useLocation();
   if (state.status === "loading") return <FullScreenLoading />;
   if (state.status === "anon") {
-    // Preserve the intended destination so it survives the login round-trip —
+    // Preserve the intended destination so it survives the login round-trip ,
     // the CLI login flow (`tunnex login` → /cli-auth?…) on a fresh machine
     // depends on landing back on /cli-auth WITH its query params (S5.1).
     const next = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/login?next=${next}`} replace />;
   }
   // S7.5.5 D8: an enrollment-gated user is confined to the enrollment ceremony until they set up 2FA;
-  // once the gate clears they are released back to the app (WF-3 — the inverse redirect the original
+  // once the gate clears they are released back to the app (WF-3, the inverse redirect the original
   // code was missing, which trapped a now-enrolled user on /enroll-mfa). The SERVER enforces the gate
   // (default-deny middleware, typed mfa_enrollment_required 403); this is the client routing so the
   // user lands on the ceremony rather than hitting dead 403s. Decision is a pure fn (authroute.ts),
@@ -167,7 +167,7 @@ function RequireAuth() {
   // ⛔ THE PASSWORD WALL IS ROUTED BEFORE EVERYTHING ELSE, INCLUDING THE MFA GATE. The credential was
   // printed to logs; until it is replaced this account may authenticate and do nothing else, and the
   // server enforces exactly that. Without this redirect the user meets the refusal as a red error on
-  // whichever page they happened to land on — which is what shipped, and what an operator actually saw.
+  // whichever page they happened to land on, which is what shipped, and what an operator actually saw.
   if (
     state.user.must_change_password &&
     location.pathname !== "/change-password"
@@ -213,7 +213,7 @@ function ForcedEnroll() {
 
 // RequireNoOrg is RequireOrg's inverse, guarding the create-org step itself
 // (S4.8/F4): a user who ALREADY belongs to an org and navigates to /create-org
-// manually is re-routed to the dashboard at VISIT time — previously only the
+// manually is re-routed to the dashboard at VISIT time, previously only the
 // submit path re-checked (403 → membership re-check), so the form rendered
 // pointlessly. Fail-open on a fetch error: the form is safe to show (the
 // submit path still ends in the server's answer).
@@ -242,14 +242,14 @@ function RequireNoOrg({ children }: { children: React.ReactNode }) {
   if (status === "loading") return <FullScreenLoading />;
   // ⛔ THE FORM IS NEVER OFFERED TO SOMEONE WHO CANNOT USE IT.
   //
-  // RequireNoOrg used to ask ONE question — "do you have an organization?" — and a brand-new account has
+  // RequireNoOrg used to ask ONE question, "do you have an organization?", and a brand-new account has
   // none, so it rendered the form. That account does not hold `cp_admin`, so submitting it hit a
   // refusal. ⚠ A form offered to someone who cannot use it is worse than no form: it costs them the
   // attempt to learn what the screen could have said first.
   //
   // ⭐ The invitation card is the correct destination for exactly this state, it already exists, and it
   // was previously one FAILED SUBMIT away. Now it is the first thing they see.
-  // ⛔ A CAPABILITY HOLDER IS NOT BOUNCED. RequireNoOrg guards the onboarding funnel — it stops a user who
+  // ⛔ A CAPABILITY HOLDER IS NOT BOUNCED. RequireNoOrg guards the onboarding funnel, it stops a user who
   // already has an org from re-entering the SIGNUP step. But this route is now also the only place org
   // creation lives, reached from the switcher's "+ New", so bouncing a holder to /dashboard would make the
   // affordance a dead link.
@@ -274,13 +274,13 @@ function RequireNoOrg({ children }: { children: React.ReactNode }) {
 // supplies once. The deferred `useCurrentOrg` hook this comment was waiting for is `lib/useOrg.tsx`.
 //
 // ⚠ THIS GUARD'S OWN FETCH STAYS, and is not the duplication that was removed. It asks a different
-// question — "any org at all", answered BEFORE the provider mounts — and folding it into the provider
+// question, "any org at all", answered BEFORE the provider mounts, and folding it into the provider
 // would put the funnel's routing decision downstream of the context it gates.
 //
 // The create-org → /dashboard handoff assumes read-your-writes: after a 201 the
 // remounted RequireOrg refetches and must see the new org. That holds for the
 // single-primary Postgres this product deploys; a read-replica topology could
-// briefly bounce the user back to /create-org (accepted — tunnex has no replicas).
+// briefly bounce the user back to /create-org (accepted, tunnex has no replicas).
 function RequireOrg({ children }: { children: React.ReactNode }) {
   const { state } = useAuth();
   const [status, setStatus] = useState<"loading" | "none" | "has">("loading");

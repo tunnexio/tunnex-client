@@ -1,0 +1,222 @@
+/* Desktop connection surface, scaled to the native window. */
+.client-workspace.tnx-client-shell { background: #090a09; color: #f3f3f1; }
+.client-workspace.tnx-client-shell .tnx-client-header { padding: 40px 26px 12px; gap: 14px; align-items: flex-start; }
+.client-workspace.tnx-client-shell .tnx-client-header > span:nth-of-type(1) img { width: 176px; height: auto; }
+.client-workspace.tnx-client-shell .tnx-client-header > span:nth-of-type(1) > :last-child { font-size: 12px; letter-spacing: .065em; line-height: 1.6; color: #c4c4be; }
+.client-workspace.tnx-client-shell .tnx-client-main { padding: 12px 26px 22px; gap: 20px; }
+.client-workspace.tnx-client-shell .client-home { flex: 1; gap: 20px; }
+.client-workspace.tnx-client-shell .tnx-client-hero { height: clamp(180px, 30vh, 250px); min-height: 180px; flex: none; }
+.client-workspace.tnx-client-shell .tnx-client-hero canvas { opacity: .22; }
+.client-workspace.tnx-client-shell .tnx-connect-control { width: 150px; height: 150px; }
+.client-workspace.tnx-client-shell .tnx-connect-orb { width: 94px; height: 94px; border-radius: 50%; background: radial-gradient(circle at 36% 28%, #fff 0%, #f3f3ef 55%, #dadbd4 100%); border: 1px solid #fff; animation: none; box-shadow: 0 0 28px #ecece833, 0 0 65px #ecece817, inset 0 0 8px #fff; }
+.client-workspace.tnx-client-shell .tnx-connect-orbit { width: 136px; height: 136px; border: 2px solid #777970; border-radius: 50%; outline: 1px solid #343630; outline-offset: 6px; }
+.client-workspace.tnx-client-shell .tnx-connect-orbit::before { content: ''; position: absolute; inset: 9px; border: 1px solid #686a60; border-radius: 50%; }
+.client-workspace.tnx-client-shell .tnx-connect-orbit-segment { border-color: #c7c9bf; border-width: 2px; }
+.client-workspace.tnx-client-shell .tnx-connect-ripple { inset: -4px; border: 1px solid #33362f; animation: none; }
+.client-workspace.tnx-client-shell .tnx-connect-ripple-late { inset: 18px; border-color: #55584e; }
+.client-workspace.tnx-client-shell .tnx-action-caption { position: absolute; top: calc(100% + 22px); color: #d6d7cf; font-size: 14px; letter-spacing: .025em; white-space: nowrap; }
+.client-workspace.tnx-client-shell .tnx-connect-control:hover .tnx-connect-orb { transform: scale(1.04); }
+.client-workspace.tnx-client-shell .tnx-connect-orb { transition: transform .2s; }
+.client-workspace.tnx-client-shell .tnx-client-status { text-align: center; }
+.client-workspace.tnx-client-shell .tnx-client-status h1 { font-size: clamp(28px, 7vw, 34px); letter-spacing: -.045em; line-height: 1.2; }
+.client-workspace.tnx-client-shell .tnx-client-status [data-status-detail],.client-workspace.tnx-client-shell .tnx-client-status [data-connection-path] { color: #94968d; font-size: 14px; line-height: 1.6; margin-top: 12px; }
+.client-workspace.tnx-client-shell .tnx-client-status .tnx-status-eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: 12px; color: #8e9187; margin-bottom: 12px; }
+.client-workspace.tnx-client-shell .tnx-client-stats { margin-top: auto; flex-shrink: 0; background: #111210; border: 1px solid #393c33; border-radius: 18px; overflow: hidden; color: #a2a599; }
+.client-workspace.tnx-client-shell .tnx-stats-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 15px 18px; font: 12px 'JetBrains Mono Variable', monospace; text-transform: uppercase; letter-spacing: .04em; text-align: left; }
+.client-workspace.tnx-client-shell .tnx-stats-toggle > span:first-child { display: flex; align-items: center; gap: 10px; }
+.client-workspace.tnx-client-shell .tnx-stats-toggle:hover { color: #f3f3ef; background: #ffffff04; }
+.client-workspace.tnx-client-shell .tnx-stats-toggle:focus-visible { outline: 2px solid #c7c9bf; outline-offset: -4px; border-radius: 16px; }
+.client-workspace.tnx-client-shell .tnx-chevron { flex: none; transition: transform .2s; }
+.client-workspace.tnx-client-shell .tnx-chevron-open { transform: rotate(180deg); }
+.client-workspace.tnx-client-shell .tnx-client-stats .client-facts { margin: 0; gap: 0; }
+.client-workspace.tnx-client-shell .tnx-client-stats .client-facts > div { padding: 12px 16px; border-top: 1px solid #303329; }
+.client-workspace.tnx-client-shell .tnx-client-stats .client-facts > div:nth-child(even) { border-left: 1px solid #303329; }
+.client-workspace.tnx-client-shell .tnx-client-stats .client-facts dt { display: flex; align-items: center; gap: 7px; color: #92968a; font-size: 11px; }
+.client-workspace.tnx-client-shell .tnx-client-stats .client-facts dd { color: #d5d7ce; margin-top: 8px; font-size: 15px; font-family: 'JetBrains Mono Variable', monospace; }
+.client-workspace.tnx-client-shell .tnx-client-stats .client-fact-wide { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.client-workspace.tnx-client-shell .tnx-client-stats .client-fact-wide dd { margin-top: 0; }
+.client-workspace.tnx-client-shell .tnx-live-rate { padding: 0 16px 10px; font: 11px monospace; }
+.client-workspace.tnx-client-shell .tnx-client-footer { flex: none; padding: 12px; border-top: 1px solid #24271f; color: #84877d; text-align: center; font-size: 12px; }
+@media (max-height: 800px) {
+  .client-workspace.tnx-client-shell[data-stats-open="true"] .tnx-client-header { padding-top: 34px; padding-bottom: 4px; }
+  .client-workspace.tnx-client-shell[data-stats-open="true"] .tnx-client-hero { height: 185px; min-height: 185px; }
+  .client-workspace.tnx-client-shell[data-stats-open="true"] .client-home { gap: 16px; }
+  .client-workspace.tnx-client-shell[data-stats-open="true"] .tnx-action-caption { top: calc(100% + 10px); }
+}
+@media (max-height: 650px) {
+  .client-workspace.tnx-client-shell .tnx-client-header { padding-top: 34px; }
+  .client-workspace.tnx-client-shell .tnx-client-hero { height: 180px; }
+  .client-workspace.tnx-client-shell .client-home { gap: 14px; }
+  .client-workspace.tnx-client-shell .tnx-client-status h1 { font-size: 28px; }
+}
+@media (prefers-reduced-motion: reduce) { .tnx-connect-orbit { animation: none; } }
+
+.client-workspace.tnx-client-shell .tnx-client-header .client-navigation-toggle { width: 32px; height: 32px; margin-top: 1px; border: 1px solid #ffffff12; border-radius: 9px; background: #ffffff04; }
+.client-workspace.tnx-client-shell .tnx-client-header > .ml-auto { min-height: 34px; }
+.client-workspace.tnx-client-shell .tnx-client-stats .client-facts dt svg { box-sizing: content-box; flex: none; padding: 6px; border: 1px solid #c7c9bf16; border-radius: 8px; background: linear-gradient(145deg, #c7c9bf0c, #c7c9bf02); color: #c7c9bf; }
+.client-workspace.tnx-client-shell .tnx-stats-toggle > span:first-child svg { color: #c7c9bf; stroke-width: 1.7; }
+
+/* Notifications share the connection surface's neutral palette. */
+.client-workspace.tnx-client-shell .client-notice,
+.client-workspace.tnx-client-shell .client-sharing-feedback {
+  color: #d5d7ce;
+  background: #141512;
+  border: 1px solid #393c33;
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: none;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.client-workspace.tnx-client-shell .client-notice .text-warn,
+.client-workspace.tnx-client-shell .client-notice .text-danger { color: #eceee5; }
+.client-workspace.tnx-client-shell .client-notice-icon { display: inline-block; vertical-align: -3px; margin-right: 8px; color: #c7c9bf; }
+.client-workspace.tnx-client-shell .client-notifications-trigger { width: 32px; height: 32px; border: 1px solid #ffffff12; border-radius: 9px; background: #ffffff04; color: #c7c9bf; }
+.client-workspace.tnx-client-shell .client-notifications-count { background: #d5d7ce; color: #141512; box-shadow: 0 0 0 2px #090a09; }
+.client-workspace.tnx-client-shell .client-notifications-panel { padding: 18px; border: 1px solid #393c33; border-radius: 16px; background: #111210; box-shadow: 0 16px 48px #0008; }
+.client-workspace.tnx-client-shell .client-notifications-panel .client-notifications-error { color: #d5d7ce; padding: 10px 12px; border: 1px solid #44473d; border-radius: 8px; background: #1b1d17; }
+.client-workspace.tnx-client-shell .client-notifications-action { color: #e1e3da; border: 1px solid #44473d; border-radius: 8px; background: #ffffff06; }
+.client-workspace.tnx-client-shell .client-notifications-action:hover:not(:disabled) { background: #ffffff0c; border-color: #717568; }
+
+.client-workspace.tnx-client-shell .tnx-stat-placeholder { display: inline-block; width: 36px; height: 6px; vertical-align: middle; border-radius: 3px; background: #55594d; opacity: .55; }
+.client-workspace.tnx-client-shell .tnx-live-rate[hidden] { display: none; }
+
+/* Local Sharing follows the same restrained surface as connection stats. */
+.client-workspace.tnx-client-shell .client-sharing { gap: 20px; padding-top: 8px; }
+.client-workspace.tnx-client-shell .client-sharing-heading h1 { margin-top: 10px; font-size: 27px; letter-spacing: -.04em; font-weight: 550; }
+.client-workspace.tnx-client-shell .client-sharing-heading p { margin-top: 8px; font-size: 13px; color: #a2a599; }
+.client-workspace.tnx-client-shell .client-sharing-eyebrow { display: flex; align-items: center; gap: 8px; font: 10px 'JetBrains Mono Variable', monospace; letter-spacing: .12em; color: #92968a; }
+.client-workspace.tnx-client-shell .client-sharing-vpn-note { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; color: #8f9387; font-size: 10px; }
+.client-workspace.tnx-client-shell .client-sharing-tabs { padding: 4px; gap: 4px; border: 1px solid #303329; border-radius: 12px; background: #111210; }
+.client-workspace.tnx-client-shell .client-sharing-tabs button { flex: 1; min-width: 0; padding: 10px 8px; border-radius: 8px; font-size: 12px; transition: background .15s, color .15s; }
+.client-workspace.tnx-client-shell .client-sharing-tabs button[aria-pressed="true"] { background: #252820; color: #eeefe9; box-shadow: 0 1px 3px #0004, inset 0 1px #ffffff08; }
+.client-workspace.tnx-client-shell .client-sharing-tabs button[aria-pressed="true"]::after { display: none; }
+.client-workspace.tnx-client-shell .client-sharing-panel { gap: 16px; }
+.client-workspace.tnx-client-shell .client-sharing-welcome,
+.client-workspace.tnx-client-shell .client-sharing-empty { padding: 30px 22px 20px; border: 1px solid #35382f; border-radius: 18px; background: radial-gradient(ellipse at 50% 0%, #c7c9bf08, transparent 70%), #111210; text-align: center; }
+.client-workspace.tnx-client-shell .client-sharing-welcome-icon { display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; margin: 0 auto 20px; border: 1px solid #484c3f; border-radius: 18px; background: linear-gradient(145deg, #ffffff08, #ffffff02); color: #c7c9bf; box-shadow: 0 8px 24px #0003; }
+.client-workspace.tnx-client-shell .client-sharing-welcome h3 { max-width: 260px; margin: 0 auto; color: #e5e7df; font-size: 19px; line-height: 1.4; letter-spacing: -.025em; font-weight: 500; }
+.client-workspace.tnx-client-shell .client-sharing-welcome p { max-width: 290px; margin: 12px auto 0; color: #969a8e; font-size: 12px; line-height: 1.8; }
+.client-workspace.tnx-client-shell .client-sharing-flow { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin: 24px 0; color: #7d8274; }
+.client-workspace.tnx-client-shell .client-sharing-flow span { padding: 6px 8px; border: 1px solid #35382e; border-radius: 6px; color: #b9beae; font: 10px 'JetBrains Mono Variable', monospace; }
+.client-workspace.tnx-client-shell .client-sharing-desktop-hint { display: flex; align-items: center; justify-content: center; gap: 8px; padding-top: 16px; border-top: 1px solid #303329; color: #a5aa9b; font-size: 11px; line-height: 1.6; }
+.client-workspace.tnx-client-shell .client-sharing-desktop-hint svg { flex: none; }
+.client-workspace.tnx-client-shell .client-sharing-help { padding: 12px 14px; border: 1px solid #303329; border-radius: 12px; background: #ffffff02; color: #a2a599; }
+.client-workspace.tnx-client-shell .client-sharing-help > summary { font-size: 11px; }
+@media (max-width: 380px) { .client-workspace.tnx-client-shell .client-sharing-welcome { padding: 24px 14px 16px; } .client-workspace.tnx-client-shell .client-sharing-flow { gap: 4px; } }
+
+/* Home fits the native viewport, including expanded facts and notices. */
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-client-main { overflow: hidden; gap: 10px; padding: 6px 24px 16px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-client-header { padding: 34px 24px 8px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-client-header > span:nth-of-type(1) img { width: 154px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-client-header > span:nth-of-type(1) > :last-child { font-size: 10px; line-height: 1.5; }
+.client-workspace.tnx-client-shell[data-pane="home"] .client-home { min-height: 0; gap: 12px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-client-hero { flex: 1 1 180px; height: auto; min-height: 120px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-connect-control { width: 120px; height: 120px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-connect-orb { width: 78px; height: 78px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-connect-orbit { width: 112px; height: 112px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-action-caption { top: calc(100% + 6px); font-size: 12px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-client-status { flex: none; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-client-status h1 { font-size: 28px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-status-eyebrow { font-size: 10px; margin-bottom: 6px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-client-status [data-status-detail] { margin-top: 6px; font-size: 12px; line-height: 1.5; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-client-stats { margin-top: 0; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-stats-toggle { padding: 11px 14px; font-size: 10px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .client-facts > div { padding: 8px 12px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .client-facts dt { font-size: 10px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .client-facts dt svg { padding: 4px; width: 14px; height: 14px; border-radius: 6px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .client-facts dd { margin-top: 4px; font-size: 12px; }
+.client-workspace.tnx-client-shell[data-pane="home"] .client-fact-wide dd { margin-top: 0; }
+.client-workspace.tnx-client-shell[data-pane="home"] .client-notice { flex: none; padding: 10px 12px; font-size: 11px; line-height: 1.5; }
+.client-workspace.tnx-client-shell[data-pane="home"] .tnx-live-rate canvas { height: 24px; }
+
+/* Settings uses compact cards and neutral controls. */
+.client-workspace.tnx-client-shell[data-pane="settings"] .tnx-client-header { padding: 34px 24px 8px; }
+.client-workspace.tnx-client-shell[data-pane="settings"] .tnx-client-header > span:nth-of-type(1) img { width: 154px; }
+.client-workspace.tnx-client-shell[data-pane="settings"] .tnx-client-header > span:nth-of-type(1) > :last-child { font-size: 10px; line-height: 1.5; }
+.client-workspace.tnx-client-shell[data-pane="settings"] .tnx-client-main { gap: 12px; padding: 8px 24px 16px; }
+.client-workspace.tnx-client-shell[data-pane="settings"] .client-pane-title { font-size: 24px; letter-spacing: -.035em; }
+.client-workspace.tnx-client-shell[data-pane="settings"] .client-section { padding: 13px 14px; border: 1px solid #35382f; border-radius: 14px; background: #111210; }
+.client-workspace.tnx-client-shell[data-pane="settings"] .client-section-title { display: inline-flex; align-items: center; gap: 8px; color: #c7c9bf; font: 10px 'JetBrains Mono Variable', monospace; text-transform: uppercase; letter-spacing: .07em; }
+.client-workspace.tnx-client-shell[data-pane="settings"] fieldset.client-section { position: relative; padding-top: 32px; }
+.client-workspace.tnx-client-shell[data-pane="settings"] fieldset.client-section legend { position: absolute; top: 12px; left: 14px; margin: 0; padding: 0; }
+.client-workspace.tnx-client-shell[data-pane="settings"] fieldset.client-section label { padding: 7px 8px; margin-top: 3px; border: 1px solid transparent; border-radius: 9px; font-size: 12px; }
+.client-workspace.tnx-client-shell[data-pane="settings"] fieldset.client-section label:has(input:checked) { background: #ffffff05; border-color: #414638; color: #e1e4d9; }
+.client-workspace.tnx-client-shell[data-pane="settings"] fieldset.client-section label .text-xs { font-size: 10px; line-height: 1.5; margin-top: 2px; }
+.client-workspace.tnx-client-shell[data-pane="settings"] .client-section p { font-size: 10px; line-height: 1.5; }
+.client-workspace.tnx-client-shell[data-pane="settings"] .client-section .client-server-address,
+.client-workspace.tnx-client-shell[data-pane="settings"] [data-version] { font-size: 12px; color: #d5d7ce; }
+.client-workspace.tnx-client-shell[data-pane="settings"] .client-server-address { overflow-wrap: anywhere; }
+.client-workspace.tnx-client-shell[data-pane="settings"] .client-actions { gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.client-workspace.tnx-client-shell[data-pane="settings"] .client-button { min-height: 29px; padding: 5px 9px; border-color: #3a3e32; border-radius: 8px; color: #c7c9bf; font-size: 10px; background: #ffffff03; }
+.client-workspace.tnx-client-shell[data-pane="settings"] .client-button:hover:not(:disabled) { background: #ffffff09; border-color: #777d6b; }
+.client-workspace.tnx-client-shell[data-pane="settings"] .text-warn { color: #b9bdae; }
+
+.client-workspace.tnx-client-shell .tnx-helper-details { margin: 10px auto 0; max-width: 290px; font-size: 11px; color: #999e90; }
+.client-workspace.tnx-client-shell .tnx-helper-details summary { display: flex; align-items: center; justify-content: center; gap: 5px; width: fit-content; margin: auto; cursor: pointer; list-style: none; padding: 3px 0; }
+.client-workspace.tnx-client-shell .tnx-helper-details summary::-webkit-details-marker { display: none; }
+.client-workspace.tnx-client-shell .tnx-helper-details summary:hover { color: #d5d7ce; }
+.client-workspace.tnx-client-shell .tnx-helper-details summary:focus-visible { outline: 1px solid #c7c9bf; outline-offset: 4px; border-radius: 3px; }
+.client-workspace.tnx-client-shell .tnx-helper-details[open] summary svg { transform: rotate(90deg); }
+.client-workspace.tnx-client-shell .tnx-helper-details p { margin-top: 8px; line-height: 1.6; }
+
+/* Reserve one native control strip on both Windows and macOS, across all panes. */
+.client-workspace.tnx-client-shell[data-pane] .tnx-client-header { padding: 40px 24px 10px; gap: 14px; align-items: flex-start; }
+.client-workspace.tnx-client-shell[data-pane] .tnx-client-header > span:nth-of-type(1) img { width: 154px; }
+.client-workspace.tnx-client-shell[data-pane] .tnx-client-header > span:nth-of-type(1) > :last-child { font-size: 10px; line-height: 1.5; }
+
+/* Development-only Windows caption simulation; production uses native controls. */
+.client-workspace.tnx-client-shell .tnx-windows-caption { position: absolute; top: 0; left: 0; right: 0; height: 32px; display: flex; z-index: 40; background: #090a09; }
+.client-workspace.tnx-client-shell .tnx-windows-caption-drag { flex: 1; }
+.client-workspace.tnx-client-shell .tnx-windows-caption button { display: flex; align-items: center; justify-content: center; width: 46px; height: 32px; color: #c7c9bf; opacity: 1; cursor: default; }
+.client-workspace.tnx-client-shell .tnx-windows-caption button:nth-last-child(2) { color: #62665a; }
+.client-workspace.tnx-client-shell .tnx-windows-caption svg { fill: none; stroke: currentColor; stroke-width: 1; }
+
+/* The native client owns the viewport; scrollable panes never add visible rails. */
+html:has(.tnx-client-shell),
+body:has(.tnx-client-shell),
+#root:has(.tnx-client-shell) { height: 100%; overflow: hidden; overscroll-behavior: none; }
+.client-workspace.tnx-client-shell { width: 100%; max-width: 100vw; }
+.client-workspace.tnx-client-shell .tnx-client-main { overflow-x: hidden; }
+.client-workspace.tnx-client-shell,
+.client-workspace.tnx-client-shell * { scrollbar-width: none; }
+.client-workspace.tnx-client-shell::-webkit-scrollbar,
+.client-workspace.tnx-client-shell *::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* Profiles: clear source selection, compact inventory, and a quiet import state. */
+.client-workspace.tnx-client-shell[data-pane="profiles"] .tnx-client-main { padding: 8px 24px 16px; gap: 14px; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-pane-title { font-size: 24px; letter-spacing: -.035em; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-pane-stack { gap: 12px; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-section { padding: 14px; border: 1px solid #35382f; border-radius: 14px; background: #111210; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-section[data-connection-source] { border-color: #555c49; background: linear-gradient(120deg, #c7c9bf08, transparent), #111210; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-section h2 { display: flex; align-items: center; gap: 8px; color: #d8dccf; font-size: 12px; font-weight: 500; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-section h2 svg { flex: none; color: #a5ad98; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-section p { font-size: 10px; line-height: 1.6; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-section h2 + p { margin-top: 6px; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-section .text-accent-400 { padding: 3px 7px; border: 1px solid #4b5240; border-radius: 6px; background: #c7c9bf06; color: #c7cfbb; font-size: 9px; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-button { min-height: 28px; padding: 5px 8px; border: 1px solid #414638; border-radius: 8px; background: #ffffff03; color: #c7c9bf; font-size: 10px; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-button:hover:not(:disabled) { background: #ffffff09; border-color: #777d6b; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-record { padding: 12px 0 0; margin-top: 12px; border: 0; border-top: 1px solid #30362a; border-radius: 0; background: transparent; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-record .client-record-title { font-size: 12px; color: #e0e4d7; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .client-record-detail { font-family: 'JetBrains Mono Variable', monospace; font-size: 9px; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .tnx-profile-empty { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 14px 12px; border: 1px dashed #3b4231; border-radius: 10px; background: #ffffff02; color: #a1aa94; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .tnx-profile-empty svg { flex: none; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .tnx-profile-empty p { margin: 0; color: #ced4c3; font-size: 11px; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .tnx-profile-empty span { font-size: 10px; color: #909987; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .tnx-profile-footnote { margin-top: 10px; color: #89927e; font-size: 9px; }
+.client-workspace.tnx-client-shell[data-pane="profiles"] .text-warn { color: #bdc5b1; }
+
+/* Logs keeps one focused viewer inside the fixed desktop surface. */
+.client-workspace.tnx-client-shell[data-pane="logs"] .tnx-client-main { overflow: hidden; padding: 8px 24px 16px; gap: 12px; }
+.client-workspace.tnx-client-shell .client-logs { gap: 12px; min-width: 0; }
+.client-workspace.tnx-client-shell .tnx-logs-heading .client-pane-title { font-size: 24px; letter-spacing: -.035em; }
+.client-workspace.tnx-client-shell .tnx-logs-heading p { margin-top: 5px; color: #929989; font-size: 10px; line-height: 1.6; }
+.client-workspace.tnx-client-shell .client-logs .client-section-header { gap: 6px; flex-wrap: nowrap; padding: 10px; border: 1px solid #35382f; border-radius: 12px; background: #111210; }
+.client-workspace.tnx-client-shell .client-logs .client-section-title { display: flex; align-items: center; gap: 6px; white-space: nowrap; color: #aeb6a1; font: 9px 'JetBrains Mono Variable', monospace; text-transform: uppercase; letter-spacing: .04em; }
+.client-workspace.tnx-client-shell .client-logs .client-button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 28px; padding: 5px 7px; font-size: 10px; border: 1px solid #3d4433; border-radius: 7px; color: #c7c9bf; background: #ffffff03; }
+.client-workspace.tnx-client-shell .client-logs .client-button:hover:not(:disabled) { background: #ffffff09; border-color: #777d6b; }
+.client-workspace.tnx-client-shell .client-log-output { min-width: 0; padding: 14px; border: 1px solid #35382f; border-radius: 14px; background: #10110f; color: #abb29f; font: 10px/1.9 'JetBrains Mono Variable', monospace; overflow-wrap: anywhere; word-break: normal; tab-size: 2; }
+.client-workspace.tnx-client-shell .client-log-output::selection { background: #c7c9bf30; color: #f1f3ea; }
+.client-workspace.tnx-client-shell .client-log-output:focus-visible { outline: 1px solid #7c866a; outline-offset: -1px; }
+.client-workspace.tnx-client-shell .client-logs > p { flex: none; overflow-wrap: anywhere; padding: 8px 10px; border: 1px solid #353d2d; border-radius: 8px; color: #b2bca3; font-size: 10px; }
+.client-workspace.tnx-client-shell .tnx-logs-footer { display: flex; flex: none; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; color: #828b75; font-size: 9px; line-height: 1.5; }

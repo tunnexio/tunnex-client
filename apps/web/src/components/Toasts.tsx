@@ -11,15 +11,15 @@ import { Button } from "./ui";
 
 export { toast, Toaster };
 
-// S14.3 SLICE B — TOASTS, AND AN UNDO THAT IS A REAL COMPENSATING ACT.
+// S14.3 SLICE B, TOASTS, AND AN UNDO THAT IS A REAL COMPENSATING ACT.
 //
 // THREE PROPERTIES, all of which follow from the measured criterion in lib/undo.ts:
 //
 //  1. UNDO IS A REAL API CALL, AUDITED AS ITS OWN ACT. Never a client-side "put the row back". The audit log
-//     must never imply the first act did not happen — it did, and someone may already have acted on it.
+//     must never imply the first act did not happen, it did, and someone may already have acted on it.
 //
 //  2. UNDO CAN FAIL, AND ITS FAILURE IS LOUD. It is a network call like any other. A silent failure would
-//     leave the user believing they reversed something they did not — STRICTLY WORSE THAN THE ORIGINAL
+//     leave the user believing they reversed something they did not, STRICTLY WORSE THAN THE ORIGINAL
 //     MISTAKE, because they have stopped worrying about it. So the failed toast does not auto-dismiss, says
 //     what did not happen, and offers a retry.
 //
@@ -34,7 +34,7 @@ export interface Toast {
   message: string;
   /** Present only when the originating action passed the undo criterion. */
   undo?: { action: string; run: () => Promise<void> };
-  /** Undo lifecycle: offered -> running -> failed. There is no "succeeded" — success dismisses the toast. */
+  /** Undo lifecycle: offered -> running -> failed. There is no "succeeded", success dismisses the toast. */
   undoState?: "offered" | "running" | "failed";
 }
 
@@ -80,7 +80,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       toast.success("Action undone successfully");
     } catch {
       // LOUD. Not dismissed, not silent, and the message says what did NOT happen rather than what went wrong
-      // — the user needs to know the state of the world, not the shape of the error.
+      //, the user needs to know the state of the world, not the shape of the error.
       const errMsg = `Couldn't undo. ${t.message}`;
       setToasts((ts) =>
         ts.map((x) =>
@@ -191,7 +191,7 @@ function ToastList({
   if (toasts.length === 0) return null;
   return (
     // `role="status"` + aria-live: a toast nobody announces is a message only sighted users receive.
-    // "polite" deliberately — a toast reports something the user just did; interrupting them to say so is
+    // "polite" deliberately, a toast reports something the user just did; interrupting them to say so is
     // worse than waiting for a pause.
     <div
       aria-live="polite"

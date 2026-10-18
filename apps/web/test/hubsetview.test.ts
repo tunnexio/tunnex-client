@@ -31,7 +31,7 @@ describe("hubSetView (S8.6 HA surface view-model)", () => {
     expect(v.members[1].role).toBe("standby");
   });
 
-  it("render-floor: idle-reporting shows 0 B (honest); NOT-reporting shows — (absent, never 0)", () => {
+  it("render-floor: idle-reporting shows 0 B (honest); NOT-reporting shows, (absent, never 0)", () => {
     const hs: HubSet = {
       generation: 3,
       members: [
@@ -46,7 +46,7 @@ describe("hubSetView (S8.6 HA surface view-model)", () => {
     };
     const v = hubSetView(hs, now)!;
     expect(v.members[0].reporting).toBe(true);
-    expect(v.members[0].rx).toBe("0 B"); // idle link — a row with zeroes is honest
+    expect(v.members[0].rx).toBe("0 B"); // idle link, a row with zeroes is honest
     expect(v.members[0].warm).toBe(true);
     expect(v.members[1].reporting).toBe(false);
     expect(v.members[1].rx).toBe("n/a"); // not reporting: absent, NOT "0 B"

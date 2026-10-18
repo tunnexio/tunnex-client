@@ -8,32 +8,32 @@ export const APPROVAL_POLL_MS = 30_000;
 export const APPROVAL_BACKOFF_MAX_MS = 5 * 60_000;
 
 // ApprovalStatus is the definitive server answer for the awaited device. A read error
-// is NOT one of these — it throws (inconclusive) so a network blip never reads as a
+// is NOT one of these, it throws (inconclusive) so a network blip never reads as a
 // transition (the deviceExists empty-orgs lesson, applied to this new component).
 export type ApprovalStatus = "pending" | "active" | "gone";
 
-// ApprovalOutcome is what a single probe decided — surfaced for the unit tests (the
+// ApprovalOutcome is what a single probe decided, surfaced for the unit tests (the
 // DECISION carries the safety properties, like RevocationMonitor / the S6.3 supervisor).
 export type ApprovalOutcome = "waiting" | "approved" | "rejected" | "inconclusive" | "skipped";
 
 // ApprovalMonitor is the CLIENT-side awaiting-approval poll (S7.3), the sibling of the
 // RevocationMonitor. It runs ONLY while a device is PENDING for the current origin and
 // polls the tenant for its status. It is a DETECTOR, not an executor:
-//   * pending      -> keep waiting (calm, stable — never an error loop).
+//   * pending      -> keep waiting (calm, stable, never an error loop).
 //   * active       -> the admin APPROVED: fire onApproved ONCE, then stop. It does NOT
-//                     auto-connect — surfacing + becoming connectable is all; the human
+//                     auto-connect, surfacing + becoming connectable is all; the human
 //                     clicks connect (a background poll must never arm the kill-switch or
 //                     trigger the helper's privilege flow as a side effect).
 //   * gone         -> REJECTED (or deleted): fire onRejected ONCE, then stop. onRejected
 //                     routes through the EXISTING S6.4 teardown path (config clear + sweep
-//                     + loud notification) — one revocation-execution path, two detectors.
+//                     + loud notification), one revocation-execution path, two detectors.
 //   * a throw      -> INCONCLUSIVE: KEEP waiting (never transition on a blip) and BACK OFF.
 //
 // Poll discipline (inherited from RevocationMonitor S6.4, verbatim): app-level SINGLETON
 // (never per-window), runs only between start()/stop(), SELF-SCHEDULING (recursive
-// setTimeout — no overlap, no wake-from-sleep backlog), fire-ONCE on a terminal transition
+// setTimeout, no overlap, no wake-from-sleep backlog), fire-ONCE on a terminal transition
 // (approved/rejected), and ORIGIN-LIFECYCLE STOP: it is stopped when its origin context
-// dies (a server-URL change / logout — finding #5), not just on connect/disconnect, so an
+// dies (a server-URL change / logout, finding #5), not just on connect/disconnect, so an
 // old-origin poll never lingers against a stale bearer.
 export class ApprovalMonitor {
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -45,7 +45,7 @@ export class ApprovalMonitor {
 
   constructor(
     private readonly deviceId: string,
-    private readonly orgId: string, // the device's own org — queried directly (S7.3 #4)
+    private readonly orgId: string, // the device's own org, queried directly (S7.3 #4)
     private readonly api: Pick<DeviceApi, "deviceStatus">,
     private readonly onApproved: () => void | Promise<void>,
     private readonly onRejected: () => void | Promise<void>,
@@ -83,7 +83,7 @@ export class ApprovalMonitor {
     this.inFlight = true;
     try {
       const status = await this.api.deviceStatus(this.deviceId, this.orgId);
-      // A stop() during the await means the awaiting UI is already dismissed — abandon.
+      // A stop() during the await means the awaiting UI is already dismissed, abandon.
       if (this.stopped) return "skipped";
       if (status === "pending") {
         this.backoff = 0; // a healthy probe returns to steady cadence
@@ -95,7 +95,7 @@ export class ApprovalMonitor {
         await this.onApproved();
         return "approved";
       }
-      await this.onRejected(); // "gone" — rejected or deleted
+      await this.onRejected(); // "gone", rejected or deleted
       return "rejected";
     } catch {
       // Inconclusive: deviceStatus throws on ANY read error (its fail-safe). KEEP waiting

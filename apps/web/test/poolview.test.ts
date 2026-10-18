@@ -7,11 +7,11 @@ import {
 
 // ⛔ THE REFUSAL IS ATOMIC AND THE PANEL NOW SAYS SO.
 //
-// Not a reassurance — a fact read off the transaction boundary. `ResizePool` returns
+// Not a reassurance, a fact read off the transaction boundary. `ResizePool` returns
 // `&ShrinkOrphansError{...}` inside `withTx` (devices/service.go:539), BEFORE
 // `UpdateOrgPoolCidr` (:541), so the tx rolls back and the pool row is untouched. Without
 // the sentence, an operator facing a red box of device names cannot tell a clean refusal
-// from a partial resize — and on a shrink that is the difference between "try again" and
+// from a partial resize, and on a shrink that is the difference between "try again" and
 // "audit the fleet".
 describe("RESIZE_ATOMIC_NOTE", () => {
   it("tells the operator nothing was written", () => {
@@ -20,7 +20,7 @@ describe("RESIZE_ATOMIC_NOTE", () => {
 });
 
 // ⛔ THE SUBTLE REASON, EXPLAINED. A `reserved_collision` address is numerically INSIDE the
-// new range (ipalloc.go:78) — it looks fine next to the CIDR — but sits on the network,
+// new range (ipalloc.go:78), it looks fine next to the CIDR, but sits on the network,
 // gateway or broadcast address the allocator will never hand out. An operator checking by
 // eye concludes the server is wrong. Naming the three addresses is what stops that.
 describe("orphanReasonCopy", () => {
@@ -37,7 +37,7 @@ describe("orphanReasonCopy", () => {
   });
 
   it("does not invent a reason it was not given", () => {
-    // A reason the client does not know must not be rendered as one it does — the enum can
+    // A reason the client does not know must not be rendered as one it does, the enum can
     // grow server-side (ipalloc.go's const block) and this is what a new value must hit.
     const copy = orphanReasonCopy("some_future_reason");
     expect(copy).toBe("stranded by this resize");

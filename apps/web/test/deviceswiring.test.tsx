@@ -9,19 +9,19 @@ import {
   within,
 } from "@testing-library/react";
 
-// SLICE 2 — Devices. It is the REFERENCE IMPLEMENTATION for revoked-suppression: the surface that always had
+// SLICE 2, Devices. It is the REFERENCE IMPLEMENTATION for revoked-suppression: the surface that always had
 // the guard (`d.status !== "revoked" && …`) while Gateways.tsx lacked it (WF-S11-10) and Sites.tsx still lacked
 // it until this branch. So its wiring test is also HALF OF D4's three-way assertion, and the sibling file reads
-// from the same production functions rather than restating the rule — a fixture that restates production tests
+// from the same production functions rather than restating the rule, a fixture that restates production tests
 // the restatement, which is WF-S13-3's class.
 //
 // QUERY STRATEGY (docs/UI-REDESIGN-registration.md consequence 2): role + accessible name for anything that
 // carries a role; mocking at the NETWORK boundary (api.GET / api.POST), never the component boundary, because
-// that layer does not change in a redesign. getByText appears only for content with NO role today — status
-// badges and empty states are <span>/<li> — and each such use is a MARKER that the element should gain
+// that layer does not change in a redesign. getByText appears only for content with NO role today, status
+// badges and empty states are <span>/<li>, and each such use is a MARKER that the element should gain
 // role="status"/role="alert" in the redesign, not an exemption.
 
-afterEach(cleanup); // docs/laws.md — no globals/setup file, so auto-cleanup never registers
+afterEach(cleanup); // docs/laws.md, no globals/setup file, so auto-cleanup never registers
 
 let devicesFail = false;
 // ⛔ RECONCILED TO THE FIXTURE (S14.10). Every device below now EXISTS in `make seed-fixtures`, and every
@@ -29,8 +29,8 @@ let devicesFail = false;
 // the fixture could not produce, which is the inversion that let 522 tests pass while the POSTURE column
 // rendered blank:
 //
-//   health_blocked: true   -> ZERO blocked devices were seeded. `posture blocked` — the DANGER tone, the
-//                             highest-severity posture state — HAD NEVER RENDERED ON LOCALHOST, and the device
+//   health_blocked: true   -> ZERO blocked devices were seeded. `posture blocked`, the DANGER tone, the
+//                             highest-severity posture state, HAD NEVER RENDERED ON LOCALHOST, and the device
 //                             named `blocked-device` was not blocked. It is unreachable from SQL (see the
 //                             register): the seeder now POSTs a real health report for it.
 //   needs_reexport: true   -> asserted twice, ONE static device seeded. Now two.
@@ -42,8 +42,8 @@ let devicesFail = false;
 const DEVICES = [
   // REVOKED and posture-bearing: the row whose badges must be suppressed. This is the shape Gateways got wrong.
   // ⛔ THIS SHAPE IS NOW SEEDED (S14.10): `old-laptop` has a real device_health row, so the suppression is
-  // observable on localhost instead of only here. It also has assigned_ip NULL on the wire — the revoked sweep
-  // frees the pool IP — so the ADDRESS cell's placeholder is exercised by the same row.
+  // observable on localhost instead of only here. It also has assigned_ip NULL on the wire, the revoked sweep
+  // frees the pool IP, so the ADDRESS cell's placeholder is exercised by the same row.
   {
     id: "d-revoked",
     name: "old-laptop",
@@ -55,7 +55,7 @@ const DEVICES = [
   },
   {
     // Was `thinkpad-erin`, which the fixture could not produce. `thinkpad-erin` is seeded active+noncompliant.
-    // health_blocked stays FALSE here: only ONE seeded device is blocked, and that is deliberate — a loop that
+    // health_blocked stays FALSE here: only ONE seeded device is blocked, and that is deliberate, a loop that
     // blocked every device destroyed the fixture's posture spread once already, and the spread is the only
     // thing that makes this column reviewable.
     id: "d-active",
@@ -68,7 +68,7 @@ const DEVICES = [
   },
   {
     // THE BLOCKED ROW, and it is its own device because exactly one seeded device is blocked. Reachable only
-    // through ReportHealth — the seeder registers it through the product.
+    // through ReportHealth, the seeder registers it through the product.
     id: "d-blocked",
     name: "blocked-device",
     status: "active",
@@ -163,14 +163,14 @@ beforeEach(() => {
 //
 // These assertions used to match device names as FREE TEXT, because until slice A there was no `<table>`
 // anywhere in the app and therefore no `role="row"` or `role="cell"` to ask for. The primitive's absence had
-// made the TESTS weaker, not only the UI — and a primitive that ships while its consumers keep the workaround
+// made the TESTS weaker, not only the UI, and a primitive that ships while its consumers keep the workaround
 // has only half landed (docs/laws.md).
 //
-// What changes materially: `getByText("old-laptop")` passes if that string appears ANYWHERE — a heading, a
+// What changes materially: `getByText("old-laptop")` passes if that string appears ANYWHERE, a heading, a
 // tooltip, a modal, a toast. `within(row).getByText(...)` passes only if it is in THAT DEVICE'S ROW. The old
 // query could not tell "the revoked device shows a posture badge" from "a posture badge exists on the page".
 
-/** The row for a device, found by its name — the query that was impossible before slice A. */
+/** The row for a device, found by its name, the query that was impossible before slice A. */
 function rowFor(name: string): HTMLElement {
   const table = screen.getByRole("table", { name: "Devices" });
   const row = within(table)
@@ -180,7 +180,7 @@ function rowFor(name: string): HTMLElement {
   return row;
 }
 
-describe("Devices — wiring", () => {
+describe("Devices, wiring", () => {
   it("a REVOKED device carries no posture badge and no re-export instruction; an active one carries both", async () => {
     render(
       <MemoryRouter>
@@ -193,7 +193,7 @@ describe("Devices — wiring", () => {
       expect(screen.getByRole("table", { name: "Devices" })).toBeTruthy(),
     );
 
-    // Two devices are posture-blocked and both need re-export. Only the ACTIVE one may say so — the revoked
+    // Two devices are posture-blocked and both need re-export. Only the ACTIVE one may say so, the revoked
     // row's badges would describe a device that is no longer meant to work, and "re-export needed" would be an
     // instruction to act on a device that cannot come back.
     //
@@ -202,7 +202,7 @@ describe("Devices — wiring", () => {
     // ⛔ THE CARRIER IS `blocked-device`, NOT `thinkpad-erin`. Reconciling the mock to the fixture SPLIT these
     // roles: exactly one seeded device is blocked, so the blocked+needs-reexport shape became its own row and
     // `thinkpad-erin` is active+noncompliant only. A blanket rename pointed this assertion at the device that
-    // no longer carries the badges — the test caught it, which is the point of asserting PER ROW.
+    // no longer carries the badges, the test caught it, which is the point of asserting PER ROW.
     expect(
       within(rowFor("blocked-device")).queryByText("posture blocked"),
     ).toBeTruthy();
@@ -217,7 +217,7 @@ describe("Devices — wiring", () => {
     ).toBeNull();
   });
 
-  it("both devices are listed — suppression hides BADGES, never the row itself", async () => {
+  it("both devices are listed, suppression hides BADGES, never the row itself", async () => {
     render(
       <MemoryRouter>
         <OrgProvider>
@@ -237,7 +237,7 @@ describe("Devices — wiring", () => {
     // ⛔ THE NUMBER MOVED IN A REVIEWED EDIT, WHICH IS THE CENSUS WORKING. It went 8 -> 9 because the mock was
     // reconciled to the fixture: `thinkpad-erin` did not exist in `seed-fixtures`, and the BLOCKED shape had to
     // become its own row because exactly one seeded device is blocked. Counting rows is a stronger claim than
-    // "these strings appear" — it also fails if an unexpected device were rendered.
+    // "these strings appear", it also fails if an unexpected device were rendered.
     expect(within(table).getAllByRole("row")).toHaveLength(9);
     // The address, pending status, and posture blocked label are asserted ON THEIR OWN DEVICE'S ROW.
     expect(within(rowFor("old-laptop")).getByText("10.99.0.9")).toBeTruthy();
@@ -249,7 +249,7 @@ describe("Devices — wiring", () => {
     ).toBeTruthy();
   });
 
-  it("the table names its columns — a cell with no header is a value nobody can identify", async () => {
+  it("the table names its columns, a cell with no header is a value nobody can identify", async () => {
     expect(lastSeen(undefined, false)).toBe("liveness not reported");
     render(
       <MemoryRouter>
@@ -261,7 +261,7 @@ describe("Devices — wiring", () => {
     await waitFor(() =>
       expect(screen.getByRole("table", { name: "Devices" })).toBeTruthy(),
     );
-    // ⚠ "Actions" left this list because the verbs left the ROWS — Approve / Reject / Revoke now live in
+    // ⚠ "Actions" left this list because the verbs left the ROWS, Approve / Reject / Revoke now live in
     // the selection bar. The claim is unchanged (every column a reader sees is named); the affordance it
     // used to head is asserted below, where it now lives.
     for (const h of ["Device", "Address", "State", "Posture"]) {
@@ -271,10 +271,10 @@ describe("Devices — wiring", () => {
   });
 });
 
-describe("Devices — failure path", () => {
+describe("Devices, failure path", () => {
   // D1(b). The loadOne law's violation mode is a REASSURING EMPTY STATE: the screen renders perfectly and tells
   // the user nothing. `loadDevices` sets the error and returns EARLY, so `devices` stays empty and the page
-  // shows both the error and "No devices yet." — the error is what must never go missing.
+  // shows both the error and "No devices yet.", the error is what must never go missing.
   it("a failed device load is SURFACED, never swallowed into 'no devices'", async () => {
     devicesFail = true;
     render(
@@ -292,7 +292,7 @@ describe("Devices — failure path", () => {
 
   it("an empty-but-successful load says so in words", async () => {
     devicesFail = false;
-    DEVICES.length = 0; // an org with no devices — a FACT, not a failure
+    DEVICES.length = 0; // an org with no devices, a FACT, not a failure
     render(
       <MemoryRouter>
         <OrgProvider>
@@ -303,7 +303,7 @@ describe("Devices — failure path", () => {
     await waitFor(() =>
       expect(screen.getByText("No devices yet.")).toBeTruthy(),
     );
-    // And with no failure, no error line is present — the two states must stay distinguishable.
+    // And with no failure, no error line is present, the two states must stay distinguishable.
     expect(screen.queryByText("Could not load devices.")).toBeNull();
     DEVICES.push(
       {
@@ -331,20 +331,20 @@ describe("Devices — failure path", () => {
 /**
  * ⛔ A STATE A SURFACE DISPLAYS AND CANNOT ACT ON IS A DEAD END.
  *
- * This page listed a device with a `pending` badge and rendered its Actions cell `null` — Revoke was offered
+ * This page listed a device with a `pending` badge and rendered its Actions cell `null`, Revoke was offered
  * for `active` only. Approve and Reject existed, and their sole call site was the Device-approval card on
  * ACCESS POLICIES, so an operator looking straight at a pending device had to already know it was governed
  * from a different screen. Found by the founder, on the screen where it is most obvious.
  */
-describe("Devices — a pending device can be acted on HERE", () => {
-  // ⚠ `DEVICES` is a SHARED, MUTATED array — an earlier test in this file empties and refills it, so an
+describe("Devices, a pending device can be acted on HERE", () => {
+  // ⚠ `DEVICES` is a SHARED, MUTATED array, an earlier test in this file empties and refills it, so an
   // appended test inherits whatever ran before. Set it explicitly rather than depending on order.
   const seed = (rows: unknown[]) => {
     DEVICES.length = 0;
     (DEVICES as unknown[]).push(...rows);
   };
 
-  it("⛔ APPROVE IS OFFERED ON A PENDING DEVICE — the verb that had no call site on this screen", async () => {
+  it("⛔ APPROVE IS OFFERED ON A PENDING DEVICE, the verb that had no call site on this screen", async () => {
     seed([
       {
         id: "d-p",
@@ -374,8 +374,8 @@ describe("Devices — a pending device can be acted on HERE", () => {
       screen.getByRole("button", { name: "Reject" }).hasAttribute("disabled"),
     ).toBe(false);
 
-    // ⛔ AND REVOKE IS *NOT* OFFERED FOR IT, with the reason. A pending device is REJECTED, not revoked —
-    // two different decisions — and revoking one would be a no-op the server reports as success.
+    // ⛔ AND REVOKE IS *NOT* OFFERED FOR IT, with the reason. A pending device is REJECTED, not revoked ,
+    // two different decisions, and revoking one would be a no-op the server reports as success.
     const revoke = screen.getByRole("button", { name: "Revoke" });
     expect(revoke.hasAttribute("disabled")).toBe(true);
     expect(revoke.getAttribute("title")).toMatch(

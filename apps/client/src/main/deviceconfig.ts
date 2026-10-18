@@ -14,20 +14,20 @@ import { OrganizationSelectionConflictError, OrganizationSelectionRequiredError 
 import { isCanonicalUuid } from "./uuid";
 
 // RoutedConfig is the S8.5 volatile-routes channel body: the org's declared routed ranges AND the DNS
-// forwards REACHABLE via those ranges (Slice 3, D4 — server-gated). ONE poll carries both; NEVER identity
-// (the never-re-fetch invariant holds — routes and forwards were never identity). Empty on both is a
+// forwards REACHABLE via those ranges (Slice 3, D4, server-gated). ONE poll carries both; NEVER identity
+// (the never-re-fetch invariant holds, routes and forwards were never identity). Empty on both is a
 // first-class answer.
 export interface RoutedConfig {
   ranges: string[];
   forwards: ResolverForward[];
   // dial is the device's ACTIVE-HUB gateway (WF-A): the endpoint + peer public key it should dial RIGHT
   // NOW, derived server-side from the hub set's active primary. null when the server does not derive one
-  // (single-gateway org, no hub set, an older server) — the client then keeps its current peer (fail-static).
-  // A routing FACT about the network, NEVER device identity — the never-re-fetch invariant holds.
+  // (single-gateway org, no hub set, an older server), the client then keeps its current peer (fail-static).
+  // A routing FACT about the network, NEVER device identity, the never-re-fetch invariant holds.
   dial: DialTarget | null;
 }
 
-// DialTarget is the re-home target's public routing facts (WF-A) — mirrors the RoutedRanges dial fields.
+// DialTarget is the re-home target's public routing facts (WF-A), mirrors the RoutedRanges dial fields.
 export interface DialTarget {
   endpoint: string;
   pubkey: string;
@@ -133,21 +133,21 @@ export interface DeviceApi {
   // deviceStatus is the definitive server status (S7.3): "pending" | "active" | "gone".
   // Queried against the device's OWN org (persisted at create) so a transient list that
   // omits that org can't read as a false "gone" (finding #4). Throws on any read error
-  // (inconclusive fail-safe) — a blip never reads as a transition.
+  // (inconclusive fail-safe), a blip never reads as a transition.
   deviceStatus(deviceId: string, orgId: string): Promise<"active" | "pending" | "gone">;
   // deviceExists = deviceStatus === "active" (finding #6: ONE fail-safe, no divergence).
-  // Self-heals a stale cached config (device revoked/GC'd) — an EXISTENCE check, not a
+  // Self-heals a stale cached config (device revoked/GC'd), an EXISTENCE check, not a
   // config re-fetch, so D2 holds. orgId is always known (legacy configs re-mint, never query).
   deviceExists(deviceId: string, orgId: string): Promise<boolean>;
   // reportHealth self-reports posture facts (S7.5.3). Terminal non-retryable answers are
   // RETURNED (not thrown) so the monitor can stop cleanly: "unsupported" = 403 (open
-  // edition / no permission — reporting is pointless until something changes),
+  // edition / no permission, reporting is pointless until something changes),
   // "gone" = 404/410 (device no longer exists). Any other failure THROWS (inconclusive
-  // — retry with backoff, same discipline as deviceStatus).
+  //, retry with backoff, same discipline as deviceStatus).
   reportHealth(deviceId: string, orgId: string, facts: HealthFacts): Promise<HealthReportResult | "unsupported" | "gone">;
   // routedConfig fetches the org's declared routed LAN ranges + the reachable DNS forwards (S8.5) + the
-  // device's active-hub dial (WF-A) — the volatile-FACTS channel (routes/forwards/dial only, NEVER identity
-  // — the never-re-fetch invariant holds). deviceId scopes the dial to THIS device (the server refuses any
+  // device's active-hub dial (WF-A), the volatile-FACTS channel (routes/forwards/dial only, NEVER identity
+  //, the never-re-fetch invariant holds). deviceId scopes the dial to THIS device (the server refuses any
   // other device's dial, no-oracle); absent → no dial derived. Throws on any read error (inconclusive: the
   // RoutedRangesMonitor keeps its last-applied sets, fail-static).
   routedConfig(orgId: string, deviceId?: string): Promise<RoutedConfig>;
@@ -159,7 +159,7 @@ export interface DeviceRecord {
 }
 
 // HealthFacts are the client-collected posture facts (S7.5.3). disk_encrypted is
-// OMITTED when the helper could not determine it — reported absent, never guessed.
+// OMITTED when the helper could not determine it, reported absent, never guessed.
 export interface HealthFacts {
   platform: "macos" | "windows" | "linux" | "other";
   os_version: string;
@@ -811,12 +811,12 @@ function markDeviceRevoked(existing: NonNullable<ReturnType<TunnelConfigStore["g
 
 // resolveTunnelConfig is the ConfigProvider body: GET-OR-CREATE, origin-keyed.
 // If a config is stored for this origin, reuse it (never re-fetch). Otherwise the
-// desktop OWNS creation — create a device, capture its one-time config, persist it,
+// desktop OWNS creation, create a device, capture its one-time config, persist it,
 // and return it. full_tunnel is set from the create INTENT (the helper enforces
 // both-family completeness when true).
 // cpEndpointFromOrigin derives the tenant API host:port from the server origin (WF-A / D-WFA-4), for the
 // helper's full-tunnel kill-switch carve-out. Default port 443 (https). Returns "" if the origin can't be
-// parsed — the helper then simply gets no carve-out (full-tunnel re-home fail-static, honest degrade).
+// parsed, the helper then simply gets no carve-out (full-tunnel re-home fail-static, honest degrade).
 export function cpEndpointFromOrigin(origin: string): string {
   try {
     const u = new URL(origin);
@@ -1219,7 +1219,7 @@ export async function resolveTunnelConfig(
 ): Promise<TunnelConfig> {
   assertCurrent?.();
   // WF-A: for a FULL tunnel, attach the CP endpoint so the helper carves the kill-switch to it (the control
-  // channel must survive the tunnel going down to re-home). NEVER persisted — it's an origin-derived routing
+  // channel must survive the tunnel going down to re-home). NEVER persisted, it's an origin-derived routing
   // fact, re-attached each connect on top of the stored identity-only config. Split → no carve-out.
   const withCP = (cfg: TunnelConfig): TunnelConfig =>
     fullTunnel ? { ...cfg, control_plane_endpoint: cpEndpointFromOrigin(origin) } : cfg;
@@ -1347,7 +1347,7 @@ export async function resolveTunnelConfig(
     enrollmentRecovery,
   );
   if (published.pending) {
-    throw new PendingApprovalError(published.deviceId); // S7.3: abort — do NOT arm the helper
+    throw new PendingApprovalError(published.deviceId); // S7.3: abort, do NOT arm the helper
   }
   return withCP(published.config);
 }
@@ -1357,7 +1357,7 @@ export async function resolveTunnelConfig(
 // create needs, so revoke BEFORE clearing and clear ONLY on revoke success. On SUCCESS it returns
 // (config cleared); on ANY failure it THROWS with the config KEPT (the slot handle survives). The
 // caller (ipc connect) degrades on OUTCOME: success -> "migrated"; throw -> honest recoverable
-// down — it does NOT branch on the error type. So this helper only needs the one guarantee: never
+// down, it does NOT branch on the error type. So this helper only needs the one guarantee: never
 // clear the config unless the revoke that frees the slot actually succeeded. Whether a failure is
 // transient (next connect self-heals) or persistent (bounded-by-honest-message) is the caller's
 // single soft-down outcome, not N cases handled here.

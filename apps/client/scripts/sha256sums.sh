@@ -1,5 +1,5 @@
 #!/bin/bash
-# S6.5a — emit SHA256SUMS over the shipped installers. This is the integrity
+# S6.5a, emit SHA256SUMS over the shipped installers. This is the integrity
 # substitute for a code signature until S6.5b: users verify the hash they downloaded
 # against the value published on the (trusted) release page (see docs/install.md).
 set -euo pipefail
@@ -11,7 +11,7 @@ cd "$REL"
 shopt -s nullglob
 FILES=(*.pkg *.dmg *.exe)
 if [ ${#FILES[@]} -eq 0 ]; then
-  echo "no .pkg/.dmg/.exe artifacts in $REL — did electron-builder run?" >&2
+  echo "no .pkg/.dmg/.exe artifacts in $REL, did electron-builder run?" >&2
   exit 1
 fi
 

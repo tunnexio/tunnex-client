@@ -6,7 +6,7 @@ import { stripJsComments } from "./support/source";
 // ⛔ THE BROWSER TREATED AN OAuth CREDENTIAL FORM AS A LOGIN FORM.
 //
 // Found on the enterprise review stack: the Google client-ID box was prefilled with the
-// signed-in admin's EMAIL and the secret box with a SAVED PASSWORD, both in autofill-blue —
+// signed-in admin's EMAIL and the secret box with a SAVED PASSWORD, both in autofill-blue ,
 // one un-noticed Save away from writing them into a live IdP config.
 //
 // ⛔ AND THE CAUSE WAS ORDER, NOT MARKUP. `SsoProvider` renders once per provider from ONE
@@ -15,15 +15,15 @@ import { stripJsComments } from "./support/source";
 // looked immune only because Chrome fills one pair per page.
 //
 //   FIXING ONLY THE PROVIDER THAT VISIBLY MISBEHAVED WOULD HAVE MOVED THE BUG, NOT REMOVED IT
-//   — reordering PROVIDERS would have handed it straight to Microsoft.
+//  , reordering PROVIDERS would have handed it straight to Microsoft.
 //
 // So the guard is a CENSUS, not a case: every password input in the app must declare what it
 // is, and a new one cannot ship silently. The census found FIVE password inputs and ZERO
-// autocomplete attributes — the OAuth secret was the one being exploited, but none of them
+// autocomplete attributes, the OAuth secret was the one being exploited, but none of them
 // were telling the browser anything.
 const SRC = join(__dirname, "..", "src");
 
-/** ⛔ Every read goes through the stripper — a COMMENTED-OUT `<input type="password">` is not a
+/** ⛔ Every read goes through the stripper, a COMMENTED-OUT `<input type="password">` is not a
  *  password input, and counting one would let a real unlabelled input hide behind the vacuity floor. */
 function read(f: string): string {
   return stripJsComments(readFileSync(f, "utf8"));
@@ -43,7 +43,7 @@ function tsxFiles(dir: string): string[] {
 /**
  * One `<Input .../>` or `<input .../>` element's attribute text.
  *
- * NOT `[^>]*?` — JSX attributes contain `>` inside arrow functions
+ * NOT `[^>]*?`, JSX attributes contain `>` inside arrow functions
  * (`onChange={(e) => …}`), so an exclusion class matches nothing at all. The vacuity floor
  * below caught exactly that on the first run: 0 password inputs found in a tree with 5.
  * Non-greedy to the first `/>` instead; `=>` cannot contain `/>`.
@@ -57,7 +57,7 @@ const files = tsxFiles(SRC);
 describe("every password input declares what it is to the browser", () => {
   it("finds the password inputs at all (vacuity floor)", () => {
     // If this drops to zero the census is measuring nothing and every assertion below
-    // passes for free — the failure mode this repo has filed four times.
+    // passes for free, the failure mode this repo has filed four times.
     const total = files
       .flatMap((f) => inputElements(read(f)))
       .filter((a) => /type=["']password["']/.test(a));
@@ -79,7 +79,7 @@ describe("every password input declares what it is to the browser", () => {
 
   it("⛔ a NON-login secret never claims to be a password the browser may fill", () => {
     // `current-password` on an OAuth client secret is what invites the saved-password fill.
-    // `new-password` is the value Chrome actually honours to suppress it — `off` is widely
+    // `new-password` is the value Chrome actually honours to suppress it, `off` is widely
     // ignored on password inputs, which is why it is not accepted here either.
     const settings = read(join(SRC, "pages", "Settings.tsx"));
     const secrets = inputElements(settings).filter((a) =>
@@ -115,11 +115,11 @@ describe("every password input declares what it is to the browser", () => {
       }
     }
     // ⭐ TWO FORMS LEGITIMATELY ASK FOR A CURRENT PASSWORD, and the second one is the forced first-login
-    // change. `current-password` is the CORRECT token there per the HTML spec — the field genuinely is the
+    // change. `current-password` is the CORRECT token there per the HTML spec, the field genuinely is the
     // existing credential, and a password manager offering to fill it is helping rather than leaking.
     //
     // ⚠ THE GUARD STAYS AN ALLOW-LIST, not a rule that says "only Login". What it exists to catch is a
-    // form that claims to be a sign-in when it is not — an invite-accept or a reset screen mislabelled
+    // form that claims to be a sign-in when it is not, an invite-accept or a reset screen mislabelled
     // that way trains the browser to offer a credential on a page that should be minting a new one.
     expect(current.sort()).toEqual([
       "src/pages/ChangePassword.tsx",

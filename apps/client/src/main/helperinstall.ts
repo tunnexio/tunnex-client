@@ -4,7 +4,7 @@ import * as path from "node:path";
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 
-// S6.5a — the in-app privileged helper install (the "zero terminal" step). On macOS
+// S6.5a, the in-app privileged helper install (the "zero terminal" step). On macOS
 // the packaged, UNSIGNED app can't use SMAppService (needs Developer ID → S6.5b), so
 // on first connect it installs the bundled helper as a LaunchDaemon via ONE GUI admin
 // prompt (osascript's `with administrator privileges`). This is the FALLBACK for a
@@ -13,11 +13,11 @@ import { execFile } from "node:child_process";
 
 const LABEL = "io.tunnex.helper";
 const PLIST = `/Library/LaunchDaemons/${LABEL}.plist`;
-const INSTALL_DIR = "/usr/local/tunnex"; // no spaces — keeps the root shell script simple
+const INSTALL_DIR = "/usr/local/tunnex"; // no spaces, keeps the root shell script simple
 const HELPER_DEST = `${INSTALL_DIR}/tunnex-helper`;
 const SOCKET = "/var/run/tunnex/helper.sock";
 // Root daemon log lives in a ROOT-OWNED dir, never world-writable /tmp (a predictable
-// /tmp path for a root O_CREAT|O_APPEND is a symlink-clobber vector — review #8).
+// /tmp path for a root O_CREAT|O_APPEND is a symlink-clobber vector, review #8).
 const HELPER_LOG = "/var/run/tunnex/helper.log";
 
 // helperInstalled is the cheap presence check (the daemon plist exists). Connect uses
@@ -93,7 +93,7 @@ function helperBinaryMatchesStaged(staged: string, installed = HELPER_DEST): boo
 }
 
 // stagedHelperPath is the bundled helper inside the app's resources (universal binary).
-// process.resourcesPath is an Electron augmentation — cast so the module also compiles
+// process.resourcesPath is an Electron augmentation, cast so the module also compiles
 // under plain node (the unit tests run via ts-node without electron's ambient types).
 function stagedHelperPath(): string {
   const resourcesPath = (process as unknown as { resourcesPath?: string }).resourcesPath ?? "";
@@ -106,7 +106,7 @@ function callerTrustDir(): string {
   return path.dirname(process.execPath);
 }
 
-// shq POSIX-single-quotes a value for safe embedding in the shell script — escapes an
+// shq POSIX-single-quotes a value for safe embedding in the shell script, escapes an
 // embedded quote as '\'' (review #1: a path with an apostrophe would otherwise break
 // the quoting and inject into the ROOT shell).
 function shq(s: string): string {
@@ -115,7 +115,7 @@ function shq(s: string): string {
 
 // installScript is the root shell script run under the single admin prompt. It is a
 // PLAIN shell script written to a file (runPrivileged executes the file path, NOT an
-// inlined body), so nothing here is double-escaped — the pf-anchor line uses ordinary
+// inlined body), so nothing here is double-escaped, the pf-anchor line uses ordinary
 // quoting (review #0). Dynamic paths go through shq().
 function installScript(staged: string, trustDir: string): string {
   return [
@@ -126,7 +126,7 @@ function installScript(staged: string, trustDir: string): string {
     `chown root:wheel ${shq(HELPER_DEST)}`,
     `chmod 755 ${shq(HELPER_DEST)}`,
     `codesign --force --sign - ${shq(HELPER_DEST)}`,
-    // pf anchor reference — mirrors the dev-install so the kill-switch anchor is live.
+    // pf anchor reference, mirrors the dev-install so the kill-switch anchor is live.
     // Plain quoting (the script is a file, not an AppleScript-escaped string).
     `if ! grep -q 'anchor "tunnex"' /etc/pf.conf; then cp /etc/pf.conf /etc/pf.conf.tunnex-bak; printf '%s\\n' 'anchor "tunnex"' >> /etc/pf.conf; pfctl -f /etc/pf.conf 2>/dev/null || true; fi`,
     `cat > ${shq(PLIST)} <<'PL'`,
@@ -152,13 +152,13 @@ function installScript(staged: string, trustDir: string): string {
 }
 
 // appleQuote escapes a value for an AppleScript string literal. Only the (fixed,
-// controlled) temp-script PATH and the prompt cross this layer — never the script body.
+// controlled) temp-script PATH and the prompt cross this layer, never the script body.
 function appleQuote(s: string): string {
   return `"${s.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
 // runPrivileged writes the script to a USER-PRIVATE temp file (os.tmpdir is per-user,
-// mode-0700 on macOS — no cross-user TOCTOU) and runs it as root via ONE GUI admin
+// mode-0700 on macOS, no cross-user TOCTOU) and runs it as root via ONE GUI admin
 // prompt. osascript executes the FILE PATH, so the script body isn't AppleScript-escaped.
 function runPrivileged(script: string, prompt: string): Promise<void> {
   const tmp = path.join(os.tmpdir(), `tunnex-install-${process.pid}-${process.hrtime.bigint()}.sh`);
@@ -181,7 +181,7 @@ function runPrivileged(script: string, prompt: string): Promise<void> {
   });
 }
 
-// waitForSocket polls for the helper's socket after a fresh install — `launchctl
+// waitForSocket polls for the helper's socket after a fresh install, `launchctl
 // bootstrap` returns before the RunAtLoad daemon binds its socket, so the very Connect
 // that installed the helper would otherwise race and fail (review #9). Best-effort:
 // returns on appearance or timeout; a still-absent socket surfaces via the connect error.
@@ -222,5 +222,5 @@ export async function ensureHelperInstalled(): Promise<void> {
 }
 
 // installScriptForTest exposes the generated script for unit assertions (escaping is the
-// bug class the review caught — pin it).
+// bug class the review caught, pin it).
 export const __test = { installScript, shq, installDirsFromPlist, trustedInstallDirsContain, helperBinaryMatchesStaged };

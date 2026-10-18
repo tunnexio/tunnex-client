@@ -29,7 +29,7 @@ function mk(api: { deviceStatus: (id: string) => Promise<"active" | "pending" | 
   return { m, events };
 }
 
-test("approval: pending keeps waiting — no transition, calm", async () => {
+test("approval: pending keeps waiting, no transition, calm", async () => {
   const api = fakeApi(() => "pending");
   const { m, events } = mk(api);
   assert.equal(await m.checkOnce(), "waiting");
@@ -56,7 +56,7 @@ test("approval: gone (rejected) fires onRejected exactly once", async () => {
   assert.deepEqual(events, ["rejected"]);
 });
 
-test("approval: a throw is INCONCLUSIVE — never reads as rejected, backs off", async () => {
+test("approval: a throw is INCONCLUSIVE, never reads as rejected, backs off", async () => {
   const api = fakeApi(() => new Error("network blip"));
   const { m, events } = mk(api);
   // A blip while awaiting must NEVER transition (the deviceExists empty-orgs lesson).
@@ -76,7 +76,7 @@ test("approval: a blip then approval still transitions (recovers)", async () => 
   assert.deepEqual(events, ["approved"]);
 });
 
-test("approval: stop() abandons — a probe after stop does nothing", async () => {
+test("approval: stop() abandons, a probe after stop does nothing", async () => {
   const api = fakeApi(() => "active");
   const { m, events } = mk(api);
   m.stop();

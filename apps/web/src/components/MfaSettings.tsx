@@ -13,10 +13,10 @@ import {
 import { OneTimeSecretModal } from "./OneTimeSecret";
 
 /**
- * MfaSettings — self-service TOTP (OPEN, all editions, S7.5.5). Verify-before-arm ceremony:
+ * MfaSettings, self-service TOTP (OPEN, all editions, S7.5.5). Verify-before-arm ceremony:
  * a secret is provisioned unconfirmed, the QR/manual key is shown ONCE, and MFA only arms on a
  * valid code. Recovery codes are a one-time-secret-class display. An abandoned ceremony leaves
- * the user unenrolled (the secret is unconfirmed) and is fully restartable — starting again
+ * the user unenrolled (the secret is unconfirmed) and is fully restartable, starting again
  * replaces the pending secret. Enrolled state carries the D11 low-remaining warning.
  */
 export function MfaSettings() {
@@ -80,7 +80,7 @@ export function MfaSettings() {
       setError(
         apiErrorMessage(
           error,
-          "That code is not valid — check your authenticator app and try again.",
+          "That code is not valid, check your authenticator app and try again.",
         ),
       );
       return;
@@ -113,7 +113,7 @@ export function MfaSettings() {
   return (
     // ⛔ THE ROW STATES WHETHER 2FA IS ON; THE WIZARD LIVES IN A DIALOG. This was a bordered card sitting
     // among rows, permanently showing a setup flow most visits are not here to run. `enrolled === null` is
-    // "not read yet", NOT "off" — rendering "Off" for an unknown value would tell someone their account is
+    // "not read yet", NOT "off", rendering "Off" for an unknown value would tell someone their account is
     // unprotected when it may not be.
     <SettingRow
       label="Two-factor authentication"
@@ -221,7 +221,7 @@ export function MfaSettings() {
             <p className="text-xs text-warn">
               {remaining === 0
                 ? "You have no recovery codes left. Turn 2FA off and on again to generate a new set before you lose access to your authenticator."
-                : `Only ${remaining} recovery code${remaining === 1 ? "" : "s"} left — turn 2FA off and on again to generate a fresh set.`}
+                : `Only ${remaining} recovery code${remaining === 1 ? "" : "s"} left, turn 2FA off and on again to generate a fresh set.`}
             </p>
           )}
           {!confirmDisable ? (
@@ -249,7 +249,7 @@ export function MfaSettings() {
         <OneTimeSecretModal
           requireAck="I have saved my recovery codes somewhere I can reach without this device."
           title="Save your recovery codes"
-          caption="Each code works once, in place of your authenticator. Store them somewhere safe — they are shown only now and let you sign in if you lose your device."
+          caption="Each code works once, in place of your authenticator. Store them somewhere safe, they are shown only now and let you sign in if you lose your device."
           secret={recovery.join("\n")}
           copyLabel="Copy codes"
           downloadFilename="tunnex-recovery-codes.txt"

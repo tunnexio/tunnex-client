@@ -54,7 +54,7 @@ func addCalls(calls []string) []string {
 	return out
 }
 
-// RED 1 — add + update + sweep: owned {.a(g-a), .c(g-c)}, desired {a, b}. Every owned rule is removed and
+// RED 1, add + update + sweep: owned {.a(g-a), .c(g-c)}, desired {a, b}. Every owned rule is removed and
 // the desired set added fresh (remove-then-add = idempotent full-sweep, no upsert/dup). .a is an UPDATE
 // (removed then re-added with its new resolver); .c is a SWEEP (removed, not re-added); .b is an ADD.
 func TestReconcileNRPTAddUpdateSweep(t *testing.T) {
@@ -72,7 +72,7 @@ func TestReconcileNRPTAddUpdateSweep(t *testing.T) {
 	}
 }
 
-// RED 2 — foreign-refuse: a desired namespace already held by a FOREIGN rule (no marker) → refuse with
+// RED 2, foreign-refuse: a desired namespace already held by a FOREIGN rule (no marker) → refuse with
 // nrpt_domain_conflict, NOTHING applied (no remove, no add), and the foreign rule is never touched.
 func TestReconcileNRPTForeignRefuse(t *testing.T) {
 	f := &fakeNrpt{getOut: row("g-foreign", ".corp.local", "")} // GPO rule, no marker
@@ -82,11 +82,11 @@ func TestReconcileNRPTForeignRefuse(t *testing.T) {
 		t.Fatalf("a desired namespace colliding with a foreign rule must refuse nrpt_domain_conflict: %v", err)
 	}
 	if n := len(removeCalls(f.calls)) + len(addCalls(f.calls)); n != 0 {
-		t.Fatalf("a conflict must apply NOTHING (no remove/add) — the GPO rule is never fought: %d calls", n)
+		t.Fatalf("a conflict must apply NOTHING (no remove/add), the GPO rule is never fought: %d calls", n)
 	}
 }
 
-// RED 3 — full-sweep, foreign untouched: owned {.a, .b}, foreign {.f}, desired {a}. Both owned rules are
+// RED 3, full-sweep, foreign untouched: owned {.a, .b}, foreign {.f}, desired {a}. Both owned rules are
 // removed (full-sweep, not just the undesired one), the foreign rule is NEVER removed, .a is re-added.
 func TestReconcileNRPTFullSweepLeavesForeign(t *testing.T) {
 	f := &fakeNrpt{getOut: row("g-a", ".a", nrptMarker) + row("g-b", ".b", nrptMarker) + row("g-f", ".f", "corp-gpo")}
@@ -102,8 +102,8 @@ func TestReconcileNRPTFullSweepLeavesForeign(t *testing.T) {
 	}
 }
 
-// RED 4 — foreign survives sweep-to-empty (the crash-sweep / CleanStaleResolvers case, condition #4):
-// reconcileNRPT(run, nil) removes every OWNED rule and NOTHING else — a planted foreign rule survives.
+// RED 4, foreign survives sweep-to-empty (the crash-sweep / CleanStaleResolvers case, condition #4):
+// reconcileNRPT(run, nil) removes every OWNED rule and NOTHING else, a planted foreign rule survives.
 func TestReconcileNRPTSweepToEmptyLeavesForeign(t *testing.T) {
 	f := &fakeNrpt{getOut: row("g-a", ".a", nrptMarker) + row("g-f", ".f", "")}
 	if err := reconcileNRPT(f.run, nil); err != nil {
@@ -121,8 +121,8 @@ func TestReconcileNRPTSweepToEmptyLeavesForeign(t *testing.T) {
 	}
 }
 
-// RED 5 — validate-first (all-or-nothing): a bad namespace fails the whole call with ZERO commands issued
-// (not even the Get) — the caller keeps its last good state, nothing half-applied.
+// RED 5, validate-first (all-or-nothing): a bad namespace fails the whole call with ZERO commands issued
+// (not even the Get), the caller keeps its last good state, nothing half-applied.
 func TestReconcileNRPTValidateFirst(t *testing.T) {
 	f := &fakeNrpt{getOut: ""}
 	err := reconcileNRPT(f.run, []ResolverForward{fwd("ok.local", "10.0.0.1"), fwd("../evil", "10.0.0.2")})
@@ -135,14 +135,14 @@ func TestReconcileNRPTValidateFirst(t *testing.T) {
 	}
 }
 
-// RED 6 — psQuote is injection-proof: safeResolverDomain does not (and must not) forbid shell
+// RED 6, psQuote is injection-proof: safeResolverDomain does not (and must not) forbid shell
 // metacharacters, so the PowerShell binding MUST render every value as a single-quoted literal, doubling
 // embedded quotes. A namespace can never become a command on the privileged SYSTEM service.
 func TestPsQuoteInjectionProof(t *testing.T) {
 	if got := psQuote("a'b"); got != "'a''b'" {
 		t.Fatalf("psQuote must double embedded quotes: %q", got)
 	}
-	// A metacharacter-bearing value is fully contained in the single-quoted literal — no bare $ ; ` reaches
+	// A metacharacter-bearing value is fully contained in the single-quoted literal, no bare $ ; ` reaches
 	// the parser. (safeResolverDomain would reject this domain's path-unsafety, but psQuote is the floor
 	// regardless of what upstream allows.)
 	s := nrptAddScript(".x`;calc", "10.0.0.1")

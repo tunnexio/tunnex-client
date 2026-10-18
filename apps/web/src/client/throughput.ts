@@ -1,4 +1,4 @@
-// The throughput plot — REAL bytes, and only real bytes.
+// The throughput plot, REAL bytes, and only real bytes.
 //
 // ⛔ WHAT THIS FILE REPLACED, AND WHY IT IS A CORRECTION RATHER THAN A DELETION.
 //
@@ -8,14 +8,14 @@
 //
 // > **A PLOT OF INVENTED DATA NEXT TO AN HONEST `n/a` IS WORSE THAN EITHER ALONE.** The `n/a` says
 // > "we did not measure this"; the plot says "we measured this". One of them is lying, and it is
-// > the one that looks like evidence. This repo's own rule — a zero nobody measured is a claim —
+// > the one that looks like evidence. This repo's own rule, a zero nobody measured is a claim ,
 // > applies with more force to a curve than to a zero.
 //
 // The mesh went at the founder's direction. The plot stayed and now draws deltas of `rx_bytes` +
 // `tx_bytes` as reported by the helper via `wg show`, which are real counters.
 //
 // ⚠ NORMALISED TO THE SESSION PEAK, NOT TO AN ABSOLUTE SCALE. There is no meaningful ceiling for a
-// tunnel's throughput, so the curve is relative and the peak is printed beside it — the number is
+// tunnel's throughput, so the curve is relative and the peak is printed beside it, the number is
 // what carries the magnitude, the shape carries the pattern.
 
 /** The design's own window: 64 samples, so the plot SCROLLS rather than rescaling horizontally. */

@@ -109,9 +109,9 @@ import {
   type CheckMode,
 } from "../lib/postureview";
 // swapRule + swapPartialMessage power the create-then-delete rule edit (D-a5) in RuleFormModal.
-// Every GET here goes through loadOne — a raw api.GET whose emptiness is user-meaningful is
+// Every GET here goes through loadOne, a raw api.GET whose emptiness is user-meaningful is
 // review-refused (S7.4a review): a fetch failure must render a legible retry, never a
-// reassuring empty state. (LoadRetry — the shared legible-retry affordance — lives in components/LoadRetry.)
+// reassuring empty state. (LoadRetry, the shared legible-retry affordance, lives in components/LoadRetry.)
 
 export default function Access() {
   const { org: currentOrg, loading: orgLoading, failed: orgFailed } = useOrg();
@@ -124,15 +124,15 @@ export default function Access() {
   // Page-level gating inputs, kept DISTINCT so no signal blanks another (fold-2):
   // - loadError: meta/org fetch failed (can't determine edition) → retry, nothing renderable.
   // - fatal: terminal, non-retryable (no org).
-  // - roleError / roleResolved: the members fetch — its failure affects ONLY the enterprise
+  // - roleError / roleResolved: the members fetch, its failure affects ONLY the enterprise
   //   admin path ([75]); role in-flight must render "loading", never the gate notice ([101]).
   const [loadError, setLoadError] = useState<string | null>(null);
   const [fatal, setFatal] = useState<string | null>(null);
   const [roleError, setRoleError] = useState<string | null>(null);
   // S8.5 stale-button fix (one-truth at the React tier): RulesSection and GroupsResourcesSection each hold
   // their OWN copy of the groups list (a cohesive batched load in RulesSection, so lifting just groups would
-  // fracture it). subjectsRev is the parent-owned invalidation signal — GroupsResourcesSection bumps it on a
-  // group/resource mutation, RulesSection re-loads on the bump — so its subject copies (and the "Add rule"
+  // fracture it). subjectsRev is the parent-owned invalidation signal, GroupsResourcesSection bumps it on a
+  // group/resource mutation, RulesSection re-loads on the bump, so its subject copies (and the "Add rule"
   // enabled state derived from them) can never go stale behind a group add. Invalidate the copy, not the
   // symptom (patching the disabled expression would leave the stale copy feeding the rule modal too).
   const [subjectsRev, setSubjectsRev] = useState(0);
@@ -170,7 +170,7 @@ export default function Access() {
     if (!mRes.ok) return setLoadError(mRes.error); // [67]: surface loadOne's (human) message
     setMeta(mRes.data as Meta);
     // ⛔ THE ORG COMES FROM THE SEAM, NOT FROM INDEX ZERO (S12.5).
-    // ⛔ LOADING IS NOT ABSENCE (S12.5). See the note in Dashboard.tsx — three states, not two: still
+    // ⛔ LOADING IS NOT ABSENCE (S12.5). See the note in Dashboard.tsx, three states, not two: still
     // loading (say nothing), the read failed (say THAT), genuinely no membership (say that).
     setOrg(target);
     const memRes = (await loadOne(() =>
@@ -187,7 +187,7 @@ export default function Access() {
     setMyRole(resolved.role);
     setRoleResolved(true);
     // ⚠ currentOrg IS A DEPENDENCY, AND THAT IS THE HALF THAT MAKES THE SWITCHER WORK. Without it the
-    // page keeps rendering the org it mounted with — the control moves, the data does not, and the user is
+    // page keeps rendering the org it mounted with, the control moves, the data does not, and the user is
     // looking at one tenant's screen labelled with another's name.
   }, [currentOrg, myId, orgFailed, orgLoading]);
   useEffect(() => {
@@ -226,7 +226,7 @@ export default function Access() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-      {/* ⛔ THIS TITLE WAS A `<div>`, so the page had NO h1 at all — and its type/colour were an inline
+      {/* ⛔ THIS TITLE WAS A `<div>`, so the page had NO h1 at all, and its type/colour were an inline
           style object using `Instrument Sans` and raw hex, neither of which is in the token set. */}
       <PageHeader
         title="Access policies"
@@ -1113,7 +1113,7 @@ function ModeSection({
       }),
     );
     if (!r.ok) {
-      setLoadError(r.error); // never hide the toggle on a failure ([5]) — show retry
+      setLoadError(r.error); // never hide the toggle on a failure ([5]), show retry
       return;
     }
     setLoadError(null);
@@ -1123,7 +1123,7 @@ function ModeSection({
     load();
   }, [load]);
 
-  // [1]+[7]: fetch the rule count FRESH at Enable-click — never a stale/defaulted-0 count that
+  // [1]+[7]: fetch the rule count FRESH at Enable-click, never a stale/defaulted-0 count that
   // would show the false zero-rules danger gate. A failed count fetch aborts LEGIBLY.
   async function openEnableConfirm() {
     setErr(null);
@@ -1263,7 +1263,7 @@ function RulesSection({
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<PolicyRule | null>(null);
   const [extendingGrant, setExtendingGrant] = useState<PolicyRule | null>(null);
-  // F3: the rules pending a disable-confirm. PLURAL since the verbs moved to the selection bar — and
+  // F3: the rules pending a disable-confirm. PLURAL since the verbs moved to the selection bar, and
   // disabling five live allows at once is strictly MORE consequential than disabling one, so the ceremony
   // grew with the set rather than being dropped for convenience.
   const [disablingRules, setDisablingRules] = useState<PolicyRule[]>([]);
@@ -1272,20 +1272,20 @@ function RulesSection({
   // the kind of control that is only ever wrong once.
   const [deletingRules, setDeletingRules] = useState<PolicyRule[]>([]);
   // SINGLE source of truth for the partial-swap warning: the SET of rule ids a create-then-
-  // delete left un-deleted. The notice is DERIVED (staleNoticeText) — no separate state to
+  // delete left un-deleted. The notice is DERIVED (staleNoticeText), no separate state to
   // desync ([291]/[309]/[371]). Pruned ONLY on a successful load (amendment A), per-id (B).
   const [staleRuleIds, setStaleRuleIds] = useState<string[]>([]);
   const [err, setErr] = useState<string | null>(null);
   // S8.3 CP summary line: BOTH derived from real load results (never an empty default) so a failed load
-  // can't render the loud "0 rules — all denied". null until the first load resolves.
+  // can't render the loud "0 rules, all denied". null until the first load resolves.
   const [modeResult, setModeResult] = useState<Loaded<
     "off" | "enforcing"
   > | null>(null);
   const [rulesResult, setRulesResult] = useState<Loaded<number> | null>(null);
-  // ⛔ MEMBER COUNTS FOR SOURCE GROUPS ONLY — the bounded half of the coupling.
+  // ⛔ MEMBER COUNTS FOR SOURCE GROUPS ONLY, the bounded half of the coupling.
   // Lazy counts in the Groups panel LOSE the visibly-empty property; src_group_empty restores it HERE, on the
   // rule row, where the operator's attention already is. The fan-out is the DISTINCT SOURCE GROUPS of the
-  // rules, not every group — the rules are what need judging.
+  // rules, not every group, the rules are what need judging.
   // `undefined` = not fetched yet, `null` = fetched and FAILED. Neither warns: "could not check" is not "empty".
   const [srcGroupCounts, setSrcGroupCounts] = useState<
     Map<string, number | null>
@@ -1348,7 +1348,7 @@ function RulesSection({
           )
         : Promise.resolve({ ok: true as const, data: [] as AgentGroup[] }),
     ]);
-    // Summary inputs — set from the SAME results (a rules-load failure → summary shows "failed", never 0).
+    // Summary inputs, set from the SAME results (a rules-load failure → summary shows "failed", never 0).
     setRulesResult(
       rr.ok ? { ok: true, data: (rr.data as PolicyRule[]).length } : rr,
     );
@@ -1357,8 +1357,8 @@ function RulesSection({
         ? { ok: true, data: (mo.data as ZeroTrustMode).mode }
         : (mo as Loaded<"off" | "enforcing">),
     );
-    // The RULES fetch failing means the section cannot render truthfully — show retry, NOT
-    // the reassuring "No rules — enforcing denies everything" ([2]). Amendment A: on this
+    // The RULES fetch failing means the section cannot render truthfully, show retry, NOT
+    // the reassuring "No rules, enforcing denies everything" ([2]). Amendment A: on this
     // FAILED path the stale-rule set is left untouched (the warning persists).
     if (!rr.ok) return setLoadError(rr.error);
     setLoadError(null);
@@ -1422,7 +1422,7 @@ function RulesSection({
     load();
   }, [load, subjectsRev]); // S8.5: re-load when a sibling section mutates groups/resources (stale-button fix)
 
-  const notice = staleNoticeText(staleRuleIds); // DERIVED — no notice state
+  const notice = staleNoticeText(staleRuleIds); // DERIVED, no notice state
   const visibleAgents = agentsOrgId === orgId ? agents : [];
 
   async function del(id: string) {
@@ -1466,7 +1466,7 @@ function RulesSection({
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-300">Rules</h2>
         {/* TWO seams, both producing ABSENCE, and the ORDER is the decision (S14.2 D3):
-            PERMISSION first, WIDTH second. A member who may not manage rules sees nothing — never
+            PERMISSION first, WIDTH second. A member who may not manage rules sees nothing, never
             "read-only on this screen size", which would imply a wider window grants what their role does not. */}
         {canManage && !view.showRetry && (
           <ComposeGate surface="Access rules">
@@ -1506,7 +1506,7 @@ function RulesSection({
       })()}
 
       {/* [291] legibility signals COMPOSE: the partial-swap notice + a mutation error render at
-          TOP LEVEL — a load failure replaces the LIST (content), never a warning. */}
+          TOP LEVEL, a load failure replaces the LIST (content), never a warning. */}
       {view.showNotice && (
         <p className="mt-2 text-xs text-amber-300">{notice}</p>
       )}
@@ -1526,11 +1526,11 @@ function RulesSection({
               a rule.
             </p>
           )}
-          {/* ── ACCESS FLOW ({{ polFlow }}) — built from the handoff's buildPolicyFlow(), not from a screenshot.
+          {/* ── ACCESS FLOW ({{ polFlow }}), built from the handoff's buildPolicyFlow(), not from a screenshot.
               GEOMETRY VERBATIM: canvas 600x312 rx14 over a 16px dot field; node boxes 152x36 rx10 at cx±76,
               columns at LX=95 / RX=505 so the paths own the middle 260px; vertical pitch 68 from cy=54;
-              glyph circle r8 at cx-60. EDGES are cubic beziers with HORIZONTAL control points ±130 —
-              `M170,sy C300,sy 300,dy 430,dy` — so they leave and arrive flat and read as flows, not chords.
+              glyph circle r8 at cx-60. EDGES are cubic beziers with HORIZONTAL control points ±130 ,
+              `M170,sy C300,sy 300,dy 430,dy`, so they leave and arrive flat and read as flows, not chords.
               Temporary grants are DASHED (5 6), allow is solid: the design distinguishes them by dash, not
               by colour. Legend bottom-left, readout bottom-right, both INSIDE the panel.
 
@@ -1538,10 +1538,10 @@ function RulesSection({
               ordered the destination column so each source's edge is level or one slot away. Ours was
               insertion order and crossed six times out of nine. Destinations are now placed by the MEAN slot
               of their sources (one barycentric pass), which reproduces the handoff's hand-chosen order on its
-              own data. A prettier line over the same tangle would have been worse — it would look deliberate.
+              own data. A prettier line over the same tangle would have been worse, it would look deliberate.
 
               ⛔ AND THE COLUMN IS CAPPED AT THE DESIGN'S OWN FOUR SLOTS. The handoff draws 5 edges over 8
-              nodes while its rule table shows 9 rows — it renders a SUBSET, by hand. Above the cap the
+              nodes while its rule table shows 9 rows, it renders a SUBSET, by hand. Above the cap the
               remainder is stated, never silently dropped, and the table below stays authoritative. */}
           {(() => {
             const rows = rules.map((r) => {
@@ -1638,7 +1638,7 @@ function RulesSection({
             };
             return (
               <div className="mt-3">
-                {/* ⛔ FIXED 600x312 — ONE USER UNIT IS ONE PIXEL. `w-full` on a viewBox scaled the whole
+                {/* ⛔ FIXED 600x312, ONE USER UNIT IS ONE PIXEL. `w-full` on a viewBox scaled the whole
                     drawing to the container (~1900px), magnifying 152x36 boxes to ~490x130 and truncating
                     every name. THE SCALE IS A CONTRACT: same law, same panel shape, second occurrence after
                     the Sites map. width/height are set explicitly and the SVG is centred, never stretched. */}
@@ -1710,7 +1710,7 @@ function RulesSection({
             );
           })()}
           {/* ⛔ THE RULES TABLE. Converted from a <ul> so it can be searched, sorted and paged like every
-              other roster — 15 rules already overflowed a screen, and the list gave no way to find one.
+              other roster, 15 rules already overflowed a screen, and the list gave no way to find one.
 
               ⚠ THE BADGE COLOURS STAY. The founder asked for the mockup's SHAPE without its palette, and
               these are not palette: OUTSIDE RANGES, VANISHED, SOURCE GROUP EMPTY and TEMP are the four
@@ -1718,7 +1718,7 @@ function RulesSection({
               colour would remove the only thing that distinguishes them from decoration. What did go is the
               mockup's decorative green/blue/purple on Active and Managed-by-GitOps, which carried no state
               this product does not already say in words. */}
-          {/* ⛔ THE FAILED COPY IS THE PAGE'S JOB, NOT THE TABLE'S — and forgetting it was one edit away.
+          {/* ⛔ THE FAILED COPY IS THE PAGE'S JOB, NOT THE TABLE'S, and forgetting it was one edit away.
               DataTable renders NOTHING when `failed`, deliberately, because only the page knows what to
               retry. Converting this list without this block would have replaced "Rules could not be loaded"
               with a blank area: the screen would say nothing at all about a read that failed, which is the
@@ -1777,7 +1777,7 @@ function RulesSection({
                   }
                 </span>
               }
-              // ⛔ THE VERBS LIVE IN ONE BAR, NOT ON EVERY ROW. Fifteen rules meant forty-five buttons —
+              // ⛔ THE VERBS LIVE IN ONE BAR, NOT ON EVERY ROW. Fifteen rules meant forty-five buttons ,
               // the same three verbs redrawn fifteen times, crowding out the thing the row is actually
               // about. `unavailable` is what makes that safe rather than merely tidier: a GitOps-managed
               // grant refuses every mutation, and the bar names that BEFORE the click instead of skipping
@@ -1859,7 +1859,7 @@ function RulesSection({
                         key: "disable",
                         label: "Disable",
                         // ⛔ F3'S ASYMMETRIC CEREMONY SURVIVES THE MOVE. Disabling withdraws a live allow in
-                        // seconds, so it confirms — and it must still confirm when it is doing so to five
+                        // seconds, so it confirms, and it must still confirm when it is doing so to five
                         // rules at once, which is strictly more consequential than doing it to one.
                         unavailable: (r: PolicyRule) =>
                           grantControls(
@@ -1984,7 +1984,7 @@ function RulesSection({
                     r.enabled ? (
                       <span className="text-xs text-slate-400">active</span>
                     ) : (
-                      /* F3: a disabled rule is shown DISTINCTLY, never hidden — the list must not lie
+                      /* F3: a disabled rule is shown DISTINCTLY, never hidden, the list must not lie
                          about what is enforcing. */
                       <span className="rounded-full border border-slate-700 bg-slate-800/80 px-2 py-0.5 font-mono text-[10px] font-semibold text-slate-400">
                         disabled
@@ -2043,7 +2043,7 @@ function RulesSection({
                       <span className="text-xs text-slate-600">standard</span>
                     ) : (
                       /* S7.5.4 linger model: a temporary grant shows its window; an EXPIRED grant stays
-                         visible (audit history), rendered distinctly — never hidden. */
+                         visible (audit history), rendered distinctly, never hidden. */
                       <span
                         className={`rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold ${exp.state === "expired" ? "border-rose-800/50 bg-rose-950/40 text-rose-400" : "border-amber-800/50 bg-amber-950/40 text-amber-300"}`}
                       >
@@ -2056,7 +2056,7 @@ function RulesSection({
                   key: "notes",
                   header: "Notes",
                   // ⚠ EVERY WARN KIND IS SEARCHABLE BY ITS OWN WORDS. These are the states an operator most
-                  // needs to find — each one means a rule that reads ACTIVE and compiles to NOTHING — and a
+                  // needs to find, each one means a rule that reads ACTIVE and compiles to NOTHING, and a
                   // badge contributes no text, so without this they would be the least findable rows here.
                   sortValue: (r) => {
                     const row = ruleRow(
@@ -2104,7 +2104,7 @@ function RulesSection({
                         : null;
                     return (
                       <span className="flex flex-wrap items-center gap-1">
-                        {/* S8.7 warn-not-refuse (D1): the SERVER's read-time judgment, rendered verbatim —
+                        {/* S8.7 warn-not-refuse (D1): the SERVER's read-time judgment, rendered verbatim ,
                             a CIDR rule matching no current org range. Self-clears when a range lands. */}
                         {row.cidrOutsideRanges && (
                           <span
@@ -2124,10 +2124,10 @@ function RulesSection({
                             VANISHED
                           </span>
                         )}
-                        {/* ⛔ src_group_empty (S14.12) — measured at compiler.go:399: a group with zero
+                        {/* ⛔ src_group_empty (S14.12), measured at compiler.go:399: a group with zero
                             members matches NO device, so this rule COMPILES TO NOTHING while rendering
                             ACTIVE. Derived from the member COUNT, never from group existence, and it does
-                            NOT fire while the count is unfetched or failed — "could not check" is not
+                            NOT fire while the count is unfetched or failed, "could not check" is not
                             "empty". */}
                         {emptyBadge && (
                           <span
@@ -2169,7 +2169,7 @@ function RulesSection({
           }}
           onDone={(staleId) => {
             // A partial swap adds the un-deleted rule id to the set; a clean create adds
-            // nothing (so it can never drop a live warning — [371]).
+            // nothing (so it can never drop a live warning, [371]).
             if (staleId)
               setStaleRuleIds((prev) =>
                 prev.includes(staleId) ? prev : [...prev, staleId],
@@ -2191,7 +2191,7 @@ function RulesSection({
           }}
         />
       )}
-      {/* F3: the disable-confirm — NAMES the rule's own subject→destination + the immediate effect. Only
+      {/* F3: the disable-confirm, NAMES the rule's own subject→destination + the immediate effect. Only
           disable gets this (enable is one-click). Danger-styled; Cancel or backdrop dismisses. */}
       {disablingRules.length > 0 &&
         (() => {
@@ -2226,8 +2226,8 @@ function RulesSection({
                 </>
               }
             >
-              {/* ⚠ ONE RULE STILL NAMES ITSELF. The single-rule sentence was specific — which source loses
-                  which destination — and a plural rewrite that dropped it would make the common case vaguer
+              {/* ⚠ ONE RULE STILL NAMES ITSELF. The single-rule sentence was specific, which source loses
+                  which destination, and a plural rewrite that dropped it would make the common case vaguer
                   in order to serve the rare one. */}
               {row ? (
                 <p className="text-sm text-slate-300">
@@ -2294,7 +2294,7 @@ function RulesSection({
         >
           <div className="text-sm text-slate-300">
             <p>
-              Deleting is permanent. Disabling keeps the rule and its history —
+              Deleting is permanent. Disabling keeps the rule and its history ,
               prefer it if you may want this access back.
             </p>
             <ul className="mt-2 max-h-48 space-y-0.5 overflow-y-auto text-xs text-slate-400">
@@ -2323,7 +2323,7 @@ function RulesSection({
 }
 
 // ExtendGrantModal moves a temporary grant's window forward (S7.5.4). A LAPSED grant is
-// refused by the server (409 grant_lapsed) — surfaced legibly here, not as a raw error;
+// refused by the server (409 grant_lapsed), surfaced legibly here, not as a raw error;
 // this is a WINDOW BUMP (PUT expires_at), never a delete+recreate.
 function ExtendGrantModal({
   orgId,
@@ -2399,7 +2399,7 @@ function RefText({ label, broken }: { label: string; broken: boolean }) {
   );
 }
 
-// RuleFormModal creates OR edits a rule. Editing = CREATE-THEN-DELETE (D-a5) via swapRule —
+// RuleFormModal creates OR edits a rule. Editing = CREATE-THEN-DELETE (D-a5) via swapRule ,
 // gap-free (allow-only union), never delete-first, with a LEGIBLE partial on delete-fail.
 function RuleFormModal({
   orgId,
@@ -2425,13 +2425,13 @@ function RuleFormModal({
   onDone: (staleRuleId?: string) => void;
 }) {
   // S8.2c D5: the modal now CREATES site-source + site-dest rules too (was API-only). src_kind ∈
-  // {group,user,site}; dst_kind ∈ {group,resource,site} — all through the same policies API (validation +
+  // {group,user,site}; dst_kind ∈ {group,resource,site}, all through the same policies API (validation +
   // audit intact; the demo's raw DB insert was the anti-pattern this closes).
   // Review #4: when the org has sites but no groups, defaulting to "group" opens a modal that can't submit
-  // (empty group select) until BOTH dropdowns are flipped — a dead end. Default to the kind that's actually
+  // (empty group select) until BOTH dropdowns are flipped, a dead end. Default to the kind that's actually
   // available so a fresh site-to-site org can Create immediately.
   const hasGroups = groups.length > 0;
-  // ⛔ S15.3 — agents enrolled in this org, offered as a policy SOURCE. Without this the AI-agents screen
+  // ⛔ S15.3, agents enrolled in this org, offered as a policy SOURCE. Without this the AI-agents screen
   // says an agent "reaches only what it is granted" and nothing could grant it anything: a capability the
   // product had and the operator could not reach.
   const [srcAgent, setSrcAgent] = useState(
@@ -2466,7 +2466,7 @@ function RuleFormModal({
   );
   const [srcCidr, setSrcCidr] = useState(editing?.src_cidr ?? ""); // S8.7: literal source CIDR (free-text)
   // Default to the first dst kind that HAS options (re-review #4: the src-side fix left the dst side able to
-  // dead-end — a no-groups org with resources/sites opened on "group" with an empty select, un-submittable).
+  // dead-end, a no-groups org with resources/sites opened on "group" with an empty select, un-submittable).
   const [dstKind, setDstKind] = useState<
     "group" | "resource" | "site" | "k8s_service"
   >(
@@ -2525,7 +2525,7 @@ function RuleFormModal({
   async function submit() {
     setBusy(true);
     setErr(null);
-    // [8]: guard a 2xx-with-no-body — never let (data).id throw and strand busy=true.
+    // [8]: guard a 2xx-with-no-body, never let (data).id throw and strand busy=true.
     const create = async (): Promise<{ id: string } | { error: unknown }> => {
       const { data, error } = await api.POST(
         "/api/v1/organizations/{orgId}/policies",
@@ -2603,13 +2603,13 @@ function RuleFormModal({
     >
       <div className="space-y-3">
         {/* S8.3 CP layout: source + destination each read as a labeled panel (was a flat field list),
-            so the "who → what" of a rule is legible at a glance. Layout only — no behavior change. */}
+            so the "who → what" of a rule is legible at a glance. Layout only, no behavior change. */}
         {/* ⛔ ONE PICKER PER SIDE. Four controls became two, and the KIND stopped being a thing you choose
-            first — you look for "Engineering", you do not first decide that Engineering is a Group. The
+            first, you look for "Engineering", you do not first decide that Engineering is a Group. The
             cascade let a source type be chosen against any destination type, which is how a site reaching
             itself became creatable; here the other side's choice is reflected in what this side offers.
 
-            ⚠ THE GUARD IS THE SERVER'S (invalid_rule_self_site). This mirrors it — the CLI and the GitOps CR
+            ⚠ THE GUARD IS THE SERVER'S (invalid_rule_self_site). This mirrors it, the CLI and the GitOps CR
             path reach the same API and never see this form, so a picker that merely hid the option would be
             guarding one caller of three. What the picker adds is the EXPLANATION. */}
         <EntityPicker
@@ -2674,7 +2674,7 @@ function RuleFormModal({
         />
         {/* ⛔ WHAT THE RULE WILL DO, IN WORDS, BEFORE Create. Two pickers and a button let an operator
             choose two nouns and press go; nothing in that gesture says what the compiler will emit. The gap
-            is enormous — "agent rajan → group Contractors" grants ONE MACHINE UNRESTRICTED ACCESS TO EVERY
+            is enormous, "agent rajan → group Contractors" grants ONE MACHINE UNRESTRICTED ACCESS TO EVERY
             DEVICE OWNED BY EVERY CONTRACTOR, because a group destination is port-unscoped by construction
             (compiler.go:442, Protocol: ProtoAny).
 
@@ -2737,7 +2737,7 @@ function RuleFormModal({
               className={`rounded-md border px-3 py-2 text-xs ${eff.wide ? "border-warn/40 bg-warn/5 text-warn" : "border-white/10 bg-white/5 text-ink-body"}`}
             >
               {eff.text}
-              {/* ⚠ THE EXTRA SENTENCE FOR THE ONE SHAPE THAT IS USUALLY A MISTAKE — attached to it alone,
+              {/* ⚠ THE EXTRA SENTENCE FOR THE ONE SHAPE THAT IS USUALLY A MISTAKE, attached to it alone,
                   because a caution on every rule is a caution nobody reads. */}
               {caution && (
                 <span className="mt-1 block text-ink-secondary">{caution}</span>
@@ -2775,9 +2775,9 @@ function GroupsResourcesSection({
 }) {
   const [groups, setGroups] = useState<UserGroup[]>([]);
   // The roster, for the "add a member" picker. A failed read leaves it EMPTY, which hides the picker rather
-  // than offering an empty one — the add control is absent, not broken.
+  // than offering an empty one, the add control is absent, not broken.
   const [orgMembers, setOrgMembers] = useState<Member[]>([]);
-  // ⛔ COUNTS ON EVERY ROW, FETCHED LAZILY, REMEMBERED ONCE KNOWN — founder-ruled, REVERSING the earlier
+  // ⛔ COUNTS ON EVERY ROW, FETCHED LAZILY, REMEMBERED ONCE KNOWN, founder-ruled, REVERSING the earlier
   // on-expansion-only ruling, and the reversal has a reason: the earlier argument was REQUEST COST, and
   // CACHING ANSWERS COST WITHOUT BUYING SILENCE. One fetch per group per session, not per render.
   //   "0 members" IS THE SINGLE MOST IMPORTANT THING THIS PANEL CAN TELL AN OPERATOR, and hiding it behind an
@@ -2802,7 +2802,7 @@ function GroupsResourcesSection({
   const [err, setErr] = useState<string | null>(null);
   const [newGroup, setNewGroup] = useState("");
   // Feature 1 (port-scoped resources): the resource MODEL + compiler + API already carry protocol + ports
-  // end-to-end (resources.port_low/high, compiler.go:417-419); only this form omitted the port inputs — so a
+  // end-to-end (resources.port_low/high, compiler.go:417-419); only this form omitted the port inputs, so a
   // rule targeting a resource could only ever grant ALL ports. Ports are OPTIONAL (empty = all ports for the
   // protocol); the server (createResource) is the authoritative validator (both-or-neither, low<=high).
   const [newRes, setNewRes] = useState({
@@ -2834,7 +2834,7 @@ function GroupsResourcesSection({
     // Per-column legibility: a failed groups load shows retry in the groups column, not
     // "No groups yet." ([4]); same for resources.
     // The roster feeds the add-a-member picker only. A failed read leaves it EMPTY, which HIDES the picker
-    // rather than offering an empty one — an absent control, never a broken one.
+    // rather than offering an empty one, an absent control, never a broken one.
     setOrgMembers(mr.ok ? (mr.data as Member[]) : []);
     setGroupsError(gr.ok ? null : gr.error);
     // One pass over the groups, cached in `memberCounts`. Bounded by group count and done ONCE.
@@ -2921,7 +2921,7 @@ function GroupsResourcesSection({
       portHigh: "",
     });
     load();
-    onSubjectsChanged(); // resources are rule destinations — keep RulesSection's copy fresh too
+    onSubjectsChanged(); // resources are rule destinations, keep RulesSection's copy fresh too
   }
   async function delResource(id: string) {
     const { error } = await api.DELETE(
@@ -2937,15 +2937,15 @@ function GroupsResourcesSection({
   }
 
   // ⛔ THE CASCADE CONFIRM MOVED WITH THE VERB. Deleting a group deletes every rule that names it, so the
-  // confirmation is not optional ceremony — and from a selection bar the same click can take several groups
+  // confirmation is not optional ceremony, and from a selection bar the same click can take several groups
   // and all of their rules at once, which is strictly more consequential than the per-row version was.
   const [deletingGroups, setDeletingGroups] = useState<UserGroup[]>([]);
   // ⛔ TABS, NOT A STACK. Two tables one under the other cost a screen of scrolling to reach the second, and
-  // the two are alternatives — an operator is working on groups OR on resources, never reading both at once.
+  // the two are alternatives, an operator is working on groups OR on resources, never reading both at once.
   const [tab, setTab] = useState<"groups" | "resources">("groups");
   // ⛔ EDIT EXISTED IN THE API AND HAD NO CALL SITE. `PATCH .../groups/{id}` and `PATCH .../resources/{id}`
   // have shipped all along; the UI offered only Delete, so renaming a group or correcting a resource's port
-  // meant deleting it — which CASCADES every rule that names it — and building it again. A capability the
+  // meant deleting it, which CASCADES every rule that names it, and building it again. A capability the
   // product had and no operator could reach (the absence question, docs/CLAUDE.md).
   const [editingGroup, setEditingGroup] = useState<UserGroup | null>(null);
   const [editingRes, setEditingRes] = useState<Resource | null>(null);
@@ -3014,10 +3014,10 @@ function GroupsResourcesSection({
       )}
       <ErrorText>{err}</ErrorText>
       {/* ⛔ STACKED, NOT SIDE BY SIDE. Two tables in a half-width column each render five columns in the
-          space of two — CIDR, protocol and ports would truncate exactly where an operator is comparing them
+          space of two, CIDR, protocol and ports would truncate exactly where an operator is comparing them
           against a router config. Each table gets the full row. */}
       {/* ⛔ TABS ABOVE, ADD-FORM ABOVE THE TABLE. Both creation forms used to sit BELOW their list, so on
-          an org with ten groups the way to make the eleventh was off the bottom of the card — the primary
+          an org with ten groups the way to make the eleventh was off the bottom of the card, the primary
           action on the screen, reachable only by scrolling past everything it creates. */}
       <div className="mt-3 flex gap-1 border-b border-white/10">
         {(["groups", "resources"] as const).map((t) => (
@@ -3116,14 +3116,14 @@ function GroupsResourcesSection({
       </div>
       <div className="mt-3 space-y-4">
         {/* ⛔ GROUPS AS A TABLE. Name / members / type / created are the same five facts for every group, and
-            an org accumulates them — the list gave no way to search and no way to stop rendering all of them.
+            an org accumulates them, the list gave no way to search and no way to stop rendering all of them.
 
             ⚠ WHAT SURVIVED THE CONVERSION, because each was earned: the DIRECTORY badge where the name is
             (the reconciler owns that membership, so say it where the name is), the THREE-ARM member count
             (unfetched renders NOTHING and must never become a 0 nobody asked for; 0 is the loudest state
             here and is styled as a warning, not as metadata), and expansion to manage members. */}
         {/* ⚠ `hidden`, NOT A CSS CLASS, AND THE DIFFERENCE IS THE POINT. `hidden` takes the panel out of
-            the accessibility tree and out of find-in-page, so a screen reader and ⌘F see what the eye sees —
+            the accessibility tree and out of find-in-page, so a screen reader and ⌘F see what the eye sees ,
             whereas `.opacity-0` or an off-screen class would leave a whole table readable to both while
             invisible, which is the invisible-is-not-absent failure.
 
@@ -3196,7 +3196,7 @@ function GroupsResourcesSection({
                     // column that means nothing until used.
                     // ⛔ IT HAD TO LOOK LIKE A CONTROL, AND IT DID NOT. The count was plain text with a
                     // hover underline, so the only way to manage members was to click something that read
-                    // as a label — the founder found it by accident, which is the definition of an
+                    // as a label, the founder found it by accident, which is the definition of an
                     // undiscoverable affordance. It is now a bordered control with a disclosure caret and
                     // the word "Manage", so what it does is legible without clicking it.
                     cell: (g, { expanded, toggle }) => {
@@ -3267,7 +3267,7 @@ function GroupsResourcesSection({
           ) : (
             <>
               {/* ⛔ RESOURCES AS A TABLE, with CIDR / protocol / ports in COLUMNS OF THEIR OWN. They were
-                  concatenated into one muted string — "10.20.4.0/24 · tcp/5432" — which cannot be sorted,
+                  concatenated into one muted string, "10.20.4.0/24 · tcp/5432", which cannot be sorted,
                   cannot be scanned down, and put the three facts that decide what a rule actually permits
                   into the typography of an afterthought. */}
               <DataTable<Resource>
@@ -3310,7 +3310,7 @@ function GroupsResourcesSection({
                       <span className="flex items-center gap-2">
                         <span className="text-slate-200">{r.name}</span>
                         {/* ⛔ THE OPERATOR'S OWN NOTE (S15.3), RENDERED AS WRITTEN. An ASSERTION, never an
-                            inference — the product cannot detect what a destination speaks, and a label the
+                            inference, the product cannot detect what a destination speaks, and a label the
                             system generated would claim a capability it does not have.
                             ⚠ Only when set: the field is optional and must LOOK optional. */}
                         {r.label && (
@@ -3405,7 +3405,7 @@ function DeviceApprovalSection({
     ]);
     setModeError(dr.ok ? null : dr.error);
     if (dr.ok) setMode((dr.data as DeviceApproval).mode);
-    // [3]: a failed pending fetch must NOT render "No devices awaiting approval" — that hides
+    // [3]: a failed pending fetch must NOT render "No devices awaiting approval", that hides
     // a device blocked from connecting. Show retry.
     setPendingError(pr.ok ? null : pr.error);
     if (pr.ok) setPending(pr.data as Device[]);
@@ -3475,7 +3475,7 @@ function DeviceApprovalSection({
       <ErrorText>{err}</ErrorText>
 
       {/* ⛔ PENDING DEVICES AS A TABLE. A device awaiting approval is the ONE list here where the operator
-          is being asked to make a security decision — and the row gave them a name and an IP with no owner,
+          is being asked to make a security decision, and the row gave them a name and an IP with no owner,
           no platform, no age. Approving a device you cannot attribute is approving a device.
 
           ⚠ The wait is shown because it is the fact that decides urgency: a request from four minutes ago
@@ -3546,7 +3546,7 @@ function DeviceApprovalSection({
 }
 
 // ── Device posture checks (S7.5.3) ───────────────────────────────────────────────────
-// Per-check org opt-in (no configured check = off — the unlock-then-opt-in convention).
+// Per-check org opt-in (no configured check = off, the unlock-then-opt-in convention).
 // Three legibility requirements (the slice-3 rider): (1) per-platform NON-coverage is
 // visible (an os_version min for macOS only must SAY Windows is unconstrained), (2) a
 // device that doesn't report shows as UNKNOWN, never as a pass (rendered on the Devices
@@ -3654,7 +3654,7 @@ function PostureChecksSection({
         <span className="text-amber-300">require</span> disconnects a
         non-compliant device within seconds of its report.
       </p>
-      {/* The honesty line — verbatim, at the point of configuration (D6, locked). */}
+      {/* The honesty line, verbatim, at the point of configuration (D6, locked). */}
       <div className="mt-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
         {POSTURE_HONESTY_LINE}
       </div>
@@ -3697,7 +3697,7 @@ function PostureChecksSection({
               )}
             </div>
             {/* A device that reports the fact as ABSENT (couldn't read it) is UNKNOWN for this
-                check — unknown never blocks, and it is not compliance. */}
+                check, unknown never blocks, and it is not compliance. */}
           </div>
 
           {/* OS version */}
@@ -3761,7 +3761,7 @@ function PostureChecksSection({
             )}
             {/* WF-OVPN-walk-3: "Off" hid the min-version inputs AND the Save button, so the setting
                 could not be persisted from the UI (a dead-end). Off has nothing to configure, but it
-                still needs its own Save affordance — saveOsVersion() already handles the off case. */}
+                still needs its own Save affordance, saveOsVersion() already handles the off case. */}
             {osMode === "off" && canManage && (
               <div className="mt-3">
                 <Button disabled={busy} onClick={saveOsVersion}>
@@ -3769,7 +3769,7 @@ function PostureChecksSection({
                 </Button>
               </div>
             )}
-            {/* THE coverage indicator (ratified rider): every reporting platform is named —
+            {/* THE coverage indicator (ratified rider): every reporting platform is named ,
                 a constrained platform shows its floor, an unconstrained one SAYS so. Never
                 a silent gap. */}
             {osMode !== "off" && (
@@ -3861,7 +3861,7 @@ function CascadeDeleteModal({
           <Button variant="ghost" onClick={onCancel}>
             Cancel
           </Button>
-          {/* The control is DISABLED until the name matches — the guard is the typing, not a second click. */}
+          {/* The control is DISABLED until the name matches, the guard is the typing, not a second click. */}
           <Button variant="danger" disabled={!ok} onClick={onConfirm}>
             Delete {kind}
           </Button>
@@ -3883,23 +3883,23 @@ function CascadeDeleteModal({
   );
 }
 
-// ── GROUP MEMBERSHIP — the surface for three endpoints that shipped in S7.5.2 with one consumer ──────────
+// ── GROUP MEMBERSHIP, the surface for three endpoints that shipped in S7.5.2 with one consumer ──────────
 //
 // `addGroupMember` and `removeGroupMember` have existed since S7.5.2 and the web app has NEVER called them.
-// A group on this screen was a name and a Delete, while rules above used those same groups as SOURCES — a
+// A group on this screen was a name and a Delete, while rules above used those same groups as SOURCES, a
 // form creating an object nobody could populate, above rules that depend on it being populated.
 //
 // ⛔ COUNTS ARE LAZY, ON EXPANSION ONLY, AND THE COLLAPSED ROW SHOWS NOTHING RATHER THAN A ZERO IT NEVER
 // FETCHED. `UserGroup` carries no count, so an eager count costs ONE REQUEST PER GROUP. Measured on the live
-// stack: 3 groups = 65ms; ~433ms at 20; ~1083ms at 50 — on a screen already making 15 reads.
+// stack: 3 groups = 65ms; ~433ms at 20; ~1083ms at 50, on a screen already making 15 reads.
 //
 //   "WE HAVEN'T ASKED" AND "ZERO MEMBERS" ARE DIFFERENT FACTS, and the second is the dangerous one on a rule
 //   source: it reads as "this rule grants nothing" and may be false.
 //
-// ⛔ AND LAZY COUNTS LOSE THE VISIBLY-EMPTY PROPERTY, which is why `src_group_empty` exists on the RULE ROW —
+// ⛔ AND LAZY COUNTS LOSE THE VISIBLY-EMPTY PROPERTY, which is why `src_group_empty` exists on the RULE ROW ,
 // it restores it where the operator's attention already is, at no request cost. Two decisions, one problem.
 /**
- * The MEMBERS panel for one group — what used to be the expanded half of a list row.
+ * The MEMBERS panel for one group, what used to be the expanded half of a list row.
  *
  * ⛔ IT NO LONGER OWNS `open`. The table owns expansion, so this component only exists while the row is
  * expanded and therefore fetches ON MOUNT. That removes the "expanded but never asked" state entirely
@@ -3950,7 +3950,7 @@ function GroupMembersPanel({
     }
   }
 
-  // ⛔ MEMBERSHIP OF A SYNCED GROUP IS NOT EDITABLE — AddGroupMember answers 409
+  // ⛔ MEMBERSHIP OF A SYNCED GROUP IS NOT EDITABLE, AddGroupMember answers 409
   // idp_managed_group (enterprise/policy/service.go:125). The controls below were gated on
   // canManage ALONE, so every Add/Remove on a directory group was a guaranteed refusal.
   const directoryManaged = isDirectoryManaged(group);
@@ -4093,8 +4093,8 @@ function GroupMembersPanel({
  * Rename a group.
  *
  * ⚠ THE NAME IS ALL THAT CHANGES, and rules follow it automatically because they reference the group by ID.
- * Said in the dialog, because the alternative an operator would otherwise assume — that renaming might break
- * their rules — is exactly what would push them back to delete-and-rebuild.
+ * Said in the dialog, because the alternative an operator would otherwise assume, that renaming might break
+ * their rules, is exactly what would push them back to delete-and-rebuild.
  */
 function RenameGroupModal({
   orgId,
@@ -4149,7 +4149,7 @@ function RenameGroupModal({
         <Input value={name} onChange={(e) => setName(e.target.value)} />
       </Field>
       <p className="mt-2 text-xs text-ink-secondary">
-        Rules that use this group keep working — they reference it by identity,
+        Rules that use this group keep working, they reference it by identity,
         not by name.
       </p>
       <ErrorText>{err}</ErrorText>
@@ -4160,7 +4160,7 @@ function RenameGroupModal({
 /**
  * Edit a resource.
  *
- * ⛔ CHANGING A CIDR OR A PORT CHANGES WHAT EVERY RULE NAMING IT PERMITS, and it does so silently — the rules
+ * ⛔ CHANGING A CIDR OR A PORT CHANGES WHAT EVERY RULE NAMING IT PERMITS, and it does so silently, the rules
  * themselves do not appear to change. That is the one thing this dialog has to say out loud, because the
  * blast radius is invisible from here.
  */
@@ -4197,7 +4197,7 @@ function EditResourceModal({
           name: f.name.trim(),
           cidr: f.cidr.trim(),
           protocol: f.protocol,
-          // Blank means "all ports" — sent as null rather than 0, which would be a port nobody asked for.
+          // Blank means "all ports", sent as null rather than 0, which would be a port nobody asked for.
           port_low: f.port_low.trim() ? Number(f.port_low) : null,
           port_high: f.port_high.trim() ? Number(f.port_high) : null,
           label: f.label.trim() ? f.label.trim() : null,

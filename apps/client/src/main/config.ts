@@ -15,12 +15,12 @@ interface ConfigShape {
   notifications: StoredNotice[];
 }
 
-// Config owns the server URL (a MAIN-process concern — it's where auth + the
+// Config owns the server URL (a MAIN-process concern, it's where auth + the
 // updater point; the renderer only reads it over the bridge). Backed by
 // electron-store in userData.
 //
 // validate and commit are SEPARATE so the caller can clear the old credential
-// BEFORE the new URL is persisted — otherwise there is a window where the
+// BEFORE the new URL is persisted, otherwise there is a window where the
 // configured origin is the new server while the old credential still exists
 // (a cross-server token-attach risk).
 export class Config {

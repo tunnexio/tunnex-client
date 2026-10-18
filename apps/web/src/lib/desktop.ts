@@ -1,7 +1,7 @@
 import type { BeamSharedView, BeamAction, BeamCreate, BeamTarget, BeamView, BeamShare, BeamGrantsPreview, BeamGrantsImpact, BeamInventory } from "./beamtypes";
 // Desktop bridge access (S6.2). The Electron preload exposes a verb-specific
 // allowlist as window.tunnex (auth.*/config.*/reserved tunnel.*). Its PRESENCE
-// is the desktop signal — one SPA bundle, runtime branch. In the browser
+// is the desktop signal, one SPA bundle, runtime branch. In the browser
 // window.tunnex is undefined and every helper here returns null / false.
 
 export interface AuthStatus {
@@ -26,7 +26,7 @@ export type ReleaseCheck =
   | { kind: "current"; version: string }
   | { kind: "unavailable"; reason: string };
 
-/** An imported `.conf` profile, as main reports it — never key material. */
+/** An imported `.conf` profile, as main reports it, never key material. */
 export interface ImportedProfile {
   id: string;
   name: string;
@@ -69,7 +69,7 @@ export interface TunnexBridge {
     removeDevice(): Promise<boolean>;
     status(): Promise<AuthStatus>;
   };
-  // Troubleshooting. `openLogs` reveals the file in the OS file manager — the log is never read
+  // Troubleshooting. `openLogs` reveals the file in the OS file manager, the log is never read
   // into the renderer, so a compromised page cannot read it out.
   diag: {
     logPath(): Promise<string>;
@@ -107,9 +107,10 @@ export interface TunnexBridge {
 
 export interface ClientNotice {id:string;kind:"access_revoked"|"device_revoked"|"update_available";title:string;body:string;created_at:string;}
 
-// TunnelStatus mirrors the helper plus client-synthesized status (no secrets — never
+// TunnelStatus mirrors the helper plus client-synthesized status (no secrets, never
 // key material). Revocation, migration and posture verdicts originate in main.
 export interface TunnelStatus {
+  helper_error?: "caller_untrusted";
   connection_path?: "direct" | "relay" | "negotiating" | "unknown";
   state: "down" | "up" | "failed" | "revoked" | "pending_approval" | "migrate_failed" | "posture_warning" | "posture_blocked";
   interface?: string;
@@ -132,5 +133,5 @@ export function desktop(): TunnexBridge | null {
 
 // ⛔ `isDesktop()` REMOVED (S14.20 step 4). Its callers were the six branches that made one bundle
 // serve two products; the last of them went with this change, and the only surviving mention is a
-// comment in `client.tsx` describing what used to be. `desktop()` stays — the client's own surface
+// comment in `client.tsx` describing what used to be. `desktop()` stays, the client's own surface
 // asks the bridge for real things.

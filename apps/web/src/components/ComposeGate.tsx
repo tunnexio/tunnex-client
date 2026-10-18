@@ -12,7 +12,7 @@ import {
   type LayoutCapability,
 } from "../lib/layout";
 
-// S14.2 — THE COMPOSITION GATE. ONE component, ONE hook, expressed ONCE.
+// S14.2, THE COMPOSITION GATE. ONE component, ONE hook, expressed ONCE.
 //
 // Screens declare WHAT they compose; they never ask HOW WIDE the window is. A screen that reads a breakpoint
 // directly is the per-screen duplication this exists to prevent, and it is the form the drift would take.
@@ -24,7 +24,7 @@ const CapabilityContext = createContext<LayoutCapability | null>(null);
  * product that is allowed to know a pixel width.
  *
  * The value is INJECTABLE (via `value`) so tests can exercise every capability without asking jsdom to lay
- * anything out — jsdom has no layout engine, so a test that measured would measure nothing.
+ * anything out, jsdom has no layout engine, so a test that measured would measure nothing.
  */
 export function LayoutCapabilityProvider({
   children,
@@ -64,15 +64,15 @@ export function useLayoutCapability(): LayoutCapability {
 /**
  * ⛔ WHY THIS RENDERS NOTHING RATHER THAN HIDING SOMETHING.
  *
- * If the rule builder were merely hidden by CSS below `compose`, it would STILL BE IN THE DOM — focusable,
+ * If the rule builder were merely hidden by CSS below `compose`, it would STILL BE IN THE DOM, focusable,
  * announced to a screen reader, and submittable. A control that GRANTS ACCESS, present to a keyboard and gone
  * only to a sighted mouse user, is the exact failure this epic already ruled on twice: INVISIBLE IS NOT ABSENT,
  * a security-adjacent surface failing open (docs/laws.md).
  *
- * So the editor is not rendered at all. The honest line replaces it — never a blank space where an editor was,
+ * So the editor is not rendered at all. The honest line replaces it, never a blank space where an editor was,
  * and never a degraded editor.
  *
- * PERMISSION IS A RENDER DECISION. WIDTH NEVER IS — which is why this gate produces ABSENCE, and why the
+ * PERMISSION IS A RENDER DECISION. WIDTH NEVER IS, which is why this gate produces ABSENCE, and why the
  * responsive contract asserts that absence BY ROLE: `queryByRole` finds a hidden element, so a `display:none`
  * implementation FAILS that assertion instead of passing it.
  */

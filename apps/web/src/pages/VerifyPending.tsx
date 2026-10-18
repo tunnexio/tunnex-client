@@ -10,7 +10,7 @@ import { Button } from "../components/ui";
  * verified-gated server-side, so instead of routing them to the create-org step
  * (which would 403), RequireOrg sends them here to finish verification first.
  *
- * An unverified user who already belongs to an org is NOT sent here — they reach
+ * An unverified user who already belongs to an org is NOT sent here, they reach
  * the shell, where VerifyEmailBanner nudges them without blocking navigation.
  */
 export default function VerifyPending() {
@@ -35,11 +35,11 @@ export default function VerifyPending() {
       {/* Success feedback uses the accent, not green: green is reserved for
           liveness, not "the action worked" (S4.4 decision f). */}
       {resend === "sent" && (
-        <p className="mt-3 text-xs text-accent-400">Sent — check your inbox.</p>
+        <p className="mt-3 text-xs text-accent-400">Sent, check your inbox.</p>
       )}
       {resend === "error" && (
         <p className="mt-3 text-xs text-danger">
-          Couldn&rsquo;t send — try again.
+          Couldn&rsquo;t send, try again.
         </p>
       )}
       <div className="mt-5 flex items-center justify-between">

@@ -40,29 +40,29 @@ function readTrayPixels(file: string): { width: number; height: number; pixels: 
 // ⛔ THE APP SHIPPED WITH ELECTRON'S OWN ICON, AND THE FIX HAD A SECOND HALF THAT NEARLY GOT LOST.
 //
 // Generating the icon was the easy part. `.gitignore` carries an UNANCHORED `build/`, which matches
-// `apps/client/build/` — the electron-builder buildResources directory, full of AUTHORED files. The
+// `apps/client/build/`, the electron-builder buildResources directory, full of AUTHORED files. The
 // four already in git are there only because somebody ran `git add -f`. The icon would have been
 // the fifth: correct on the machine that generated it, absent on every fresh clone, and the
 // packaged app would have gone back to Electron's atom with nothing failing.
 //
-// > **THIS REPO HAS ALREADY PAID FOR THIS EXACT PATTERN** — an unanchored `secrets/` kept
+// > **THIS REPO HAS ALREADY PAID FOR THIS EXACT PATTERN**, an unanchored `secrets/` kept
 // > `apps/api/internal/secrets` SOURCE out of git, building locally and breaking every clone.
 
 test("the app icon exists and is a square PNG big enough for every target", () => {
-  assert.ok(existsSync(ICON), "apps/client/build/icon.png is missing — run `pnpm --filter @tunnex/client icon`");
+  assert.ok(existsSync(ICON), "apps/client/build/icon.png is missing, run `pnpm --filter @tunnex/client icon`");
   const buf = readFileSync(ICON);
   // PNG signature, then IHDR: width and height are big-endian u32 at offsets 16 and 20.
   assert.equal(buf.subarray(1, 4).toString("ascii"), "PNG");
   const w = buf.readUInt32BE(16);
   const h = buf.readUInt32BE(20);
-  assert.equal(w, h, `the icon is ${w}x${h} — a non-square icon is stretched by every OS that shows it`);
+  assert.equal(w, h, `the icon is ${w}x${h}, a non-square icon is stretched by every OS that shows it`);
   // electron-builder derives .icns and .ico from this one file; below 512 they come out blurred.
-  assert.ok(w >= 512, `the icon is ${w}px — too small to generate .icns/.ico cleanly`);
+  assert.ok(w >= 512, `the icon is ${w}px, too small to generate .icns/.ico cleanly`);
 });
 
 test("⛔ the icon is not swallowed by the unanchored `build/` ignore rule", () => {
   // ⚠ `git check-ignore` IS THE WRONG INSTRUMENT AND IT ANSWERED "IGNORED" FOR A FILE THAT IS NOT.
-  // Its exit status is 0 when ANY pattern matches — including a NEGATION — so an un-ignored file
+  // Its exit status is 0 when ANY pattern matches, including a NEGATION, so an un-ignored file
   // reports the same status as an ignored one. The question is not "does a rule match" but "would
   // git add this", and only `ls-files --others --exclude-standard` answers that.
   const tracked = execFileSync("git", ["ls-files", "apps/client/build/icon.png"], {
@@ -76,7 +76,7 @@ test("⛔ the icon is not swallowed by the unanchored `build/` ignore rule", () 
   ).trim();
   assert.ok(
     tracked !== "" || addable !== "",
-    "apps/client/build/icon.png is neither tracked nor addable — .gitignore is swallowing it, and " +
+    "apps/client/build/icon.png is neither tracked nor addable, .gitignore is swallowing it, and " +
       "the packaged app will fall back to Electron's icon on a fresh clone",
   );
 });
@@ -88,7 +88,7 @@ test("the generated helper binary stays OUT of git", () => {
     ["ls-files", "--others", "--exclude-standard", "apps/client/build/helper/"],
     { cwd: ROOT, encoding: "utf8" },
   ).trim();
-  assert.equal(addable, "", "the staged helper binary became addable — it is a build output");
+  assert.equal(addable, "", "the staged helper binary became addable, it is a build output");
 });
 
 test("tray icons are shipped as explicit normal and Retina PNG resources", () => {
@@ -97,7 +97,7 @@ test("tray icons are shipped as explicit normal and Retina PNG resources", () =>
     "connected-win.png", "connected-win@2x.png", "idle-win.png", "idle-win@2x.png",
   ]) {
     const file = join(TRAY_DIR, name);
-    assert.ok(existsSync(file), `${name} is missing — macOS tray may render blank`);
+    assert.ok(existsSync(file), `${name} is missing, macOS tray may render blank`);
     assert.equal(readFileSync(file).subarray(1, 4).toString("ascii"), "PNG", `${name} is not a PNG`);
   }
   const yml = readFileSync(join(__dirname, "..", "electron-builder.yml"), "utf8");
@@ -115,7 +115,7 @@ test("tray PNGs are centred transparent assets, not opaque SVG thumbnail canvase
     for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
       if (pixels[(y * width + x) * 4 + 3] > 0) opaque.push([x, y]);
     }
-    assert.equal(pixels[3], 0, `${name} has an opaque top-left canvas — the mark will render as a square`);
+    assert.equal(pixels[3], 0, `${name} has an opaque top-left canvas, the mark will render as a square`);
     assert.ok(opaque.length > 0, `${name} has no visible mark`);
     const xs = opaque.map(([x]) => x);
     const ys = opaque.map(([, y]) => y);
@@ -148,15 +148,15 @@ test("macOS and Windows tray assets use their native footprints with the same ce
 // ── S14.20 step 4: the dashboard is not shipped ─────────────────────────────────────────────────
 test("⛔ the packaged bundle EXCLUDES the dashboard entry, and keeps the shared brand chunk", () => {
   // The vite build emits two entries. The client loads client.html and cannot reach index.html at
-  // all, so shipping it put the whole admin dashboard — 352 KB of JS plus its CSS — inside the
+  // all, so shipping it put the whole admin dashboard, 352 KB of JS plus its CSS, inside the
   // client as code that cannot execute but can be read.
   //
   // ⚠ `brand-*` is SHARED and must survive: client.html references brand.css and brand.js. Verified
-  // against the built HTML, not guessed — which is why this asserts the keep as well as the drop.
+  // against the built HTML, not guessed, which is why this asserts the keep as well as the drop.
   const yml = readFileSync(join(__dirname, "..", "electron-builder.yml"), "utf8");
   assert.match(yml, /!index\.html/, "index.html is still shipped to the client");
   assert.match(yml, /!assets\/index-\*/, "the dashboard chunk is still shipped to the client");
-  assert.ok(!/!assets\/brand-/.test(yml), "brand-* must NOT be excluded — the client renders it");
+  assert.ok(!/!assets\/brand-/.test(yml), "brand-* must NOT be excluded, the client renders it");
 });
 
 test("⛔ the app:// fallback serves the CLIENT entry, not the dashboard's", () => {
@@ -166,7 +166,7 @@ test("⛔ the app:// fallback serves the CLIENT entry, not the dashboard's", () 
     .replace(/^\s*\/\/.*$/gm, " ")
     .replace(/\/\*[\s\S]*?\*\//g, " ");
   const fallback = /const serveIndex = \(\) => \{[\s\S]*?\n    \};/.exec(src)?.[0] ?? "";
-  assert.ok(fallback.length > 0, "serveIndex not found — this test is measuring nothing");
+  assert.ok(fallback.length > 0, "serveIndex not found, this test is measuring nothing");
   assert.ok(!/index\.html/.test(fallback), "the fallback still points at the dashboard entry");
   assert.match(fallback, /CLIENT_ENTRY/);
 });

@@ -43,7 +43,7 @@ func TestReconcileWritesScopedResolver(t *testing.T) {
 	}
 }
 
-// TestReconcileIdempotent: applying the same desired set twice converges — no error,
+// TestReconcileIdempotent: applying the same desired set twice converges, no error,
 // same content, file still owned.
 func TestReconcileIdempotent(t *testing.T) {
 	dir := t.TempDir()
@@ -83,7 +83,7 @@ func TestReconcileHealsUnreadableOwnedResolver(t *testing.T) {
 }
 
 // TestReconcileFullSweep: switching the desired set removes the owned file no longer
-// desired and writes the new one — full-sweep, not additive.
+// desired and writes the new one, full-sweep, not additive.
 func TestReconcileFullSweep(t *testing.T) {
 	dir := t.TempDir()
 	if err := reconcileResolvers(dir, []ResolverForward{{Domain: "old.local", ResolverIP: "10.20.0.53"}}); err != nil {
@@ -116,7 +116,7 @@ func TestReconcileEmptyClearsOwned(t *testing.T) {
 }
 
 // TestReconcileInertNoOp: with nothing owned and nothing desired, reconcile does not
-// even create the dir — zero files, zero behavior delta (the ruling's inert red).
+// even create the dir, zero files, zero behavior delta (the ruling's inert red).
 func TestReconcileInertNoOp(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "resolver") // does NOT exist yet
 	if err := reconcileResolvers(dir, nil); err != nil {
@@ -153,8 +153,8 @@ func TestReconcileNeverTouchesForeign(t *testing.T) {
 	}
 }
 
-// TestReconcileAcceptsSingleLabel (F3): a single-label zone ("internal") — legitimate in homelab/SMB and
-// ACCEPTED by the control plane — must install, not be rejected by the helper (the third-normalizer drift).
+// TestReconcileAcceptsSingleLabel (F3): a single-label zone ("internal"), legitimate in homelab/SMB and
+// ACCEPTED by the control plane, must install, not be rejected by the helper (the third-normalizer drift).
 func TestReconcileAcceptsSingleLabel(t *testing.T) {
 	dir := t.TempDir()
 	if err := reconcileResolvers(dir, []ResolverForward{{Domain: "internal", ResolverIP: "10.20.0.53"}}); err != nil {
@@ -166,9 +166,9 @@ func TestReconcileAcceptsSingleLabel(t *testing.T) {
 	}
 }
 
-// TestReconcileAcceptsUnderscoreAndUnicode (S8.4 fold R1) — the helper does PATH-SAFETY only; a domain the
-// CP accepts (an AD `_msdcs.corp` SRV zone, a unicode zone) must install, and — critically now that apply is
-// all-or-nothing — one such domain must NOT sink the WHOLE set.
+// TestReconcileAcceptsUnderscoreAndUnicode (S8.4 fold R1), the helper does PATH-SAFETY only; a domain the
+// CP accepts (an AD `_msdcs.corp` SRV zone, a unicode zone) must install, and, critically now that apply is
+// all-or-nothing, one such domain must NOT sink the WHOLE set.
 func TestReconcileAcceptsUnderscoreAndUnicode(t *testing.T) {
 	dir := t.TempDir()
 	err := reconcileResolvers(dir, []ResolverForward{
@@ -186,7 +186,7 @@ func TestReconcileAcceptsUnderscoreAndUnicode(t *testing.T) {
 	}
 }
 
-// TestReconcileStillRefusesTraversal (S8.4 fold R1) — the path-safety FLOOR did not regress: separators,
+// TestReconcileStillRefusesTraversal (S8.4 fold R1), the path-safety FLOOR did not regress: separators,
 // traversal, and leading/trailing dots are still refused.
 func TestReconcileStillRefusesTraversal(t *testing.T) {
 	dir := t.TempDir()
@@ -224,7 +224,7 @@ func TestReconcilePartialWriteRollsBack(t *testing.T) {
 	if err == nil {
 		t.Fatal("a mid-apply write failure must surface an error")
 	}
-	// The first (newly created) file must have been rolled back — nothing stranded.
+	// The first (newly created) file must have been rolled back, nothing stranded.
 	if _, statErr := os.Stat(filepath.Join(dir, "a.local")); !os.IsNotExist(statErr) {
 		t.Errorf("partial apply stranded a.local: err=%v", statErr)
 	}

@@ -6,7 +6,7 @@ import { stripJsComments, stripXmlComments } from "./support/source";
 // ⛔ A SIZE EXPRESSED AS ONE DIMENSION IS A HOPE ABOUT THE OTHER.
 //
 // Two ratio bugs shipped on the login page before this guard existed:
-//   · the mark is 577x551 — NOT square — and was rendered `h-7 w-7`, squashing it horizontally
+//   · the mark is 577x551, NOT square, and was rendered `h-7 w-7`, squashing it horizontally
 //   · the wordmark is 792x120 (6.6:1) and was given a HEIGHT ONLY, so a flex row stretched it
 //
 // Both were invisible in code review and obvious on screen. The assets carry their intrinsic size
@@ -26,7 +26,7 @@ describe("brand assets", () => {
     expect(svgs.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("⛔ the mark is NOT square — the assumption that broke it", () => {
+  it("⛔ the mark is NOT square, the assumption that broke it", () => {
     const { w, h } = intrinsic("tunnex-logo.svg");
     expect(w).toBeGreaterThan(0);
     expect(h).toBeGreaterThan(0);
@@ -34,7 +34,7 @@ describe("brand assets", () => {
   });
 
   it("⛔ Logo derives BOTH dimensions from the intrinsic ratios", () => {
-    // Source-level, because the bug is the ABSENCE of a width — a rendering test would have to
+    // Source-level, because the bug is the ABSENCE of a width, a rendering test would have to
     // guess a container to reproduce the stretch, and the real defect is that nothing pinned it.
     const src = stripJsComments(
       readFileSync(join(__dirname, "..", "src", "brand.tsx"), "utf8"),
@@ -62,9 +62,9 @@ describe("brand assets", () => {
 });
 
 describe("⛔ the mark is never cropped to fit its box", () => {
-  it("carries no corner-radius class — it was clipping the identity at every size", () => {
+  it("carries no corner-radius class, it was clipping the identity at every size", () => {
     // `rounded-lg` took an 8px radius off a 22px image in the desktop client's header. The mark's
-    // shape reaches its own corners, so the crop was visible as a trimmed logo — worst at the
+    // shape reaches its own corners, so the crop was visible as a trimmed logo, worst at the
     // smallest size, which is where it is used most.
     //
     // > **A LOGO IS THE ONE ASSET THAT MUST NOT BE CROPPED TO FIT.** Scale it or give it room; a
@@ -75,7 +75,7 @@ describe("⛔ the mark is never cropped to fit its box", () => {
     const img = /<img[\s\S]*?\/>/.exec(src)?.[0] ?? "";
     expect(
       img,
-      "the mark <img> was not found — this census is measuring nothing",
+      "the mark <img> was not found, this census is measuring nothing",
     ).toContain("logoUrl");
     expect(img).not.toMatch(/rounded-/);
     expect(img).not.toMatch(/overflow-hidden/);

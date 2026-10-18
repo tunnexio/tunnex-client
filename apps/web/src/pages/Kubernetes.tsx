@@ -43,11 +43,11 @@ import {
 import type { Node } from "../lib/api";
 import { ManagedBadge } from "../components/ManagedBadge";
 
-// Kubernetes (S10.3): the in-cluster connectivity surface — register a cluster (a synthetic VIP range fronted
+// Kubernetes (S10.3): the in-cluster connectivity surface, register a cluster (a synthetic VIP range fronted
 // by a site gateway) and expose its Services to the fabric. CONNECTIVITY is CORE (all editions): this whole
 // page is k8s:manage-gated but never edition-gated; the GRANT that reaches an exposed Service (Access page)
 // is the enterprise governance gate. Every rendered field is wire-truth; the FQDN is READ from the server
-// (never constructed in the client — "copy, don't construct").
+// (never constructed in the client, "copy, don't construct").
 
 interface Raw {
   clusters: K8sCluster[];
@@ -77,7 +77,7 @@ export default function Kubernetes() {
     // ⛔ THE ORG COMES FROM THE SEAM, NOT FROM INDEX ZERO (S12.5). This used to fetch the org list here and
     // take `[0]`, which meant a user in two organizations could reach only one of them and the switcher in
     // the header would have had nothing to switch.
-    // ⛔ LOADING IS NOT ABSENCE (S12.5). See the note in Dashboard.tsx — three states, not two: still
+    // ⛔ LOADING IS NOT ABSENCE (S12.5). See the note in Dashboard.tsx, three states, not two: still
     // loading (say nothing), the read failed (say THAT), genuinely no membership (say that).
     if (orgLoading) return;
     const first = currentOrg;
@@ -112,7 +112,7 @@ export default function Kubernetes() {
       }),
     )) as Loaded<Site[]>;
     // ⛔ TWO SECOND-CLASS READS. Both enrich a screen that is already correct, so a failure degrades a cell
-    // rather than blanking the page — and `null` is carried through rather than collapsed to 0/[].
+    // rather than blanking the page, and `null` is carried through rather than collapsed to 0/[].
     const nRes = (await loadOne(() =>
       api.GET("/api/v1/organizations/{orgId}/nodes", {
         params: { path: { orgId: first.id } },
@@ -128,11 +128,11 @@ export default function Kubernetes() {
       services: svcRes.data,
       sites: sRes.ok ? sRes.data : [],
       nodes: nRes.ok ? nRes.data : [],
-      // NULL, not 0 — "we could not look" is a different fact from "there are none", and the tile says which.
+      // NULL, not 0, "we could not look" is a different fact from "there are none", and the tile says which.
       machineCreds: mcRes.ok ? mcRes.data.length : null,
     });
     // ⚠ currentOrg IS A DEPENDENCY, AND THAT IS THE HALF THAT MAKES THE SWITCHER WORK. Without it the
-    // page keeps rendering the org it mounted with — the control moves, the data does not, and the user is
+    // page keeps rendering the org it mounted with, the control moves, the data does not, and the user is
     // looking at one tenant's screen labelled with another's name.
   }, [currentOrg, myId]);
   useEffect(() => {
@@ -159,7 +159,7 @@ export default function Kubernetes() {
         id: n.id,
         revoked: n.status === "revoked",
         endpointsUnavailable:
-          // ⛔ S14.21: a REVOKED gateway is not reporting anything — its last known kind is a stale
+          // ⛔ S14.21: a REVOKED gateway is not reporting anything, its last known kind is a stale
           // reading of a machine that is no longer meant to work.
           n.status !== "revoked" &&
           n.policy_degraded_kind === "k8s_endpoints_unavailable",
@@ -357,7 +357,7 @@ export default function Kubernetes() {
   const serviceColumns = [
     {
       key: "fqdn",
-      header: "Exposed Service — FQDN (copy, don't construct)",
+      header: "Exposed Service, FQDN (copy, don't construct)",
       cell: (r: SvcRow) => (
         <span className="flex flex-col gap-0.5">
           <span className="font-mono text-ink-primary">{r.fqdn}</span>
@@ -462,12 +462,12 @@ export default function Kubernetes() {
                   {t.label}
                 </p>
                 <p className="mt-1 text-[22px] font-semibold text-ink-heading">
-                  {/* ⛔ "n/a", NOT AN EM-DASH. A null never renders 0 — "we could not look" is a different
-                      fact from "there are none" — but the ABSENT MARKER ITSELF was the banned glyph.
+                  {/* ⛔ "n/a", NOT AN EM-DASH. A null never renders 0, "we could not look" is a different
+                      fact from "there are none", but the ABSENT MARKER ITSELF was the banned glyph.
                       S14.5 already resolved this exact collision on hubsetview: an em-dash "is not READ as
                       'we have no value' by anyone who has not been told that it means that. It reads as a
                       dash, as a minus, or as NOTHING AT ALL to a screen reader."
-                      This site carried a WRITTEN EXEMPTION for the case that law had already decided — and
+                      This site carried a WRITTEN EXEMPTION for the case that law had already decided, and
                       that law's closing line names the reflex verbatim: "the reflex in that moment is to
                       claim an exemption for the older rule." */}
                   {t.value === null ? "n/a" : t.value}
@@ -582,7 +582,7 @@ helm install op tunnex/operator \\
                     <strong className="text-ink-body">
                       What IS served is ownership
                     </strong>{" "}
-                    — which is why the withheld control above is real.
+                   , which is why the withheld control above is real.
                   </li>
                   <li>
                     <strong className="text-ink-body">
@@ -898,16 +898,16 @@ function ExposeServiceModal({
 }) {
   const [name, setName] = useState("");
   const [namespace, setNamespace] = useState("default");
-  // WF-K5 M8/M9: an exposure needs a SINGLE specific port + a protocol — the gateway DNATs VIP:port ->
+  // WF-K5 M8/M9: an exposure needs a SINGLE specific port + a protocol, the gateway DNATs VIP:port ->
   // podIP:targetPort, so all-ports/ranges are refused server-side. The form must offer the port the refusal
   // teaches the user to supply (offering the refusal without the field would make the dashboard structurally
-  // unable to produce a valid exposure). Protocol is tcp/udp (no "any" — a ported DNAT needs an L4 proto).
+  // unable to produce a valid exposure). Protocol is tcp/udp (no "any", a ported DNAT needs an L4 proto).
   const [port, setPort] = useState("");
   const [protocol, setProtocol] = useState<"tcp" | "udp">("tcp");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Client-side UX validation ONLY — the server's ExposeService is the authoritative validator (one-validator):
+  // Client-side UX validation ONLY, the server's ExposeService is the authoritative validator (one-validator):
   // its typed refusals (service_port_required / service_port_range_unsupported) render verbatim via apiErrorMessage.
   const portNum = Number(port);
   const portValid =

@@ -1,11 +1,11 @@
-// Pure tray view-models — NO electron import, so they are unit-testable in CI (where
+// Pure tray view-models, NO electron import, so they are unit-testable in CI (where
 // ELECTRON_SKIP_BINARY_DOWNLOAD makes require("electron") throw). tray.ts consumes
 // these and adds the Electron Tray wiring; the test imports only from here.
 
 // TrayState is the tunnel state the tray reflects. It mirrors the renderer's derived
 // state (including handshake-liveness: an interface that is up but has no fresh
 // handshake reads "connecting", not "connected") so the tray never disagrees with the
-// window, plus the operable states — failed (kill-switch) and revoked.
+// window, plus the operable states, failed (kill-switch) and revoked.
 export type TrayState = "disconnected" | "connecting" | "connected" | "failed" | "revoked" | "pending" | "migrate_retry" | "posture_warning" | "posture_blocked";
 
 // macOS uses the canonical brand silhouette and network nodes without a surrounding box.
@@ -32,7 +32,7 @@ export function trayIconAssetNamesFor(platform: string, variant: TrayIconVariant
 }
 
 // HANDSHAKE_STALE_SEC mirrors TunnelControl.tsx: a handshake older than a couple rekey
-// windows (or none) means the link isn't live yet — "connecting", not "connected".
+// windows (or none) means the link isn't live yet, "connecting", not "connected".
 const HANDSHAKE_STALE_SEC = 180;
 
 // trayStateFor derives the tray state from a forwarded status, matching the renderer's
@@ -66,32 +66,32 @@ export function trayMenuModel(state: TrayState): TrayMenuModel {
     case "connected":
       return { statusLabel: "Connected", showConnect: false, showDisconnect: true };
     case "connecting":
-      // Interface up but no fresh handshake yet — offer only Disconnect (cancel).
+      // Interface up but no fresh handshake yet, offer only Disconnect (cancel).
       return { statusLabel: "Connecting…", showConnect: false, showDisconnect: true };
     case "failed":
       // Failed = kill-switch active. Offer BOTH: reconnect (retry) and disconnect
       // (tear down the kill-switch and go back to normal networking).
-      return { statusLabel: "Tunnel failed — kill-switch active", showConnect: true, showDisconnect: true };
+      return { statusLabel: "Tunnel failed, kill-switch active", showConnect: true, showDisconnect: true };
     case "revoked":
       // The dead config was already cleared; reconnect re-enrolls a fresh device.
-      return { statusLabel: "Device revoked — reconnect to re-enroll", showConnect: true, showDisconnect: false };
+      return { statusLabel: "Device revoked, reconnect to re-enroll", showConnect: true, showDisconnect: false };
     case "pending":
       // S7.3: awaiting admin approval. No connect (already enrolled + waiting); offer
-      // disconnect to stop waiting (cancel). The tunnel is NOT up — nothing to tear down.
+      // disconnect to stop waiting (cancel). The tunnel is NOT up, nothing to tear down.
       return { statusLabel: "Awaiting admin approval…", showConnect: false, showDisconnect: true };
     case "migrate_retry":
       // S7.3: the legacy-config replacement didn't complete. Config was kept, so reconnect
-      // retries it — offer connect (retry). Nothing is up, so no disconnect.
-      return { statusLabel: "Couldn't replace device — reconnect to retry", showConnect: true, showDisconnect: false };
+      // retries it, offer connect (retry). Nothing is up, so no disconnect.
+      return { statusLabel: "Couldn't replace device, reconnect to retry", showConnect: true, showDisconnect: false };
     case "posture_warning":
-      return { statusLabel: "Connected — device posture warning", showConnect: false, showDisconnect: true };
+      return { statusLabel: "Connected, device posture warning", showConnect: false, showDisconnect: true };
     case "posture_blocked":
       // S7.5.3: a require-mode posture check disconnected the device server-side. The
       // interface is up but the gateway dropped the peer, so traffic is dead. Reconnect
-      // won't help (still non-compliant) — the device auto-reconnects on the NEXT report
+      // won't help (still non-compliant), the device auto-reconnects on the NEXT report
       // once the posture is fixed (encryption on / OS updated). Offer disconnect to tear
       // down the dead tunnel; no connect (a re-mint doesn't change posture).
-      return { statusLabel: "Blocked by device posture policy — fix posture to reconnect", showConnect: false, showDisconnect: true };
+      return { statusLabel: "Blocked by device posture policy, fix posture to reconnect", showConnect: false, showDisconnect: true };
     case "disconnected":
       return { statusLabel: "Not connected", showConnect: true, showDisconnect: false };
   }

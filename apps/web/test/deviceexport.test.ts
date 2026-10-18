@@ -17,7 +17,7 @@ describe("device export ceremony (S9.1 4b-wiring)", () => {
     expect(c.honesty).toContain("site routes");
   });
 
-  it("the QR renders ONLY while the secret is present — never after the modal closes (no re-view, D2)", () => {
+  it("the QR renders ONLY while the secret is present, never after the modal closes (no re-view, D2)", () => {
     expect(shouldRenderQR("wireguard", "the-config")).toBe(true);
     expect(shouldRenderQR("wireguard", null)).toBe(false); // dismissed -> secret cleared -> no QR
     expect(shouldRenderQR("wireguard", "")).toBe(false);

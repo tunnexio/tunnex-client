@@ -8,7 +8,7 @@ import (
 )
 
 // collectPosture reads macOS posture facts (S7.5.3). FileVault state comes from
-// `fdesetup status` (needs root — which this helper is; the unprivileged app
+// `fdesetup status` (needs root, which this helper is; the unprivileged app
 // cannot ask). Any failure or unrecognized output yields a nil fact: reported
 // absent upstream, never guessed.
 func collectPosture() PostureStatus {

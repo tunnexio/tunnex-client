@@ -56,7 +56,7 @@ import {
 } from "../lib/sitesview";
 
 // Sites (S8.3): the topology + its mutation surfaces. Reads render wire-truth only (render-floor law);
-// mutations all go through the AUDITED service endpoints (Slice-3 condition 4 — nothing routed around the
+// mutations all go through the AUDITED service endpoints (Slice-3 condition 4, nothing routed around the
 // audit trail). The pending queue + every mutation affordance are canManage-gated (D5: a member sees the
 // read-only topology, never the queue).
 
@@ -64,8 +64,8 @@ interface Raw {
   sites: Site[];
   nodes: Node[];
   subnetsBySite: Record<string, SiteSubnet[]>;
-  hubSet: HubSet | null; // S8.6 — the persisted HA hub set (null when unpinned / load failed: no HA surface)
-  // S14.5 D1 — the ORG-WIDE zone list, fanned out one request per site. Carries its own per-site failure
+  hubSet: HubSet | null; // S8.6, the persisted HA hub set (null when unpinned / load failed: no HA surface)
+  // S14.5 D1, the ORG-WIDE zone list, fanned out one request per site. Carries its own per-site failure
   // record, because a short list on a conflict view reads as "no conflict".
   forwards: OrgForwardsView;
 }
@@ -92,7 +92,7 @@ export default function Sites() {
     // ⛔ THE ORG COMES FROM THE SEAM, NOT FROM INDEX ZERO (S12.5). This used to fetch the org list here and
     // take `[0]`, which meant a user in two organizations could reach only one of them and the switcher in
     // the header would have had nothing to switch.
-    // ⛔ LOADING IS NOT ABSENCE (S12.5). See the note in Dashboard.tsx — three states, not two: still
+    // ⛔ LOADING IS NOT ABSENCE (S12.5). See the note in Dashboard.tsx, three states, not two: still
     // loading (say nothing), the read failed (say THAT), genuinely no membership (say that).
     if (orgLoading) return;
     const first = currentOrg;
@@ -139,14 +139,14 @@ export default function Sites() {
       if (!subRes.ok) return setLoadError(subRes.error); // any failed subnet load → legible retry, not a partial topology
       subnetsBySite[sRes.data[i].id] = subRes.data;
     }
-    // S8.6 hub set (member-readable). NON-fatal: a load failure just hides the HA surface (render-floor —
+    // S8.6 hub set (member-readable). NON-fatal: a load failure just hides the HA surface (render-floor ,
     // show nothing rather than a broken card or block the whole topology).
     const hRes = (await loadOne(() =>
       api.GET("/api/v1/organizations/{orgId}/hub-set", {
         params: { path: { orgId: first.id } },
       }),
     )) as Loaded<HubSet>;
-    // D1 — the org-wide DNS fan-out. ONE request per site, issued HERE with the rest of the page load, not
+    // D1, the org-wide DNS fan-out. ONE request per site, issued HERE with the rest of the page load, not
     // per render: a per-site effect would re-fire on every selection change the mesh causes.
     //
     // NON-FATAL per site, unlike the subnet loads above. A failed subnet load blocks the page because a
@@ -172,7 +172,7 @@ export default function Sites() {
       ),
     });
     // ⚠ currentOrg IS A DEPENDENCY, AND THAT IS THE HALF THAT MAKES THE SWITCHER WORK. Without it the
-    // page keeps rendering the org it mounted with — the control moves, the data does not, and the user is
+    // page keeps rendering the org it mounted with, the control moves, the data does not, and the user is
     // looking at one tenant's screen labelled with another's name.
   }, [currentOrg, myId]);
   useEffect(() => {
@@ -190,8 +190,8 @@ export default function Sites() {
       raw ? assembleTopology(raw.sites, raw.subnetsBySite, raw.nodes) : [],
     [raw],
   );
-  // Approved-subnet count per site — the CW threshold input. Unbound nodes — the bind picker. All gateways
-  // (nodes bound to any site) — the CW sub-ceiling naming input. All derived from wire data.
+  // Approved-subnet count per site, the CW threshold input. Unbound nodes, the bind picker. All gateways
+  // (nodes bound to any site), the CW sub-ceiling naming input. All derived from wire data.
   const approvedCountBySite = useMemo(() => {
     const m: Record<string, number> = {};
     if (raw)
@@ -245,14 +245,14 @@ export default function Sites() {
         <>
           {/* README: grid-template-columns 8fr 4fr, gap 12, align-items start. `min-w-0` on both tracks
               because a grid item defaults to min-width:auto and a long CIDR or zone name would otherwise
-              push the track wider than its share — the same class as the 65px header overflow. */}
+              push the track wider than its share, the same class as the 65px header overflow. */}
           <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[8fr_4fr]">
             <div className="flex min-w-0 flex-col gap-3">
               <Panel
                 title="Network map"
                 actions={
                   /* D2 (ruled): scoped to the MAP, not the page. The mesh's edges are handshake-derived, so
-                     the claim is true here. Over the subnet queue it would not be — those are control-plane
+                     the claim is true here. Over the subnet queue it would not be, those are control-plane
                      rows. */
                   <span className="rounded-full border border-line bg-ink-800 px-2 py-0.5 font-mono text-micro text-ink-tertiary">
                     ● WIRE-TRUTH
@@ -260,7 +260,7 @@ export default function Sites() {
                 }
               >
                 {/* The handoff puts the hint INLINE beside the title (dc.html L454). Ours drops "hover to
-                    trace a link" because we do not implement hover tracing — describing an interaction the
+                    trace a link" because we do not implement hover tracing, describing an interaction the
                     component does not have is the same class of lie as a chart with no source. */}
                 <p className="-mt-1.5 text-micro text-ink-faint">
                   Click a node to inspect · the hub is derived by the backend
@@ -320,7 +320,7 @@ export default function Sites() {
               drew only a diagram because a drawing never had to manage anything.
 
               ⛔ THE LIST IS A TABLE AND THE DETAIL IS ONE CARD. Rendering a full card per site made the page
-              grow with the network — 10 sites was 3,200px of scroll, and the two teaching accordions were
+              grow with the network, 10 sites was 3,200px of scroll, and the two teaching accordions were
               identical on every one of them. Now: every site is one row, and the SELECTED site alone expands
               into the card that carries the forms. */}
           <SiteList
@@ -364,10 +364,10 @@ export default function Sites() {
   );
 }
 
-// ── S14.5 — CROSS-SITE DNS FORWARDING, ORG-WIDE (D1) ────────────────────────────────────────────────────
+// ── S14.5, CROSS-SITE DNS FORWARDING, ORG-WIDE (D1) ────────────────────────────────────────────────────
 //
 // The wireframe lists zones across the org with a `via <site>` column. Our endpoint is per-site, so this is
-// an N+1 — founder-ruled and accepted, because the invariant it exists to show (one zone maps to one
+// an N+1, founder-ruled and accepted, because the invariant it exists to show (one zone maps to one
 // resolver ORG-WIDE) cannot be seen from inside any single site.
 function DNSForwardsPanel({
   view,
@@ -437,9 +437,9 @@ function DNSForwardsPanel({
   );
 }
 
-// ── S14.5 — SITE ACTIONS, SCOPED TO THE SELECTION ───────────────────────────────────────────────────────
+// ── S14.5, SITE ACTIONS, SCOPED TO THE SELECTION ───────────────────────────────────────────────────────
 //
-// The wireframe titles this "Site actions — ap-lan", i.e. it is already selection-scoped there. With nothing
+// The wireframe titles this "Site actions, ap-lan", i.e. it is already selection-scoped there. With nothing
 // selected it says so rather than presenting controls with no object, which is the shape that produces
 // "unbind, from what?".
 function SiteActionsPanel({
@@ -533,10 +533,10 @@ function SiteActionsPanel({
   );
 }
 
-// RouteLANModal (S8.5 D1) — the one-screen affordance for the solo-admin / Pritunl migrator: pick a
+// RouteLANModal (S8.5 D1), the one-screen affordance for the solo-admin / Pritunl migrator: pick a
 // gateway, type a LAN CIDR, go. One POST does register-site + bind + advertise + approve (byte-identical
 // to the long ceremony). Name is optional (the server derives one). A range collision renders the typed
-// refusal VERBATIM (the one validator + its teaching text — no JS re-check).
+// refusal VERBATIM (the one validator + its teaching text, no JS re-check).
 function RouteLANModal({
   orgId,
   nodes,
@@ -569,7 +569,7 @@ function RouteLANModal({
     );
     setBusy(false);
     if (error)
-      return setErr(apiErrorMessage(error, "Could not route the LAN.")); // verbatim typed refusal — no JS re-check
+      return setErr(apiErrorMessage(error, "Could not route the LAN.")); // verbatim typed refusal, no JS re-check
     onClose();
     onDone();
   }
@@ -623,10 +623,10 @@ function RouteLANModal({
 }
 
 // ── S8.6 hub set (HA): the operator surface + the L1 metrics ─────────────────────────
-// The persisted HA hub set — ordered candidates (PRIMARY on members[0], evolving the HUB badge vocabulary),
-// warm/handshake state + L1 byte counters per member (from node_peer_status — render-floor: a not-reporting
-// link shows "—", NEVER 0; an idle link shows its real 0 bytes), and the generation as the set's version
-// tag. When the active order diverges from the configured pins a failover is IN EFFECT — stated, with the
+// The persisted HA hub set, ordered candidates (PRIMARY on members[0], evolving the HUB badge vocabulary),
+// warm/handshake state + L1 byte counters per member (from node_peer_status, render-floor: a not-reporting
+// link shows "N/A", NEVER 0; an idle link shows its real 0 bytes), and the generation as the set's version
+// tag. When the active order diverges from the configured pins a failover is IN EFFECT, stated, with the
 // demoted member marked and an audit pointer. Member-readable; the pin control is manage-gated.
 function HubSetSection({
   orgId,
@@ -666,24 +666,24 @@ function HubSetSection({
     onDone();
   }
 
-  // Nothing to show a MEMBER when no HA set is configured (zero-config — no HA surface).
+  // Nothing to show a MEMBER when no HA set is configured (zero-config, no HA surface).
   if (!view && !canManage) return null;
 
   // ⛔ BELOW THE THRESHOLD THE PANEL EXPLAINS ITSELF AND OFFERS NO CONTROL (S14.5, founder-ruled).
   //
   // It used to render "pin as primary" beside a lone gateway, under copy about failing transit over to a
   // standby if the primary goes stale. THERE IS NOTHING TO FAIL OVER TO. A control for multi-gateway transit,
-  // offered on a one-gateway stack, describes machinery that cannot engage — the same family as a
+  // offered on a one-gateway stack, describes machinery that cannot engage, the same family as a
   // `site link down` badge on a link that was never attempted.
   //
   // THE RULE, FOR EVERY SCREEN: WHEN A CONTROL IS MEANINGLESS AT CURRENT SCALE, RENDER THE PANEL WITH AN
   // EMPTY STATE THAT NAMES THE PRECONDITION AND THE ACTION THAT CROSSES IT. NEVER THE CONTROL, NEVER
   // DISABLED-WITHOUT-REASON, NEVER ABSENT.
   //
-  //   · not ABSENT   — scale is a state the operator MOVES THROUGH, unlike an edition boundary, which is a
+  //   · not ABSENT  , scale is a state the operator MOVES THROUGH, unlike an edition boundary, which is a
   //                    purchase. Hiding HA means they never learn it exists nor what unlocks it.
-  //   · not DISABLED — a greyed control says something is unavailable without saying why or what to do.
-  //   · not OFFERED  — which is what shipped, and it produced the question "when does connectivity start?"
+  //   · not DISABLED, a greyed control says something is unavailable without saying why or what to do.
+  //   · not OFFERED , which is what shipped, and it produced the question "when does connectivity start?"
   //
   // An EXISTING hub set still renders in full: crossing back below the threshold (a gateway revoked) must
   // show the set that is still configured, not hide it behind a precondition notice.
@@ -830,7 +830,7 @@ function HubSetSection({
 }
 
 // ── the read-only topology + per-site mutation affordances ───────────────────────────
-// ── S14.5 — THE SITE LIST SCALES, THE DETAIL DOES NOT REPEAT ────────────────────────────────────────────
+// ── S14.5, THE SITE LIST SCALES, THE DETAIL DOES NOT REPEAT ────────────────────────────────────────────
 //
 // ⛔ WHAT WAS WRONG. Every site rendered as a full CARD: name, gateway, health, subnet chips, TWO collapsed
 // teaching accordions and four buttons. ~320px each.
@@ -839,17 +839,17 @@ function HubSetSection({
 //    10 sites  = 3,200px
 //    50 sites  = unusable
 //
-// And the two accordions — "Cloud fabric setup" and "Cross-site DNS forwarding" — are STATIC TEACHING TEXT,
+// And the two accordions, "Cloud fabric setup" and "Cross-site DNS forwarding", are STATIC TEACHING TEXT,
 // IDENTICAL ON EVERY CARD. N sites meant N copies of the same paragraph. The page's height grew with the
 // network while the information in it did not.
 //
 // ⛔ THE SHAPE THAT SCALES: A LIST IS A TABLE. A DETAIL IS ONE PANEL. SELECTION IS THE LINK BETWEEN THEM.
 //
-// One row per site — scannable, sortable-shaped, constant height, works at 500 sites. The row carries the
+// One row per site, scannable, sortable-shaped, constant height, works at 500 sites. The row carries the
 // facts you compare ACROSS sites (health, gateway, ranges). The panel carries what you only need for ONE
 // (actions, teaching text, forms). Nothing that is the same on every site is rendered more than once.
 //
-// Selecting a row selects the same site the MESH selects — one selection, two ways in.
+// Selecting a row selects the same site the MESH selects, one selection, two ways in.
 function SiteList({
   cards,
   canManage,
@@ -915,7 +915,7 @@ function SiteList({
           <span className="text-ink-faint">none</span>
         ) : (
           // ⛔ role + accessible name, NOT `title`. A `title` on a role-less <span> is not an accessible
-          // name a screen reader reliably announces, and querying it violated query rule 1 — role and
+          // name a screen reader reliably announces, and querying it violated query rule 1, role and
           // accessible name only. The chip is a LIST ITEM stating a range's routing state, so it says so.
           <span role="list" className="flex flex-wrap gap-1">
             {c.subnets.map((sn) => (
@@ -1055,7 +1055,7 @@ function SiteCardView({
         </div>
       )}
 
-      {/* WF-3: guided cloud-fabric setup, SURFACED IN-UI (not docs-only). STATIC per cloud — the SDN
+      {/* WF-3: guided cloud-fabric setup, SURFACED IN-UI (not docs-only). STATIC per cloud, the SDN
           steps that get a behind-host's packet to this gateway are un-codeable, so we show the copy-paste
           the operator applies in ONE cloud-console visit (the Zero-Touch Law boundary clause). No
           cloud-detection this pass (that rides S8.5); doc link for the full reference. */}
@@ -1091,7 +1091,7 @@ function SiteCardView({
               <span className="font-mono"> &lt;REMOTE_CIDR&gt;</span> → target =
               the gateway instance/ENI.
             </p>
-            {/* A3b PD-4: the DEVICE POOL needs the same return route as the site ranges — behind-host
+            {/* A3b PD-4: the DEVICE POOL needs the same return route as the site ranges, behind-host
                 replies to a connected device (its 10.99.x pool address) die at the cloud router without
                 it. Wording sourced from the Deck-D Leg-10 console fixes (the walk that found the gap). */}
             <p>
@@ -1103,7 +1103,7 @@ function SiteCardView({
               back, exactly like a remote site's CIDR.
             </p>
             {/* WF-B (EPIC-8 smooth walk): behind-host HA needs a CLOUD-side route failover. The overlay
-                fails over (a standby is promoted) but the VPC route to the gateway ENI is STATIC — the
+                fails over (a standby is promoted) but the VPC route to the gateway ENI is STATIC, the
                 zero-touch boundary Tunnex won't cross. By design; documented here so it's not a surprise. */}
             <p>
               <span className="font-semibold text-slate-300">
@@ -1124,7 +1124,7 @@ function SiteCardView({
         </details>
       )}
 
-      {/* S8.4 D7: cross-site DNS forwarding — rides the same card as the fabric steps (one site, one story). */}
+      {/* S8.4 D7: cross-site DNS forwarding, rides the same card as the fabric steps (one site, one story). */}
       {canManage && card.subnets.some((s) => s.status === "approved") && (
         <DNSForwardSection orgId={orgId} siteId={card.id} />
       )}
@@ -1134,11 +1134,11 @@ function SiteCardView({
           <Button variant="ghost" onClick={() => setModal("subnet")}>
             Advertise subnet
           </Button>
-          {/* S8.6 D4: Bind and Unbind are NOT mutually exclusive — a site can carry MORE THAN ONE gateway (an
+          {/* S8.6 D4: Bind and Unbind are NOT mutually exclusive, a site can carry MORE THAN ONE gateway (an
               HA hub pair is exactly that). The old `hasGateway ? Unbind : Bind` was the list-of-one assumption
               in the action path: once the first gateway bound, the second was unreachable through the product's
               own UI (the box-walk had to POST /bind from the console). Unbind shows when a gateway is bound;
-              Bind shows whenever an unbound gateway exists — both can show together. */}
+              Bind shows whenever an unbound gateway exists, both can show together. */}
           {hasGateway && (
             <Button variant="ghost" onClick={() => setModal("unbind")}>
               Unbind gateway
@@ -1206,13 +1206,13 @@ function SiteCardView({
 }
 
 // EXPORTED FOR THE SIBLING-CONSISTENCY TEST (D4), not for reuse. The revoked-suppression rule is rendered by
-// THREE surfaces — this row, Gateways.tsx and Devices.tsx — and a per-screen test passes on all three while
+// THREE surfaces, this row, Gateways.tsx and Devices.tsx, and a per-screen test passes on all three while
 // they disagree, which is exactly how WF-S11-10 survived on this one. The assertion has to reach the row.
 export function GatewayRow({ g }: { g: GatewayView }) {
   // S8.4 rider (VERIFY-0): render the last-seen FACT + an OFFLINE badge when stale, so a stopped gateway no
-  // longer reads healthy on the site surface. Extends the S8.3 badge system — no third health vocabulary.
+  // longer reads healthy on the site surface. Extends the S8.3 badge system, no third health vocabulary.
   const live = gatewayLiveness(g.lastSeenAt, Date.now());
-  // S8.5 WF-1: the POSITIVE liveness signal — a fresh, healthy, active gateway reads "online" instead of
+  // S8.5 WF-1: the POSITIVE liveness signal, a fresh, healthy, active gateway reads "online" instead of
   // silent absence. Same clock + health bool as the offline/degraded badges (no third vocabulary).
   const online = gatewayOnline(g.status, live.offline, g.health);
   return (
@@ -1230,10 +1230,10 @@ export function GatewayRow({ g }: { g: GatewayView }) {
         <span className={`text-xs ${badgeClass("danger")}`}>offline</span>
       )}
       {/* WF-S11-10, THIRD SURFACE. The fix landed on Gateways.tsx and Devices.tsx already suppressed health on
-          revoked rows — this list rendered the same concept with the same defect, so a revoked gateway could
-          read "revoked" beside "certificate expired — re-enroll this gateway": two labels contradicting each
+          revoked rows, this list rendered the same concept with the same defect, so a revoked gateway could
+          read "revoked" beside "certificate expired, re-enroll this gateway": two labels contradicting each
           other, the instructional one telling an operator to UNDO a deliberate security action. `offline` stays
-          unguarded on purpose — it is a liveness FACT, not an instruction, and a revoked gateway genuinely is
+          unguarded on purpose, it is a liveness FACT, not an instruction, and a revoked gateway genuinely is
           offline. It is the health/instruction vocabulary that must not describe a gateway no longer meant to
           work. Found by asking who ELSE renders this concept, not by walking the UI. */}
       {g.status !== "revoked" && g.health && (
@@ -1242,7 +1242,7 @@ export function GatewayRow({ g }: { g: GatewayView }) {
         </span>
       )}
       {online && <span className="text-xs text-emerald-400">online</span>}
-      {/* WF-B: the SUBORDINATE site-link note — a demoted-dead peer while transit is healthy. A distinct
+      {/* WF-B: the SUBORDINATE site-link note, a demoted-dead peer while transit is healthy. A distinct
           muted line item naming the peer + "(demoted)", NEVER the headline (a healthy failover reads
           transit-healthy above; this is the "why is there a dead link" detail). Independent of g.health. */}
       {g.siteLinkNote && (
@@ -1470,7 +1470,7 @@ function UnbindConfirm({
 }) {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  // S8.6 #3: a site may hold several gateways — name WHICH to unbind (no arbitrary server-side pick). Default
+  // S8.6 #3: a site may hold several gateways, name WHICH to unbind (no arbitrary server-side pick). Default
   // to the first; a picker appears when there is more than one.
   const [nodeId, setNodeId] = useState(gateways[0]?.id ?? "");
   async function submit() {
@@ -1529,7 +1529,7 @@ function UnbindConfirm({
   );
 }
 
-// WF-5: un-advertise / remove a single subnet — no longer needs a whole-site delete. The confirm STATES
+// WF-5: un-advertise / remove a single subnet, no longer needs a whole-site delete. The confirm STATES
 // the full-sweep consequence for an approved subnet (route withdrawn from every gateway).
 function RemoveSubnetConfirm({
   orgId,
@@ -1637,7 +1637,7 @@ function RemoveSubnetConfirm({
 }
 
 // S8.4 D7: per-site cross-site DNS forwarding config. The typed server refusals (dns_domain_conflict,
-// dns_resolver_not_in_site_subnet) are rendered VERBATIM — no JS re-check, ONE validator (the D3/S8.3
+// dns_resolver_not_in_site_subnet) are rendered VERBATIM, no JS re-check, ONE validator (the D3/S8.3
 // convention). Rides the fabric-card layout.
 function DNSForwardSection({
   orgId,
@@ -1857,7 +1857,7 @@ function DeleteSiteModal({
         </>
       }
     >
-      {/* PRESENT-TENSE cascade preview (the ratified copy — advisory, not a promise; the audit records the
+      {/* PRESENT-TENSE cascade preview (the ratified copy, advisory, not a promise; the audit records the
           actual counts). */}
       {refErr && (
         <p className="text-xs text-amber-300">
@@ -1963,7 +1963,7 @@ function PendingQueue({
   }
 
   // onApproveClick decides whether this approval crosses the multi-site threshold with sub-ceiling
-  // gateways present — if so it opens the CW confirm naming them; otherwise it approves directly.
+  // gateways present, if so it opens the CW confirm naming them; otherwise it approves directly.
   function onApproveClick(subnet: SiteSubnet) {
     const gateways = subCeilingGateways(allGateways, ceiling);
     if (
@@ -1982,7 +1982,7 @@ function PendingQueue({
         <LoadRetry error={loadErr} onRetry={loadQueue} />
       </Card>
     );
-  if (pending == null) return null; // queue still loading — the topology below renders regardless
+  if (pending == null) return null; // queue still loading, the topology below renders regardless
   if (pending.length === 0) return null; // nothing awaiting approval → no queue section
 
   return (

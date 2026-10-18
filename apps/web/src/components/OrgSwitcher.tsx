@@ -22,21 +22,21 @@ export function OrgSwitcher() {
   const { state } = useAuth();
   const inRouter = useInRouterContext();
   const navigate = inRouter ? useNavigate() : () => {};
-  // ⛔ THE CAPABILITY, NOT A ROLE. `cp_admin` is deployment-scoped — the only such field this
-  // product has — because a permission granted inside org A cannot license creating org B.
+  // ⛔ THE CAPABILITY, NOT A ROLE. `cp_admin` is deployment-scoped, the only such field this
+  // product has, because a permission granted inside org A cannot license creating org B.
   //
   // ⚠ AN AFFORDANCE HINT, NEVER THE BOUNDARY. The server refuses regardless (tenancy.checkMayCreateOrg),
   // so a client that ignores this gains nothing; it only decides whether offering the action is honest.
   const mayCreate = state.status === "authed" && Boolean(state.user.cp_admin);
 
   // ⭐ THE "ABSENT BELOW 2" RULE RELAXES ONLY FOR A HOLDER, and only because the switcher is now the ONLY
-  // place org creation lives. A control with one option still teaches nothing — but for someone who may
+  // place org creation lives. A control with one option still teaches nothing, but for someone who may
   // create a second organization it is not a one-option control, it is the entry point.
   if ((orgs.length < 2 && !mayCreate) || !org) return null;
 
   return (
     <label className="flex min-w-0 items-center gap-2">
-      {/* Labelled for screen readers without spending header width — the control's purpose is legible from
+      {/* Labelled for screen readers without spending header width, the control's purpose is legible from
           its content (it shows the current org name), so a visible label would be redundant, but an
           unlabelled <select> in a header is unnavigable. */}
       <span className="sr-only">Organization</span>

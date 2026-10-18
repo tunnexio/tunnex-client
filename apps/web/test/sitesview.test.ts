@@ -34,16 +34,16 @@ const subnet = (
   status: SiteSubnet["status"],
 ): SiteSubnet => ({ id, site_id, cidr, status });
 
-describe("siteGate — EVERY EDITION, member sees topology, manage needs site:manage + verified", () => {
+describe("siteGate, EVERY EDITION, member sees topology, manage needs site:manage + verified", () => {
   // ⛔ THESE ASSERTIONS WERE INVERTED UNTIL S14.5, AND THAT IS THE POINT WORTH KEEPING.
   //
-  // The suite asserted `edition: "open"` → `canView: false`, so the defect was not merely unguarded — it was
+  // The suite asserted `edition: "open"` → `canView: false`, so the defect was not merely unguarded, it was
   // GUARDED THE WRONG WAY. A test can hold a client-invented rule in place just as firmly as a real one,
   // and this one made the upsell look deliberate to anyone who read the tests for intent.
   //
   // A test is only evidence about the product when the rule it encodes came from the product. This one came
   // from the page it was testing. Server truth: site_handlers.go:19/95/280, all-editions core (D11).
-  it("an OPEN-edition owner can view AND manage — there is no edition term left to fail on", () => {
+  it("an OPEN-edition owner can view AND manage, there is no edition term left to fail on", () => {
     const g = siteGate({ role: "owner", emailVerified: true });
     expect(g.canView).toBe(true);
     expect(g.canManage).toBe(true);
@@ -63,7 +63,7 @@ describe("siteGate — EVERY EDITION, member sees topology, manage needs site:ma
       false,
     );
   });
-  it("canView is TRUE even with no role at all — reading is not a privilege here", () => {
+  it("canView is TRUE even with no role at all, reading is not a privilege here", () => {
     // Both sides of the two-valued thing (mechanism 9): canManage varies, canView does not, and that is
     // asserted rather than assumed.
     const g = siteGate({ role: undefined, emailVerified: false });
@@ -72,7 +72,7 @@ describe("siteGate — EVERY EDITION, member sees topology, manage needs site:ma
   });
 });
 
-describe("sitesView — three states, and 'upsell' is no longer one of them", () => {
+describe("sitesView, three states, and 'upsell' is no longer one of them", () => {
   it("load error → retry (never a reassuring empty topology)", () => {
     expect(sitesView({ ready: true, loadError: true })).toBe("load_retry");
   });
@@ -80,16 +80,16 @@ describe("sitesView — three states, and 'upsell' is no longer one of them", ()
     expect(sitesView({ ready: false, loadError: false })).toBe("loading");
     expect(sitesView({ ready: true, loadError: false })).toBe("body");
   });
-  it("a load error OUTRANKS not-ready — a failure is never shown as a spinner", () => {
+  it("a load error OUTRANKS not-ready, a failure is never shown as a spinner", () => {
     expect(sitesView({ ready: false, loadError: true })).toBe("load_retry");
   });
 });
 
-describe("assembleTopology — the wire-truth join (CH list-of-one, backend hub, real states)", () => {
+describe("assembleTopology, the wire-truth join (CH list-of-one, backend hub, real states)", () => {
   const sA = site("sa", "HQ");
   const sB = site("sb", "Branch");
 
-  it("a site's gateways are the nodes with its site_id — as a LIST, never a scalar", () => {
+  it("a site's gateways are the nodes with its site_id, as a LIST, never a scalar", () => {
     const nodes = [
       node({ id: "g1", site_id: "sa", is_site_hub: true }),
       node({ id: "g2", site_id: "sb" }),
@@ -97,7 +97,7 @@ describe("assembleTopology — the wire-truth join (CH list-of-one, backend hub,
     const cards = assembleTopology([sA, sB], {}, nodes);
     expect(Array.isArray(cards[0].gateways)).toBe(true);
     expect(cards[0].gateways.map((g) => g.id)).toEqual(["g1"]);
-    // A future HA site with TWO gateways renders both (the shape does not foreclose it — CH).
+    // A future HA site with TWO gateways renders both (the shape does not foreclose it, CH).
     const ha = assembleTopology([sA], {}, [
       node({ id: "g1", site_id: "sa" }),
       node({ id: "g3", site_id: "sa" }),
@@ -132,7 +132,7 @@ describe("assembleTopology — the wire-truth join (CH list-of-one, backend hub,
   });
 
   it("WF-B: the subordinate site-link note rides the join, INDEPENDENT of the headline (the walk's state)", () => {
-    // A healthy-headline gateway that still carries a demoted-dead-peer note — both truths distinct.
+    // A healthy-headline gateway that still carries a demoted-dead-peer note, both truths distinct.
     const cards = assembleTopology([sA], {}, [
       node({
         id: "g1",
@@ -185,7 +185,7 @@ describe("assembleTopology — the wire-truth join (CH list-of-one, backend hub,
 
 // ── Slice 3: mutation-surface decisions ──────────────────────────────────────────────
 
-describe("crossesMultiSiteThreshold — the CW confirm's action-ordering gate", () => {
+describe("crossesMultiSiteThreshold, the CW confirm's action-ordering gate", () => {
   it("a FIRST site's approval never crosses (no other site has approved subnets yet)", () => {
     expect(crossesMultiSiteThreshold("sa", {})).toBe(false); // no approved anywhere
     expect(crossesMultiSiteThreshold("sa", { sa: 0 })).toBe(false);
@@ -203,7 +203,7 @@ describe("crossesMultiSiteThreshold — the CW confirm's action-ordering gate", 
   });
 });
 
-describe("subCeilingGateways — names the gateways below the server ceiling (absence = below)", () => {
+describe("subCeilingGateways, names the gateways below the server ceiling (absence = below)", () => {
   const gws = [
     { id: "g1", name: "hub", maxPolicyVersion: 5 },
     { id: "g2", name: "old", maxPolicyVersion: 4 },
@@ -222,7 +222,7 @@ describe("subCeilingGateways — names the gateways below the server ceiling (ab
   });
 });
 
-describe("nameMatchesExactly — the delete-site ceremony (exact match, button dead until then)", () => {
+describe("nameMatchesExactly, the delete-site ceremony (exact match, button dead until then)", () => {
   it("exact match only", () => {
     expect(nameMatchesExactly("HQ", "HQ")).toBe(true);
     expect(nameMatchesExactly("hq", "HQ")).toBe(false);
@@ -231,7 +231,7 @@ describe("nameMatchesExactly — the delete-site ceremony (exact match, button d
   });
 });
 
-describe("disjointRefusal — VERBATIM per overlap class, null otherwise (no JS re-check)", () => {
+describe("disjointRefusal, VERBATIM per overlap class, null otherwise (no JS re-check)", () => {
   const refusal = (cls: string) => ({
     error: {
       code: "subnet_not_disjoint",
@@ -260,7 +260,7 @@ describe("disjointRefusal — VERBATIM per overlap class, null otherwise (no JS 
 
 import { gatewayLiveness, GATEWAY_OFFLINE_MS } from "../src/lib/sitesview";
 
-describe("gatewayLiveness — S8.4 rider (VERIFY-0: a stopped gateway must NOT read healthy on the site card)", () => {
+describe("gatewayLiveness, S8.4 rider (VERIFY-0: a stopped gateway must NOT read healthy on the site card)", () => {
   const now = 1_000_000_000_000;
   it("a freshly-reporting gateway is NOT offline", () => {
     const r = gatewayLiveness(new Date(now - 10_000).toISOString(), now);
@@ -283,7 +283,7 @@ describe("gatewayLiveness — S8.4 rider (VERIFY-0: a stopped gateway must NOT r
 
 import { forwardsInSubnet } from "../src/lib/sitesview";
 
-describe("forwardsInSubnet — S8.4 F4 (name the DNS forwards a subnet removal will also sweep; advisory only)", () => {
+describe("forwardsInSubnet, S8.4 F4 (name the DNS forwards a subnet removal will also sweep; advisory only)", () => {
   const fwds = [
     { domain: "corp.local", resolver_ip: "10.20.0.53" },
     { domain: "branch.local", resolver_ip: "10.30.0.53" },
@@ -330,12 +330,12 @@ describe("gatewayOnline (WF-1 positive health)", () => {
 
 import { meshFrom } from "../src/lib/sitesview";
 
-// S14.5 — the map's data, checked at the counts a real org actually has.
+// S14.5, the map's data, checked at the counts a real org actually has.
 //
 // ⛔ N=1 IS THE CASE THE DESIGN NEVER SHOWS. The wireframe draws five spokes filling a 600x320 frame; the
 // first customer has one. Placement inherited from that populated example put a lone spoke directly ABOVE
 // the hub, producing a column of two circles with two-thirds of the panel empty.
-describe("meshFrom — the sparse cases the wireframe never draws", () => {
+describe("meshFrom, the sparse cases the wireframe never draws", () => {
   const mkCard = (
     id: string,
     name: string,
@@ -393,7 +393,7 @@ describe("meshFrom — the sparse cases the wireframe never draws", () => {
   });
 });
 
-describe("meshFrom — a node with no link has no link STATE either", () => {
+describe("meshFrom, a node with no link has no link STATE either", () => {
   const mk = (id: string, name: string, gateways: unknown[]) =>
     ({
       id,
@@ -431,7 +431,7 @@ describe("meshFrom — a node with no link has no link STATE either", () => {
     expect(site.note).toBe("local VPC attachment");
   });
 
-  it("a REAL degraded link still carries its tone — the other half of the two-valued thing", () => {
+  it("a REAL degraded link still carries its tone, the other half of the two-valued thing", () => {
     // Mechanism 9: if `tone` were only ever observed undefined, the test could not tell it from a constant.
     const spokeGw = {
       id: "g2",
@@ -455,16 +455,16 @@ describe("meshFrom — a node with no link has no link STATE either", () => {
   });
 });
 
-// WF-S11-10c (S13.1 Slice 3) — a REVOKED gateway carries no health badge on the Sites surface.
+// WF-S11-10c (S13.1 Slice 3), a REVOKED gateway carries no health badge on the Sites surface.
 //
 // Found on a live dashboard, where `aws-site` rendered:
-//     aws-gw-1  revoked  offline  certificate expired — re-enroll this gateway
+//     aws-gw-1  revoked  offline  certificate expired, re-enroll this gateway
 // Two labels contradicting each other, and the instructional one urging the operator to undo a deliberate
 // revocation. `revoked` IS the state; a degradation badge beside it describes a gateway that is no longer meant to
 // work.
 //
 // The same defect was fixed in Gateways.tsx during EPIC 11, and it survived HERE because that fix was
-// component-local — which is why this one lives in the view-model, where every consumer of the join gets it.
+// component-local, which is why this one lives in the view-model, where every consumer of the join gets it.
 describe("assembleTopology: revoked gateways carry no health badge (WF-S11-10c)", () => {
   const site = { id: "site-1", name: "aws-site" } as never;
   const gw = (over: Record<string, unknown>) =>
@@ -483,12 +483,12 @@ describe("assembleTopology: revoked gateways carry no health badge (WF-S11-10c)"
     expect(card.gateways[0].status).toBe("revoked");
     expect(
       card.gateways[0].health,
-      "a revoked gateway must show no degradation badge: `revoked` is its state, and 'certificate expired — " +
+      "a revoked gateway must show no degradation badge: `revoked` is its state, and 'certificate expired, " +
         "re-enroll this gateway' beside it tells the operator to undo a deliberate revocation",
     ).toBeNull();
   });
 
-  it("still badges an ACTIVE gateway — suppression must not silence the live fleet", () => {
+  it("still badges an ACTIVE gateway, suppression must not silence the live fleet", () => {
     const [card] = assembleTopology([site], {}, [gw({ status: "active" })]);
     expect(card.gateways[0].health).not.toBeNull();
   });

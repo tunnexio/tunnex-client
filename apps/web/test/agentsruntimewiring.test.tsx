@@ -49,7 +49,7 @@ vi.mock("../src/components/ui", () => {
       createElement(tag, props, children);
   return {
     // The page header is a real component now, not markup each page hand-rolls. Mocked to an h1 so the
-    // route's heading stays assertable — a `primitive("header")` would spread `title` onto the DOM node
+    // route's heading stays assertable, a `primitive("header")` would spread `title` onto the DOM node
     // and the text would vanish from the tree.
     PageHeader: ({
       title,
@@ -189,7 +189,7 @@ afterEach(() => {
   authStatus = "authed";
 });
 
-describe("released Agents route — F04 runtime facts", () => {
+describe("released Agents route, F04 runtime facts", () => {
   it("requests credential rotation and renders only the refetched secret-free status", async () => {
     let status: { device_id: string; current_revision: number; state: string; requested_revision: number | null; deadline: string | null; wireguard_current_revision: number; wireguard_state: string; wireguard_requested_revision: number | null } = {
       device_id: "device-a", current_revision: 1, state: "current", requested_revision: null, deadline: null,

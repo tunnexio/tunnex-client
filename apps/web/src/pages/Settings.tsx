@@ -65,7 +65,7 @@ type Provider = (typeof PROVIDERS)[number];
 type SsoView = SsoConfigView;
 
 export default function Settings() {
-  // ⛔ THE ORG COMES FROM THE SEAM (S12.5) — the page no longer picks index zero out of a list it
+  // ⛔ THE ORG COMES FROM THE SEAM (S12.5), the page no longer picks index zero out of a list it
   // fetched itself, which is what made a second organization unreachable.
   const { org: currentOrg, loading: orgLoading, failed: orgFailed } = useOrg();
   const { state } = useAuth();
@@ -96,7 +96,7 @@ export default function Settings() {
           );
         // ⛔ LOADING IS NOT ABSENCE (S12.5). The provider resolves the org list asynchronously, so this
         // effect runs once with currentOrg === null before the answer exists. Treating that as "you have no
-        // organization" renders a confident, false statement — and because the second pass only sets the
+        // organization" renders a confident, false statement, and because the second pass only sets the
         // data, the stale error stayed on screen BESIDE the correct org name.
         //
         // ⚠ THREE STATES, NOT TWO: still loading (say nothing), the read failed (say THAT), genuinely no
@@ -132,8 +132,8 @@ export default function Settings() {
     };
     // ⛔ currentOrg IS A DEPENDENCY, AND ITS ABSENCE WAS A REAL BUG (S12.5). The provider resolves the org
     // list asynchronously, so on this effect's first run currentOrg is still null. Without the dependency
-    // the effect never ran again and the page rendered "You are not a member of any organization yet" — a
-    // confident, wrong statement — permanently, for every user. The same line is what makes the switcher work.
+    // the effect never ran again and the page rendered "You are not a member of any organization yet", a
+    // confident, wrong statement, permanently, for every user. The same line is what makes the switcher work.
   }, [myId, currentOrg, orgFailed, orgLoading]);
 
   const isAdmin = can(myRole, "org:update");
@@ -149,11 +149,11 @@ export default function Settings() {
   );
   const [section, setSection] = useState<string>(RAIL[0].id);
   // ⚠ FALL BACK WHEN THE SELECTION STOPS EXISTING. Switching to an org where you are a plain member must not
-  // leave a tab selected that is no longer in the rail — the panel would vanish and nothing would be active.
+  // leave a tab selected that is no longer in the rail, the panel would vanish and nothing would be active.
   const active = shown.some((r) => r.id === section)
     ? section
     : (shown[0]?.id ?? "");
-  const canMachines = can(myRole, "machine:manage"); // owner-only — the GitOps operator credential panel
+  const canMachines = can(myRole, "machine:manage"); // owner-only, the GitOps operator credential panel
 
   if (currentOrg && org?.id !== currentOrg.id) {
     return <p className="text-sm text-slate-400">Loading settings…</p>;
@@ -162,11 +162,11 @@ export default function Settings() {
   return (
     // ⛔ NO CAP, AND THAT IS THE FIX RATHER THAN A SMALLER ONE. `max-w-[110rem]` was here to stop fields
     // stretching on a 32" display, but 1760px is wider than the content box ever gets, so it capped nothing
-    // and instead OVERFLOWED — 1760 + 48px padding + the 228px sidebar is 2036px of demand against a
+    // and instead OVERFLOWED, 1760 + 48px padding + the 228px sidebar is 2036px of demand against a
     // ~1999px viewport, and `mx-auto` cannot centre what does not fit, so the right edge was shaved off.
     //
     // ⚠ THE WORRY IT ENCODED WAS A ONE-COLUMN WORRY. The rail track is fixed and the content track takes
-    // what is left, so a wide screen buys a wider VALUE column, not a 2000px input — and AppShell's stated
+    // what is left, so a wide screen buys a wider VALUE column, not a 2000px input, and AppShell's stated
     // law is that page bodies fill available width (its own comment records what capping one cost before).
     <div>
       <PageHeader
@@ -176,35 +176,35 @@ export default function Settings() {
       <ErrorText>{error}</ErrorText>
 
       {/* Desktop-only: server connection + sign-out for THIS client (renders nothing
-          in the browser build). Above the org sections — it's a device concern, not
+          in the browser build). Above the org sections, it's a device concern, not
           an org-admin one, so it shows regardless of role. */}
 
       {/* Self-service 2FA is per-USER (OPEN, every edition), so it shows for every signed-in user
-          regardless of org role — unlike the org-level enforce toggle below (enterprise, admin). */}
-      {/* ⛔ ONE GRID, AUTO-FILLED — and `auto-fill` with a MINIMUM is what stops the stretch. A fixed
+          regardless of org role, unlike the org-level enforce toggle below (enterprise, admin). */}
+      {/* ⛔ ONE GRID, AUTO-FILLED, and `auto-fill` with a MINIMUM is what stops the stretch. A fixed
           `lg:grid-cols-3` would widen every card to a third of whatever the screen is; this fills the row
           with as many ~24rem columns as fit and leaves the rest as margin. Adding a section later drops it
-          into the flow and reflows the row — it does not change the width of anything already there.
+          into the flow and reflows the row, it does not change the width of anything already there.
 
           ⚠ THE CARDS ARE `items-start`, NOT STRETCHED TO THE TALLEST IN THE ROW. A three-line card padded
           to the height of a twenty-line neighbour reads as a card with something missing from it. */}
       {/* ⛔ ONE COLUMN OF SECTIONS, AND THE PACKING PROBLEM IS GONE RATHER THAN SOLVED.
-          Three layouts were tried here in turn — fixed `grid-cols-3` (every card stretched to a third of
+          Three layouts were tried here in turn, fixed `grid-cols-3` (every card stretched to a third of
           the screen), an auto-fill grid (a grid ALIGNS ROWS, so every short card was followed by a hole the
           height of its tallest neighbour), then multi-column masonry (no holes, but column-major reading
-          order, and NO full-width child possible — the credentials table had to be lifted out of the flow
+          order, and NO full-width child possible, the credentials table had to be lifted out of the flow
           entirely).
 
           All three accept the same premise: that these are cards of varying height which must be packed.
           They are ROWS AND GROUPS of settings. Stacked in one column there is nothing to pack, no holes to
           avoid, no `break-inside-avoid` to remember, and a table can simply sit in the flow. The masonry was
-          not a bad answer — it was a good answer to a question the page should never have been asking.
+          not a bad answer, it was a good answer to a question the page should never have been asking.
 
           ⚠ The reading order is now the one the sections are written in, so that order is a decision:
           Organization → Network → Authentication → Features → Licence, roughly what an operator sets up
           first to what they revisit least. */}
       {/* ⛔ THE RAIL IS A SECOND TRACK, NOT A SIDEBAR. `minmax(0,…)` on BOTH columns because a grid item
-          defaults to `min-width:auto` — a long CIDR or credential name in the right track would otherwise
+          defaults to `min-width:auto`, a long CIDR or credential name in the right track would otherwise
           push it wider than its share, which is the class of bug that shaved this page's right edge off
           before. Below `lg` the rail is dropped rather than stacked: six labels above the content is six
           rows of chrome before the thing you came for. */}
@@ -245,7 +245,7 @@ export default function Settings() {
 
         {/* ⚠ MIXED GATES, DELIBERATELY IN ONE SECTION. Personal 2FA is per-USER and shows for everyone;
             SSO and enforcement are org-admin; directory sync answers to `idpGate`, its own permission,
-            NOT to `org:update` — see the note below. Grouping by SUBJECT is what a reader is looking for;
+            NOT to `org:update`, see the note below. Grouping by SUBJECT is what a reader is looking for;
             each child keeps whatever gate it already had. */}
         {active === "authentication" && (
         <SettingGroup id="authentication" title="Authentication"
@@ -284,13 +284,13 @@ export default function Settings() {
             )}
 
             {/* Directory sync renders OUTSIDE the `isAdmin` gate, on purpose but NOT because of a
-              live defect — the honest version, after a mutation survivor sent me to measure.
+              live defect, the honest version, after a mutation survivor sent me to measure.
               Settings gates its org panels on `org:update`; every idp-sync handler gates on
               `policy:manage`. Today those are held by the same user-assignable roles (owner, admin),
               so nesting would change nothing observable. `operator` holds policy:manage WITHOUT
-              org:update but is MACHINE-ONLY — `memberships` CHECKs role IN (owner, admin, member),
+              org:update but is MACHINE-ONLY, `memberships` CHECKs role IN (owner, admin, member),
               so it never renders a UI and cannot make the difference visible.
-              It is out here so the panel is governed by ONE gate — its own, matching the server —
+              It is out here so the panel is governed by ONE gate, its own, matching the server ,
               rather than silently ANDed with a different permission that merely happens to coincide.
               `idpGate` is the authority; a test pins the coincidence so a divergence is loud. */}
         </SettingGroup>
@@ -316,7 +316,7 @@ export default function Settings() {
           <SettingGroup id="features" title="Features"
             tabpanel>
             <div className="flex flex-col gap-3.5">
-              {/* OpenVPN is OPEN (every edition) but OFF by default — unlock-then-opt-in (D-S9.5-OPTIN). */}
+              {/* OpenVPN is OPEN (every edition) but OFF by default, unlock-then-opt-in (D-S9.5-OPTIN). */}
               <OrgOVPNToggle
                 org={org}
                 canEdit={emailVerified}
@@ -361,7 +361,7 @@ export default function Settings() {
         )}
 
         {/* ⛔ THE CAPABILITY EXISTED AND NOTHING COULD REACH IT. `DELETE /organizations/{id}` has shipped
-            since S1 with `org:delete` on it and NO CALL SITE anywhere in the web — one of the 12 genuinely
+            since S1 with `org:delete` on it and NO CALL SITE anywhere in the web, one of the 12 genuinely
             unreachable mutating operations the S14.12 census counted. An owner could not delete an
             organization they created by mistake without curl.
             ⚠ ITS OWN GROUP, AND LAST: a destructive verb does not belong beside the name field, where a
@@ -528,7 +528,7 @@ function AgentJITAccessToggle({
  * permissions an owner holds and an admin does not; hiding the section entirely would leave an admin
  * hunting for a control the product does have.
  *
- * ⛔ AND IT REFUSES WHILE THE ORGANIZATION OWNS ANYTHING. Delete here is a SOFT delete — gateways keep
+ * ⛔ AND IT REFUSES WHILE THE ORGANIZATION OWNS ANYTHING. Delete here is a SOFT delete, gateways keep
  * carrying traffic on the customer's own servers, devices keep their addresses, machine credentials keep
  * authenticating, all owned by an organization no screen will show again. The server enforces this; this
  * screen reads the same counts from the same function so the two can never describe the state differently.
@@ -559,7 +559,7 @@ function DangerZone({
       })
       .then(({ data }) => {
         // ⚠ THE ARRAY IS DEFAULTED AT THE SEAM. A body without `blockers` crashed the whole Settings page
-        // on `.join` — caught by the wiring test, and it is not a test artifact: any proxy, older server
+        // on `.join`, caught by the wiring test, and it is not a test artifact: any proxy, older server
         // or partial response produces the same white screen on the page holding the delete control.
         if (!off && data)
           setPre({ deletable: data.deletable, blockers: data.blockers ?? [] });
@@ -578,7 +578,7 @@ function DangerZone({
         </h2>
         <p className="mt-2 text-sm text-slate-400">
           {/* ⚠ NOT THE SETTINGS-WIDE SENTENCE. Reusing "managed by owners and admins" put a second copy of
-              it on the page for a plain member, and the e2e spec that asserts it went strict-mode red —
+              it on the page for a plain member, and the e2e spec that asserts it went strict-mode red ,
               correctly: two identical sentences in different sections is a page that cannot be pointed at. */}
           {role === "admin"
             ? "Deleting an organization is reserved for owners."
@@ -603,7 +603,7 @@ function DangerZone({
     }
     // ⛔ A FULL RELOAD, NOT A ROUTER NAVIGATION. The org seam holds the list in memory and has no refresh
     // verb; a client-side route change would leave the just-deleted organization in the switcher and
-    // selected — a tenant that no longer exists, on screen, ready to be acted on. Adding a refresh method
+    // selected, a tenant that no longer exists, on screen, ready to be acted on. Adding a refresh method
     // to the seam for one caller is the wider change; this is the honest small one.
     window.location.assign("/dashboard");
   }
@@ -646,7 +646,7 @@ function DangerZone({
         <div className="flex flex-col gap-3">
       {/* ⛔ THE BLOCKERS ARE SHOWN BEFORE THE CONFIRMATION FIELD, NOT AFTER THE ATTEMPT. A refusal that
           arrives only once someone has typed the organization's name to confirm is a refusal met at the
-          most dangerous moment — with their attention on getting past it. */}
+          most dangerous moment, with their attention on getting past it. */}
       {blocked && (
         <div className="mt-3 rounded-card border border-warn/30 bg-warn/5 p-3">
           <p className="text-cell text-ink-body">
@@ -656,7 +656,7 @@ function DangerZone({
             {pre.blockers.length > 0
               ? `This organization still has ${pre.blockers.join(", ")}.`
               : "This organization still owns resources."}{" "}
-            Remove them first — deleting now would leave them running with no
+            Remove them first, deleting now would leave them running with no
             organization to manage them from.
           </p>
         </div>
@@ -664,7 +664,7 @@ function DangerZone({
 
         <div className="min-w-[14rem] flex-1">
           {/* ⚠ TYPE THE SLUG, NOT "DELETE". The slug is the one string that differs between the org you
-              mean and the one you are looking at — and with a switcher in the header, looking at the wrong
+              mean and the one you are looking at, and with a switcher in the header, looking at the wrong
               organization is the realistic mistake, not clicking the wrong button. */}
           <Field label={`Type ${org.slug} to confirm`}>
             <Input
@@ -681,7 +681,7 @@ function DangerZone({
   );
 }
 
-// OrgMfaEnforce — org-level MFA mandate (enterprise, S7.5.5). Unlock-then-opt-in: default OFF; on
+// OrgMfaEnforce, org-level MFA mandate (enterprise, S7.5.5). Unlock-then-opt-in: default OFF; on
 // toggle, unenrolled password users are prompted to enroll at their next sign-in (never locked out).
 function OrgMfaEnforce({
   orgId,
@@ -732,10 +732,10 @@ function OrgMfaEnforce({
   return (
     <SettingRow
       label="Require two-factor authentication"
-      description="Password sign-ins must have 2FA. Applies at sign-in — open sessions stay valid until they expire."
+      description="Password sign-ins must have 2FA. Applies at sign-in, open sessions stay valid until they expire."
       error={error}
     >
-      {/* ⚠ `null` is NOT "off" — it is "not read yet". Rendering an off switch for an unknown value would
+      {/* ⚠ `null` is NOT "off", it is "not read yet". Rendering an off switch for an unknown value would
           state, in the one place an admin checks, that enforcement is disabled when it may well be on. */}
       {enforce === null ? (
         <p className="text-xs text-slate-500">Loading…</p>
@@ -751,7 +751,7 @@ function OrgMfaEnforce({
   );
 }
 
-// OrgOVPNToggle is the OpenVPN opt-in (S9.1 D-S9.5-OPTIN) — OPEN edition, org:update-gated, OFF by
+// OrgOVPNToggle is the OpenVPN opt-in (S9.1 D-S9.5-OPTIN), OPEN edition, org:update-gated, OFF by
 // default. This is the operator's on-switch for the whole feature (unlock-then-opt-in): enabling makes
 // the OpenVPN capability available on the org's gateways + surfaces the OpenVPN device type in the
 // export ceremony. The initial state comes from the org (no separate GET); PUT flips it.
@@ -788,7 +788,7 @@ function OrgOVPNToggle({
 
   return (
     // ⛔ A ROW WITH A SWITCH, NOT A CARD WITH A BUTTON. The state is what the operator cares about, and a
-    // button labelled "Enable OpenVPN" makes them read the LABEL to infer the STATE — the button says what
+    // button labelled "Enable OpenVPN" makes them read the LABEL to infer the STATE, the button says what
     // will happen next, never what is true now. The switch shows the state and changes it in one control.
     <SettingRow
       label="OpenVPN"
@@ -828,7 +828,7 @@ function PoolSection({
   const [err, setErr] = useState<string | null>(null);
 
   // ⛔ THE POOL DIALOG DOES NOT CLOSE ON SAVE, AND THAT IS THE EXCEPTION THAT PROVES THE RULE.
-  // A successful resize returns a consequence the operator MUST read — existing devices keep their old
+  // A successful resize returns a consequence the operator MUST read, existing devices keep their old
   // addresses and their configs are one-time, so reaching the new range means re-issuing them. Closing on
   // success would dismiss the only place that is ever said. A shrink refusal likewise returns the device
   // list that blocks it. The dialog stays open and Cancel becomes Close.
@@ -912,11 +912,11 @@ function PoolSection({
           </Field>
 
         {/* Accept-and-surface (S4.5b decision e): the resize succeeds, but existing
-            configs embed the old range and are one-time — they can't be re-served. */}
+            configs embed the old range and are one-time, they can't be re-served. */}
         {done && (
           <p className="mt-3 text-xs text-accent-400">
             Pool resized to <span className="font-mono">{cidr}</span>. Existing
-            devices keep their current addresses — to reach addresses in the new
+            devices keep their current addresses, to reach addresses in the new
             range, re-issue their configs (revoke + recreate; configs are shown
             once and can’t be re-sent).
           </p>
@@ -930,7 +930,7 @@ function PoolSection({
               {conflict.orphan_count === 1 ? "" : "s"} must be removed or
               renumbered first.{" "}
               {/* The refusal rolls back inside the transaction (service.go:539 returns
-                  BEFORE UpdateOrgPoolCidr at :541), so this is a fact, not reassurance —
+                  BEFORE UpdateOrgPoolCidr at :541), so this is a fact, not reassurance ,
                   and without it the operator cannot tell a refusal from a partial resize. */}
               <span className="text-slate-400">{RESIZE_ATOMIC_NOTE}</span>
             </p>
@@ -964,10 +964,10 @@ function PoolSection({
   );
 }
 
-// IdpSyncSection — directory sync (S14.14). The consuming layer for FIVE endpoints that had
+// IdpSyncSection, directory sync (S14.14). The consuming layer for FIVE endpoints that had
 // ZERO call sites: putIdpSyncConfig, getIdpSyncHealth, triggerIdpSync, mapIdpGroup, unmapIdpGroup.
 //
-// ⛔ GATED ON POLICY PERMISSIONS, NOT ORG ONES — measured from the handlers, not from the screen
+// ⛔ GATED ON POLICY PERMISSIONS, NOT ORG ONES, measured from the handlers, not from the screen
 // it lives on. An operator with org:update and without policy:manage sees Settings and does not
 // see this panel, rather than seeing a control that can only ever 403.
 function IdpSyncSection({
@@ -1038,7 +1038,7 @@ function IdpSyncSection({
     return (
       <Card>
         <h2 className="text-sm font-semibold text-slate-300">
-          Directory sync — {providerLabel(provider)}
+          Directory sync, {providerLabel(provider)}
         </h2>
         <p className="mt-1 text-xs text-slate-500">
           Syncing groups from {providerLabel(provider)} is a Tunnex Enterprise
@@ -1128,7 +1128,7 @@ function IdpSyncSection({
 
   return (
     // ⛔ A ROW THAT OPENS A CONSOLE, NOT ONE THAT OPENS A FORM. Directory sync is health + sync-now +
-    // credential replacement + group mapping — several independent transactions, not one value with a
+    // credential replacement + group mapping, several independent transactions, not one value with a
     // Save. So the dialog's only action is Close; every control inside keeps its own confirmation, and
     // nothing pretends the panel is a single form that can be "saved".
     <SettingDialogRow
@@ -1152,7 +1152,7 @@ function IdpSyncSection({
         )
       }
       actionLabel={state.kind === "configured" ? "Manage" : "Configure"}
-      dialogTitle={`Directory sync — ${providerLabel(provider)}`}
+      dialogTitle={`Directory sync, ${providerLabel(provider)}`}
       error={err}
       actions={(close) => (
         <Button variant="ghost" onClick={close}>
@@ -1170,12 +1170,12 @@ function IdpSyncSection({
         <p className="mt-1 text-xs text-slate-500">{UNSUPPORTED_NOTE}</p>
       )}
 
-      {/* ⛔ THE THIRD ARM. A failed read never renders the Configure form — offering it over a
+      {/* ⛔ THE THIRD ARM. A failed read never renders the Configure form, offering it over a
           live credential is the S14.13 destructive path, and this is the same class. */}
       {state.kind === "unknown" && (
         <>
           <p className="mt-2 text-sm text-slate-400">
-            Directory-sync status unknown — the health read failed, so we cannot
+            Directory-sync status unknown, the health read failed, so we cannot
             tell whether this provider is configured.
           </p>
           <Button
@@ -1248,11 +1248,11 @@ function IdpSyncSection({
 
       {showForm && (
         <form onSubmit={saveConfig} className="mt-3 space-y-3">
-          {/* ⛔ WRITE-ONLY STATE, NAMED. There is no GET for this config — client_id, tenant and
+          {/* ⛔ WRITE-ONLY STATE, NAMED. There is no GET for this config, client_id, tenant and
               the secret fingerprint come back only from the PUT that wrote them. So the form is
               never pre-filled from the server and does not pretend to show what is stored. */}
           <p className="text-xs text-slate-600">
-            Credentials are set, not readable back — this server serves no read
+            Credentials are set, not readable back, this server serves no read
             for the directory-sync credential, so the fields below always start
             empty even when a credential is stored.
           </p>
@@ -1384,7 +1384,7 @@ function IdpSyncSection({
             </Field>
             <p className="text-xs text-slate-600">
               Mapping onto an existing group is only allowed if that group is
-              empty — {emptyManual.length} manual group
+              empty, {emptyManual.length} manual group
               {emptyManual.length === 1 ? "" : "s"} exist.
             </p>
             <Button type="submit" disabled={busy === "map" || !canEdit}>
@@ -1395,7 +1395,7 @@ function IdpSyncSection({
       )}
 
       {/* ⛔ THE UNMAP BLAST RADIUS. Check 7b, one screen over from S14.12's cascade: the verb
-          deletes every member, KEEPS the group, and pushes org-wide — so rules using it survive
+          deletes every member, KEEPS the group, and pushes org-wide, so rules using it survive
           and match nobody. No NUMBER is shown: the 204 has no body and the server serves no
           preview, so a client-computed count would be a second source of truth. */}
       {unmapping && (
@@ -1446,7 +1446,7 @@ function providerLabel(p: string): string {
 }
 
 /**
- * The section rail — one section at a time.
+ * The section rail, one section at a time.
  *
  * ⛔ SELECTING A SECTION SHOWS ONLY THAT SECTION (founder-directed). The whole page rendered at once was
  * seven cards deep and every visit scrolled past six groups to reach one; this makes the rail the navigation
@@ -1455,7 +1455,7 @@ function providerLabel(p: string): string {
  * ⚠ THE ACTIVE STATE IS REAL STATE, WHICH IS WHY IT EXISTS AT ALL. The previous version deliberately had NO
  * highlight, because indicating "which section am I looking at" from scroll position needs a layout jsdom
  * cannot render (docs/laws.md: a responsive assertion there asserts nothing). Selection is a value, so the
- * indicator is now checkable — the design's highlight arrives on the mechanism that earns it.
+ * indicator is now checkable, the design's highlight arrives on the mechanism that earns it.
  *
  * A vertical `tablist`, matching the tab pattern already in Access.tsx.
  */
@@ -1470,7 +1470,7 @@ const RAIL: ReadonlyArray<{
    *
    * ⛔ THIS FIELD IS A BUG FIX. The rail filtered on `adminOnly` alone while six of the seven panels are
    * ALSO `org &&` gated, so before an org resolved, Directory sync / Licence / Danger zone rendered a tab
-   * that opened NOTHING — three dead tabs, found by the test written to assert every tab leads somewhere.
+   * that opened NOTHING, three dead tabs, found by the test written to assert every tab leads somewhere.
    * Both gates now live on the entry, which is the only way the rail and the panel cannot drift.
    */
   needsOrg?: boolean;
@@ -1528,7 +1528,7 @@ function SettingsRail({
   active,
   onSelect,
 }: {
-  /** Only the sections this role can actually reach — an empty panel is worse than an absent tab. */
+  /** Only the sections this role can actually reach, an empty panel is worse than an absent tab. */
   sections: ReadonlyArray<(typeof RAIL)[number]>;
   active: string;
   onSelect: (id: string) => void;
@@ -1549,7 +1549,7 @@ function SettingsRail({
             role="tab"
             id={`${s.id}-tab`}
             /* ⛔ THE HINT IS VISUAL ONLY. Without this the accessible name concatenated both, so the tab
-               announced as "NetworkAddress space devices draw from." — a label a screen-reader user has to
+               announced as "NetworkAddress space devices draw from.", a label a screen-reader user has to
                listen through, and one no test could address by the name a person would call it. */
             aria-label={s.label}
             aria-selected={on}
@@ -1673,7 +1673,7 @@ function OrgSection({
 function SsoSettings({ orgId, canEdit }: { orgId: string; canEdit: boolean }) {
   // ⚠ THE "SINGLE SIGN-ON" SUB-LABEL IS GONE, AND ITS REASON WENT WITH IT. It existed because this block
   // rendered two CARDS floating on the page background with nothing naming the pair. They are rows inside a
-  // named Authentication section now, so the label was a third heading level naming nothing — and each row
+  // named Authentication section now, so the label was a third heading level naming nothing, and each row
   // already says which provider it is.
   return (
     <>
@@ -1697,7 +1697,7 @@ function SsoProvider({
   const [configured, setConfigured] = useState(false);
   // Third arm: the read failed, so neither "configured" nor "not configured" is known.
   const [loadFailed, setLoadFailed] = useState(false);
-  // Fourth arm: the plan does not include SSO. Knowable, not unknown — and not retryable.
+  // Fourth arm: the plan does not include SSO. Knowable, not unknown, and not retryable.
   const [gated, setGated] = useState(false);
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
@@ -1719,7 +1719,7 @@ function SsoProvider({
     if (isCancelled()) return;
     // ⛔ NOT CONFIGURED IS A STATE. A FAILED READ IS NOT.
     //
-    // This branch was `if (error || !data) { setConfigured(false) }` — it collapsed BOTH into "no config
+    // This branch was `if (error || !data) { setConfigured(false) }`, it collapsed BOTH into "no config
     // yet", so a transient failure rendered the CONFIGURE form on an org that HAS SSO, and an admin could
     // reconfigure from scratch against a live IdP. Ranked destructive in S14.11 and registered unfixed; this
     // screen is its home.
@@ -1728,7 +1728,7 @@ function SsoProvider({
     //   404 + code "sso_not_configured"  -> genuinely not set up
     //   anything else                    -> we could not read it, and we do not know
     //
-    // The code was DOCUMENTED at line 541 and DISCARDED at line 553 — prose-versus-behaviour, twelve lines
+    // The code was DOCUMENTED at line 541 and DISCARDED at line 553, prose-versus-behaviour, twelve lines
     // apart, in the file that held the destructive finding.
     if (error) {
       if (apiErrorCode(error) === "sso_not_configured") {
@@ -1739,13 +1739,13 @@ function SsoProvider({
       }
       // ⛔ A REFUSAL THAT NAMES ITSELF IS NOT AN UNKNOWN, AND CALLING IT ONE MISINFORMS TWICE.
       //
-      // `edition_required` means the plan does not include SSO — as knowable as `sso_not_configured`, and
+      // `edition_required` means the plan does not include SSO, as knowable as `sso_not_configured`, and
       // the server said so in one word. Routed into the unknown arm it rendered "the settings could not be
       // read" beside a RETRY BUTTON THAT CAN NEVER SUCCEED: the operator is told we have a problem reading
       // their config, and invited to keep asking.
       //
       // ⚠ The unknown arm is still right for everything else, and still must not offer Configure. This
-      // adds a fourth state rather than widening the third — "we could not read it" and "you are not
+      // adds a fourth state rather than widening the third, "we could not read it" and "you are not
       // entitled to it" have different remedies, and only one of them is retryable.
       if (apiErrorCode(error) === "edition_required") {
         setGated(true);
@@ -1753,7 +1753,7 @@ function SsoProvider({
         setConfigured(false);
         return;
       }
-      // ⛔ WE DO NOT KNOW. Never offer Configure here — offering it invites the destructive path.
+      // ⛔ WE DO NOT KNOW. Never offer Configure here, offering it invites the destructive path.
       setLoadFailed(true);
       setGated(false);
       return;
@@ -1802,7 +1802,7 @@ function SsoProvider({
     onDone?.();
   }
 
-  // Display name for the provider — also the label prefix that keeps each provider's fields uniquely named.
+  // Display name for the provider, also the label prefix that keeps each provider's fields uniquely named.
   const providerName = provider === "microsoft" ? "Microsoft" : "Google";
 
   // ⛔ THE PLAN ANSWER COMES FIRST, because it is the only one of the four that is certain and static.
@@ -1845,7 +1845,7 @@ function SsoProvider({
         <p className="mt-2 text-xs text-slate-400">
           The current {providerName} SSO settings could not be read, so this
           shows neither “configured” nor “not configured”. Refresh to try again
-          — reconfiguring from here could overwrite a live setup.
+         , reconfiguring from here could overwrite a live setup.
         </p>
         <div className="mt-3">
           <Button variant="ghost" onClick={() => void load(() => false)}>
@@ -1876,7 +1876,7 @@ function SsoProvider({
       actionLabel={configured ? "Replace config" : "Configure"}
       dialogTitle={`${providerName} single sign-on`}
       /* ⚠ A STABLE SEAM, BECAUSE THIS ROW EXISTS TWICE BY CONSTRUCTION. The e2e spec used to reach Google's
-         config by "the first Client ID field", relying on PROVIDERS order — which silently becomes the wrong
+         config by "the first Client ID field", relying on PROVIDERS order, which silently becomes the wrong
          row the moment both providers are configured and both offer the same action label. */
       data-testid={`sso-row-${provider}`}
       disabled={!canEdit}
@@ -1886,8 +1886,8 @@ function SsoProvider({
           <Button variant="ghost" onClick={close}>
             Cancel
           </Button>
-          {/* ⛔ CLOSES ONLY AFTER THE SAVE IS CONFIRMED. The secret is write-only — it is cleared from page
-              state on success and can never be re-read — so a dialog that closed optimistically and then
+          {/* ⛔ CLOSES ONLY AFTER THE SAVE IS CONFIRMED. The secret is write-only, it is cleared from page
+              state on success and can never be re-read, so a dialog that closed optimistically and then
               failed would leave the operator with nothing to retype and no error to explain why. */}
           <Button
             disabled={busy || !canEdit}
@@ -1901,19 +1901,19 @@ function SsoProvider({
       {() => (
         <div className="space-y-3">
           {/* Labels are PROVIDER-SCOPED (S11-1 class): SsoProvider renders once per provider, so a bare
-              "Client ID" would put two controls with the SAME accessible name on the Settings page — a
+              "Client ID" would put two controls with the SAME accessible name on the Settings page, a
               screen reader announces them identically and a label-navigating user cannot tell them apart. */}
           {/* ⛔ AN OAuth CLIENT ID IS NOT A USERNAME, AND A CLIENT SECRET IS NOT A PASSWORD.
               Chrome fills the FIRST text+password pair on a page as a login form. This component
               renders once per provider and `google` comes first (PROVIDERS), so Google's pair was
-              being filled with the signed-in admin's EMAIL and a SAVED PASSWORD — in
+              being filled with the signed-in admin's EMAIL and a SAVED PASSWORD, in
               autofill-blue, on a credential surface, one un-noticed Save away from writing them
               into a live IdP config. The Microsoft pair looked immune only because Chrome fills
               one pair per page; the markup was byte-identical, so this is ORDER, not markup, and
               fixing only the visibly-affected provider would have moved the bug rather than
               removed it. Both are annotated for that reason.
               `new-password` (not `off`) is what actually suppresses saved-password fill in
-              Chrome — `off` is widely ignored on password inputs. */}
+              Chrome, `off` is widely ignored on password inputs. */}
           {provider === "microsoft" && (
             <Field label={`${providerName} client ID`}>
               <Input
@@ -1964,7 +1964,7 @@ function SsoProvider({
           )}
           {/* ⛔ THE LABEL CHANGES WITH THE ARM, because the control MEANS something different in each.
               Configured: it reflects STORED STATE. Unconfigured: nothing is stored, so it can only be
-              an INTENT about the config being created — and calling that "Enabled" asserted a fact
+              an INTENT about the config being created, and calling that "Enabled" asserted a fact
               that did not exist. Google rendered CHECKED + "Enabled" on a provider the server answers
               404 for. */}
           <label className="flex items-center gap-2 text-sm text-slate-300">

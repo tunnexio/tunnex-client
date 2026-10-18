@@ -19,21 +19,21 @@ import { stripCssComments } from "./support/source";
 // authored form: the package-name route resolves through @tunnex/shared's raw .ts entry, which Node cannot
 // load at config time and which a cached workspace link can serve staleley. Same file, no ambiguity.
 
-// S14.1 — THE DESIGN SYSTEM'S GATES. Both FAIL the build; neither warns.
+// S14.1, THE DESIGN SYSTEM'S GATES. Both FAIL the build; neither warns.
 //
-// A linter that emits warnings is a convention. A failing test is a mechanism — and this repo has already
+// A linter that emits warnings is a convention. A failing test is a mechanism, and this repo has already
 // ruled that a standard recorded only in prose is the convention-not-mechanism failure.
 
-describe("accessibility floor — WCAG 2.1 AA, COMPUTED not reviewed", () => {
+describe("accessibility floor, WCAG 2.1 AA, COMPUTED not reviewed", () => {
   // Contrast is computable from the token values, so the floor is a unit test rather than a design review.
-  // Every (foreground, background) pair the system PERMITS is enumerated deliberately in CONTRAST_PAIRS — a
+  // Every (foreground, background) pair the system PERMITS is enumerated deliberately in CONTRAST_PAIRS, a
   // derived list would compare the token set to itself and pass by construction.
   for (const themeName of Object.keys(THEMES)) {
     for (const pair of CONTRAST_PAIRS) {
-      it(`[${themeName}] ${pair.fg} on ${pair.bg} meets ${pair.floor}:1 — ${pair.why}`, () => {
+      it(`[${themeName}] ${pair.fg} on ${pair.bg} meets ${pair.floor}:1, ${pair.why}`, () => {
         const theme = THEMES[themeName]!;
         // `solid()` composites a translucent surface to the colour it actually renders as. The glass is
-        // rgba by design, and a ratio computed from an alpha value is NaN — which FAILS, correctly, but for
+        // rgba by design, and a ratio computed from an alpha value is NaN, which FAILS, correctly, but for
         // the wrong reason. Resolving first means the assertion measures what the eye sees.
         const ratio = contrastRatio(
           solid(theme, pair.fg),
@@ -47,15 +47,15 @@ describe("accessibility floor — WCAG 2.1 AA, COMPUTED not reviewed", () => {
     }
   }
 
-  it("the pair list is not empty — a floor over zero pairs cannot fail", () => {
+  it("the pair list is not empty, a floor over zero pairs cannot fail", () => {
     // The gate's own vacuity guard. An empty CONTRAST_PAIRS would make every assertion above vanish and the
     // suite would go green having checked nothing.
     expect(CONTRAST_PAIRS.length).toBeGreaterThanOrEqual(8);
   });
 });
 
-describe("the `ok` reservation — S4.4 decision f, asserted rather than commented", () => {
-  // WHY THIS EXISTS. `ok` is reserved for LIVENESS ONLY — an online peer, a healthy check — and explicitly NOT
+describe("the `ok` reservation, S4.4 decision f, asserted rather than commented", () => {
+  // WHY THIS EXISTS. `ok` is reserved for LIVENESS ONLY, an online peer, a healthy check, and explicitly NOT
   // for success feedback, so that green keeps meaning LIVE. That is a decision about what a colour MEANS, and
   // a token migration is exactly how it dies: `ok` drifts into a generic "success" colour, every screen still
   // renders, nothing looks wrong, and the only record of the rule was a comment in a config that got rewritten.
@@ -66,7 +66,7 @@ describe("the `ok` reservation — S4.4 decision f, asserted rather than comment
 
   it("NO forbidden use appears as an `ok` use-site anywhere in the app", () => {
     // The real assertion. `text-ok` / `bg-ok` next to success wording is the drift this reservation forbids,
-    // and it is the form the violation actually takes — nobody renames the token, they reuse it.
+    // and it is the form the violation actually takes, nobody renames the token, they reuse it.
     const files = import.meta.glob("../src/**/*.tsx", {
       query: "?raw",
       import: "default",
@@ -82,7 +82,7 @@ describe("the `ok` reservation — S4.4 decision f, asserted rather than comment
         );
         if (hit)
           offenders.push(
-            `${path}: "${hit}" beside an \`ok\` colour — ${RESERVATIONS.ok.meaning}`,
+            `${path}: "${hit}" beside an \`ok\` colour, ${RESERVATIONS.ok.meaning}`,
           );
       }
     }
@@ -90,7 +90,7 @@ describe("the `ok` reservation — S4.4 decision f, asserted rather than comment
     expect(offenders, offenders.join("\n")).toEqual([]);
   });
 
-  it("scans a non-trivial number of files — the scan must not pass by finding nothing", () => {
+  it("scans a non-trivial number of files, the scan must not pass by finding nothing", () => {
     // Same vacuity guard as above: a glob that silently matched zero files would make the check green forever.
     const files = import.meta.glob("../src/**/*.tsx", {
       query: "?raw",
@@ -101,7 +101,7 @@ describe("the `ok` reservation — S4.4 decision f, asserted rather than comment
   });
 });
 
-describe("theme completeness — a theme that omits a token renders a broken var()", () => {
+describe("theme completeness, a theme that omits a token renders a broken var()", () => {
   for (const [name, theme] of Object.entries(THEMES) as Array<
     [string, Record<string, string>]
   >) {
@@ -122,8 +122,8 @@ describe("theme completeness — a theme that omits a token renders a broken var
     expect(Object.keys(THEMES)).toContain(DEFAULT_THEME);
   });
 
-  it("the Tailwind palette references variables ONLY — a literal hex here defeats theming", () => {
-    // If any colour resolved to a hex, that class would stop responding to a theme swap — silently, since it
+  it("the Tailwind palette references variables ONLY, a literal hex here defeats theming", () => {
+    // If any colour resolved to a hex, that class would stop responding to a theme swap, silently, since it
     // would still render a colour.
     const flat = JSON.stringify(tailwindColors());
     expect(flat).not.toMatch(/#[0-9a-f]{3,8}/i);
@@ -131,10 +131,10 @@ describe("theme completeness — a theme that omits a token renders a broken var
   });
 });
 
-describe("COVERAGE CENSUS — the CLAIM compared to the ARTIFACT (S14.3 slice 0)", () => {
+describe("COVERAGE CENSUS, the CLAIM compared to the ARTIFACT (S14.3 slice 0)", () => {
   // ⚠ THE ASSERTION THAT DID NOT EXIST, AND THE REASON THE DEFECT SHIPPED.
   //
-  // S14.1's paper claimed five covered groups — colour, typography, spacing, radius/elevation, motion. The
+  // S14.1's paper claimed five covered groups, colour, typography, spacing, radius/elevation, motion. The
   // emitted set was thirteen names and every one was a colour. EVERY GATE PASSED, because every gate was
   // aimed at the names that existed and none at the ones the paper promised: theme completeness compares each
   // theme to TOKEN_NAMES, contrast compares colours to colours, the reservation scan compares source to a
@@ -145,7 +145,7 @@ describe("COVERAGE CENSUS — the CLAIM compared to the ARTIFACT (S14.3 slice 0)
   //
   // The claim is hand-authored (CLAIMED_COVERAGE) and the artifact is generated, so the two are independent.
   // Deriving the claim from the scales would compare the token set to itself and pass by construction.
-  // ⚠ READ FROM DISK, NOT VIA `?raw`. The obvious route — `import css from "…/tokens.css?raw"` — returns an
+  // ⚠ READ FROM DISK, NOT VIA `?raw`. The obvious route, `import css from "…/tokens.css?raw"`, returns an
   // EMPTY STRING under vitest: CSS processing is disabled by default, and the raw query is swallowed with it.
   // It failed loudly here only because the assertions below are lower-bounds (0 < 13). Had any of them been an
   // "and nothing unexpected" check, an empty artifact would have satisfied it VACUOUSLY. The guard three tests
@@ -163,7 +163,7 @@ describe("COVERAGE CENSUS — the CLAIM compared to the ARTIFACT (S14.3 slice 0)
   );
 
   for (const c of CLAIMED_COVERAGE) {
-    it(`[${c.category}] emits ≥${c.minCount} variables — claim: ${c.claim}`, () => {
+    it(`[${c.category}] emits ≥${c.minCount} variables, claim: ${c.claim}`, () => {
       const names = new Set(
         [...css.matchAll(/--tnx-([a-z0-9-]+)\s*:/g)]
           .map((m) => m[1]!)
@@ -172,24 +172,24 @@ describe("COVERAGE CENSUS — the CLAIM compared to the ARTIFACT (S14.3 slice 0)
       expect(
         names.size,
         `"${c.category}" claims ${c.claim} but the emitted CSS carries ${names.size} matching variable(s) ` +
-          `for prefix "${c.prefix}" — a claim with nothing behind it.`,
+          `for prefix "${c.prefix}", a claim with nothing behind it.`,
       ).toBeGreaterThanOrEqual(c.minCount);
     });
   }
 
-  it("the coverage list is non-empty — a census over zero claims cannot fail", () => {
+  it("the coverage list is non-empty, a census over zero claims cannot fail", () => {
     expect(CLAIMED_COVERAGE.length).toBeGreaterThanOrEqual(5);
   });
 
-  it("the emitted CSS was actually read — an empty artifact would satisfy nothing above", () => {
+  it("the emitted CSS was actually read, an empty artifact would satisfy nothing above", () => {
     // The vacuity guard that matters most here: if the raw import silently resolved to "", every prefix would
-    // match zero names and every assertion would fail loudly — which is the safe direction. This asserts the
+    // match zero names and every assertion would fail loudly, which is the safe direction. This asserts the
     // opposite risk, that the file is real, so a passing run means the comparison happened.
     expect(css.length).toBeGreaterThan(200);
     expect(css).toContain("--tnx-");
   });
 
-  it("prefers-reduced-motion is honoured in the ARTIFACT, unconditionally — not left to each component", () => {
+  it("prefers-reduced-motion is honoured in the ARTIFACT, unconditionally, not left to each component", () => {
     // The CSS half of the motion gate. It needs no JavaScript and nothing has to remember to check: a
     // component that forgets the preference still animates for zero milliseconds.
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)/);

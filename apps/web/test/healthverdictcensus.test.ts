@@ -6,7 +6,7 @@ import { stripJsComments } from "./support/source";
 // ⛔ THE CENSUS THAT STOPS THE FOURTH INSTANCE.
 //
 // A revoked gateway rendered the literal word "healthy", in green, on the deployed dashboard. It had been
-// fixed twice already — Gateways.tsx at EPIC 11, sitesview.ts at S13.1 — and both fixes were made AT THE SITE
+// fixed twice already, Gateways.tsx at EPIC 11, sitesview.ts at S13.1, and both fixes were made AT THE SITE
 // WHERE THE BUG WAS SEEN, so it returned at the next consumer.
 //
 // The census that produced S14.21 found SEVEN sites forming a health verdict about a gateway: four guarded
@@ -51,7 +51,7 @@ describe("⛔ the gateway health verdict is formed in ONE place", () => {
     expect(owner).toMatch(/status === "revoked"/);
   });
 
-  it("⛔ NO OTHER MODULE READS policy_degraded RAW — that read is a second verdict", () => {
+  it("⛔ NO OTHER MODULE READS policy_degraded RAW, that read is a second verdict", () => {
     // Comments stripped first: the prose explaining this rule quotes the field name, and a census that
     // counted its own explanation would be the shape this repo has filed three times.
     const offenders = files
@@ -70,7 +70,7 @@ describe("⛔ the gateway health verdict is formed in ONE place", () => {
     ).toEqual([]);
   });
 
-  it("⛔ no caller re-states the revoked guard — a restated rule is a remembered one", () => {
+  it("⛔ no caller re-states the revoked guard, a restated rule is a remembered one", () => {
     // The three correct sites carried this line verbatim. That was the tell that the callee did not own
     // the rule; if it reappears, the callee has stopped owning it again.
     const restaters = files

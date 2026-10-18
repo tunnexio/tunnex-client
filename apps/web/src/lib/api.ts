@@ -4,7 +4,7 @@ import { createTunnexClient, type components } from "@tunnex/shared";
 export const api = createTunnexClient("/");
 
 // The X-Tunnex-CSRF header is attached to every unsafe-method request by
-// createTunnexClient itself (see packages/shared) — no per-call plumbing.
+// createTunnexClient itself (see packages/shared), no per-call plumbing.
 
 export type AuthUser = components["schemas"]["AuthUser"];
 export type Meta = components["schemas"]["Meta"];
@@ -22,7 +22,7 @@ export type SsoConfigView = components["schemas"]["SsoConfigView"];
 export type ResizeConflict = components["schemas"]["ResizeConflict"];
 export type AuditLogEntry = components["schemas"]["AuditLogEntry"];
 export type AccessEvent = components["schemas"]["AccessEvent"];
-// S7.4a — Zero Trust admin UI DTOs.
+// S7.4a, Zero Trust admin UI DTOs.
 export type UserGroup = components["schemas"]["UserGroup"];
 export type GroupMember = components["schemas"]["GroupMember"];
 export type Resource = components["schemas"]["Resource"];
@@ -47,21 +47,21 @@ export type AgentPolicyTemplateRemovalImpact = components["schemas"]["AgentPolic
 export type AgentPolicyTemplateDestinationImpact = components["schemas"]["AgentPolicyTemplateDestinationImpact"];
 export type ZeroTrustMode = components["schemas"]["ZeroTrustMode"];
 export type AffectedDevice = components["schemas"]["AffectedDevice"];
-// S7.5.4 — per-user + temporary grants.
+// S7.5.4, per-user + temporary grants.
 export type CreatePolicyRuleRequest =
   components["schemas"]["CreatePolicyRuleRequest"];
 export type ExtendGrantRequest = components["schemas"]["ExtendGrantRequest"];
 export type DeviceApproval = components["schemas"]["DeviceApproval"];
-// S7.5.3 — device posture config DTO. (HealthCheckInput / DeviceHealthResult are
-// consumed by the Electron client, not the SPA — the web app only reads/writes the
+// S7.5.3, device posture config DTO. (HealthCheckInput / DeviceHealthResult are
+// consumed by the Electron client, not the SPA, the web app only reads/writes the
 // check config, so only HealthCheck is surfaced here.)
 export type HealthCheck = components["schemas"]["HealthCheck"];
-// S8.3 — site management UI.
+// S8.3, site management UI.
 export type Site = components["schemas"]["Site"];
 export type SiteSubnet = components["schemas"]["SiteSubnet"];
 export type SiteReferences = components["schemas"]["SiteReferences"];
 export type DNSForward = components["schemas"]["DNSForward"];
-// S10.3 — Kubernetes cluster/Service connectivity.
+// S10.3, Kubernetes cluster/Service connectivity.
 export type K8sCluster = components["schemas"]["K8sCluster"];
 export type K8sService = components["schemas"]["K8sService"];
 
@@ -73,14 +73,14 @@ export function apiErrorMessage(error: unknown, fallback: string): string {
 
 // Loaded<T> normalizes a GET result. openapi-fetch is a STANDING FOOTGUN: it returns
 // {data:undefined, error} on a non-2xx (it does NOT throw) and REJECTS on a network
-// failure — two paths that, if a component only reads `data`, silently render a
+// failure, two paths that, if a component only reads `data`, silently render a
 // reassuring EMPTY state for a real failure (the S7.4a review's dominant cluster).
 // loadOne collapses BOTH into a discriminated result so callers render a legible
-// "failed — retry", never "none".
+// "failed, retry", never "none".
 //
 // SANCTIONED CALL PATTERN: a raw `api.GET` in a component whose emptiness is
 // user-meaningful (a list, a role, a count that gates a destructive action) is
-// review-refused — route it through loadOne so a fetch failure can't read as absence.
+// review-refused, route it through loadOne so a fetch failure can't read as absence.
 export type Loaded<T> = { ok: true; data: T } | { ok: false; error: string };
 
 export async function loadOne<T>(

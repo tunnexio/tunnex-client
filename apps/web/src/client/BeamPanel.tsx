@@ -55,10 +55,12 @@ export function BeamPanel() {
   const [tab, setTab] = useState<"mine" | "shared">("mine");
   return <div className="client-sharing">
     <header className="client-sharing-heading">
+      <span className="client-sharing-eyebrow"><Icon name="app-window-share" size={14} /> PRIVATE APP ACCESS</span>
       <h1>Local Sharing</h1>
-      <p>Works independently of your VPN connection.</p>
+      <p>Your local apps. A private link away.</p>
+      <span className="client-sharing-vpn-note"><Icon name="check-circle" size={13} /> Works independently of your VPN</span>
     </header>
-    <nav aria-label="Beam shares" className="client-sharing-tabs">
+    <nav aria-label="Local Sharing tabs" className="client-sharing-tabs">
       <button type="button" aria-pressed={tab === "mine"} onClick={() => setTab("mine")}>My shares</button>
       <button type="button" aria-pressed={tab === "shared"} onClick={() => setTab("shared")}>Shared with me</button>
     </nav>
@@ -277,12 +279,16 @@ function BeamPublisherPanel() {
     key.current = null;
   };
   return (
-    <section aria-label="Tunnex Beam" className="client-sharing-panel">
+    <section aria-label="Local Sharing" className="client-sharing-panel">
       <h2 className="sr-only">My shares</h2>
       {!bridge && (
-        <p role="status" className="client-empty">
-          Open Tunnex desktop to publish a local app.
-        </p>
+        <div role="status" className="client-sharing-welcome">
+          <div className="client-sharing-welcome-icon"><Icon name="app-window-share" size={30} strokeWidth={1.4} /></div>
+          <h3>Bring your local app to the conversation.</h3>
+          <p>Share a private link with your team, choose who can open it, and keep control of access.</p>
+          <div className="client-sharing-flow" aria-hidden="true"><span>Local app</span><Icon name="chevron-right" size={14} /><span>Private link</span><Icon name="chevron-right" size={14} /><span>Your team</span></div>
+          <div className="client-sharing-desktop-hint"><Icon name="monitor" size={16} /><span>Open Tunnex desktop to publish a local app.</span></div>
+        </div>
       )}
       {error && (
         <p
@@ -311,7 +317,7 @@ function BeamPublisherPanel() {
             "Your administrator needs to enable Local Sharing and allow publishing for your account."}
         </p>
       )}
-      {!creating && !editing && <div className="client-sharing-toolbar">
+      {bridge && !creating && !editing && <div className="client-sharing-toolbar">
         {view && <>
           <label className="sr-only" htmlFor="beam-search">Search shares</label>
           <input id="beam-search" className={input} placeholder="Find a share…" value={query} maxLength={120} onChange={(e) => { setQuery(e.target.value); setOffset(0); }} />
@@ -554,6 +560,7 @@ function BeamPublisherPanel() {
       {!creating && !editing && <>
       {view && !liveShares.length && (
         <div className="client-empty client-sharing-empty">
+          <div className="client-sharing-welcome-icon"><Icon name="app-window-share" size={26} strokeWidth={1.4} /></div>
           <p className="client-sharing-empty-title">
             {query || offset
               ? "No live shares match this page or search."
@@ -804,9 +811,9 @@ function BeamPublisherPanel() {
           needs a valid certificate or the local app’s CA certificate.
         </p>
         <p>
-          For Vite or another development server, allow the exact Beam hostname
+          For Vite or another development server, allow the exact sharing hostname
           in its allowed-host configuration and configure its public WebSocket
-          URL if needed. Beam preserves WebSocket subprotocols and streams SSE;
+          URL if needed. Local Sharing preserves WebSocket subprotocols and streams SSE;
           WebSocket compression is unavailable in v1.
         </p>
         <p>

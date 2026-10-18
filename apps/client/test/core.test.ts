@@ -14,7 +14,7 @@ import * as crypto from "node:crypto";
 // ---- app:// path escape-rejection (the security core of the protocol) --------
 test("resolveBundlePath serves in-bundle files and REJECTS escapes", () => {
   // Resolve the fixture root for the host platform (Windows prefixes a drive) so
-  // expectations match resolveBundlePath's own absolute resolution — the function
+  // expectations match resolveBundlePath's own absolute resolution, the function
   // is correct cross-platform; only a POSIX-literal fixture broke on Windows CI.
   const root = path.resolve("/app/bundle");
   assert.equal(resolveBundlePath(root, "/"), path.join(root, "index.html"));
@@ -177,12 +177,12 @@ test("exchangeCode returns the credential on 200 and throws the server message o
 //
 // `package.json`'s `test` lists every file by name (node --test does not glob here). A file added to
 // `test/` and left off that list exists, typechecks, passes locally when invoked directly, and
-// contributes NOTHING to CI — and the total test count barely moves, so nobody notices.
+// contributes NOTHING to CI, and the total test count barely moves, so nobody notices.
 //
 // Found the moment `entry.test.ts` was added: the count stayed at 102. **A test that is not RUN is
 // indistinguishable from a test that does not exist**, which is the same class as the unreachable
 // branch that file was written to cover.
-test("every test file is listed in the test script — an unlisted test never runs", () => {
+test("every test file is listed in the test script, an unlisted test never runs", () => {
   const pkg = JSON.parse(
     readFileSync(join(__dirname, "..", "package.json"), "utf8"),
   ) as { scripts: { test: string } };

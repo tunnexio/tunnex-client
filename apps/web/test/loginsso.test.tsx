@@ -39,7 +39,7 @@ function captureNavigation(): { url: string | null } {
 }
 
 // Routes by PATH, not by call order: the page fetches /api/v1/meta on mount, and a queue keyed on
-// order silently fed that meta response to the first SSO click instead — the click then saw a
+// order silently fed that meta response to the first SSO click instead, the click then saw a
 // success shape with no redirect_url and no error, so the ambiguity branch never ran.
 function metaThen(...starts: unknown[]) {
   get.mockReset();
@@ -49,7 +49,7 @@ function metaThen(...starts: unknown[]) {
       return { data: { sso_providers: ["google", "microsoft"] } };
     }
     // ⛔ /healthz MUST BE ROUTED, NOT LEFT TO THE QUEUE. AuthLayout renders HealthStatus, which GETs
-    // /healthz on mount — so an unrouted path fell through to `starts[i++]` and ATE the SSO response the
+    // /healthz on mount, so an unrouted path fell through to `starts[i++]` and ATE the SSO response the
     // test had queued. The click then saw a health payload, and four tests failed for a reason that had
     // nothing to do with SSO. Routing by path is the whole point of this stub; every path the page actually
     // calls has to be named.
@@ -77,7 +77,7 @@ describe("SSO sign-in without an organization field", () => {
   });
 
   // ⛔ THE POINT OF THE WHOLE CHANGE. A person clicking "Continue with Google" must never be asked
-  // for a tenant slug, so the request must carry NO `org` query at all — an empty string is a slug
+  // for a tenant slug, so the request must carry NO `org` query at all, an empty string is a slug
   // the server would try to look up and fail on.
   it("starts SSO with no org query and follows the IdP redirect", async () => {
     const nav = captureNavigation();
@@ -99,7 +99,7 @@ describe("SSO sign-in without an organization field", () => {
   });
 
   // A failure that is NOT the person's to fix must not sprout a field that implies they typed
-  // something wrong — sso_not_configured is an operator's problem, not theirs.
+  // something wrong, sso_not_configured is an operator's problem, not theirs.
   it("does not reveal the org field when SSO is simply not configured", async () => {
     metaThen({
       error: {
@@ -147,7 +147,7 @@ describe("SSO sign-in without an organization field", () => {
     const retry = get.mock.calls
       .filter((c: unknown[]) => c[0] === "/api/v1/auth/sso/{provider}/start")
       .at(-1);
-    // Trimmed — a slug pasted with surrounding whitespace is the same slug.
+    // Trimmed, a slug pasted with surrounding whitespace is the same slug.
     expect(retry?.[1]).toEqual({
       params: { path: { provider: "google" }, query: { org: "demo-sandbox" } },
     });

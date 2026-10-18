@@ -21,12 +21,12 @@ import { useNavCounts } from "../lib/useNavCounts";
 import { Icon, type IconName } from "./Icon";
 import { badgeText, gatewayBadgeText, type NavCounts } from "../lib/navcounts";
 
-// S14.2 — THE NAV, GROUPED. The wireframe groups destinations NETWORK / ACCESS / OBSERVE / OPERATE / SETTINGS,
+// S14.2, THE NAV, GROUPED. The wireframe groups destinations NETWORK / ACCESS / OBSERVE / OPERATE / SETTINGS,
 // and that grouping is preserved at EVERY width; only its PRESENTATION changes.
 //
 // ⛔ RESPONSIVE MAY RE-ARRANGE, NEVER REMOVE. Every destination is in the DOM at every width. A CSS-hidden
 // destination is a navigation surface that exists for some users and not others, DECIDED BY VIEWPORT RATHER
-// THAN BY PERMISSION — and permission is a render decision while width never is (docs/laws.md).
+// THAN BY PERMISSION, and permission is a render decision while width never is (docs/laws.md).
 //
 // Sites (S8.3) and Kubernetes (S10.3) are shown to everyone: each page owns its own edition upsell (the Access
 // precedent, D5), so a non-enterprise org sees the entry and a clear explanation rather than a dead link.
@@ -42,18 +42,18 @@ export const NAV_GROUPS: Array<{
     group: "NETWORK",
     items: [
       // S14.6: Gateways leads NETWORK, as the handoff's nav does. It was a component inside Devices with no
-      // route and no entry here — working fleet management an operator could only reach by scrolling another
+      // route and no entry here, working fleet management an operator could only reach by scrolling another
       // screen.
       { to: "/gateways", label: "Gateways", icon: "server" },
       { to: "/sites", label: "Sites", icon: "network" },
-      // S14.7: Routed Ranges was BUILD, not REDESIGN — `/routed-ranges` has been served since S8.5 and
+      // S14.7: Routed Ranges was BUILD, not REDESIGN, `/routed-ranges` has been served since S8.5 and
       // nothing rendered it. The answer to "does my LAN traffic go down the tunnel" was reachable only by
       // reading a device's AllowedIPs.
       { to: "/routed-ranges", label: "Routed ranges", icon: "route" },
       { to: "/kubernetes", label: "Kubernetes", icon: "boxes" },
-      // ⛔ S15.3 — AI agents is a TOP-LEVEL DESTINATION, beside Kubernetes, and the placement is the
+      // ⛔ S15.3, AI agents is a TOP-LEVEL DESTINATION, beside Kubernetes, and the placement is the
       // ruling. It was first built as a section inside Devices on the premise that the schema says an
-      // agent is a devices row — and the measurement broke that premise: an agent is a GATEWAY, enrolled
+      // agent is a devices row, and the measurement broke that premise: an agent is a GATEWAY, enrolled
       // on Gateways, that ACQUIRES a device row. The row is an artifact of attribution, not the thing.
       // ⚠ NETWORK is where things you ENROL live, which is exactly what an agent now is.
       { to: "/agents", label: "AI agents", icon: "bot" },
@@ -84,22 +84,22 @@ export const NAV_GROUPS: Array<{
   },
 ];
 
-/** Flat destination list — the invariant the responsive contract asserts is identical at every width. */
+/** Flat destination list, the invariant the responsive contract asserts is identical at every width. */
 export const NAV_DESTINATIONS = NAV_GROUPS.flatMap((g) => g.items);
 
-/** The triage set — the surfaces mobile exists FOR (read health, work the approval queue, act on devices). */
+/** The triage set, the surfaces mobile exists FOR (read health, work the approval queue, act on devices). */
 const TRIAGE_SET = ["/dashboard", "/devices", "/access"];
 
 /**
  * The badge for a destination, or `null`.
  *
- * ⛔ `null` MEANS RENDER NOTHING. Not an empty string, not a dash, and never `0` — see lib/navcounts.ts for
+ * ⛔ `null` MEANS RENDER NOTHING. Not an empty string, not a dash, and never `0`, see lib/navcounts.ts for
  * why this surface is stricter than any other in the app.
  */
 function badgeFor(to: string, c: NavCounts): string | null {
   // ⛔ THE GATEWAY RATIO BELONGS ON /gateways, and it was on /dashboard because /gateways DID NOT EXIST.
   //
-  // Overview rendered `1/6` — the online-of-total GATEWAY count — on a nav item that is not about gateways,
+  // Overview rendered `1/6`, the online-of-total GATEWAY count, on a nav item that is not about gateways,
   // while the Gateways item carried nothing. The handoff binds `3/7` to Gateways. Moved now that slice 1
   // gave the fleet a route of its own.
   //
@@ -126,7 +126,7 @@ function NavGroups({
       {NAV_GROUPS.map((g) => (
         <div key={g.group || "root"} className="mb-3">
           {/* ⛔ HEADERS GO, DESTINATIONS STAY. A rail that dropped a destination would make it
-              unreachable rather than compact — the collapse is a presentation, never a filter. */}
+              unreachable rather than compact, the collapse is a presentation, never a filter. */}
           {g.group && shows.sectionHeaders && (
             <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
               {g.group}
@@ -156,16 +156,16 @@ function NavGroups({
                 >
                   <Icon name={item.icon} size={14} className="shrink-0" />
                   {/* The label is the only thing the rail drops. `title` keeps it reachable to a
-                      pointer, and the aria-label keeps it reachable to a screen reader — a rail of
+                      pointer, and the aria-label keeps it reachable to a screen reader, a rail of
                       unlabelled icons is not a compact nav, it is a quiz. */}
                   {shows.labels && (
                     <span className="truncate">{item.label}</span>
                   )}
                   {/* ⛔ The badge is RIGHT-ALIGNED and CONDITIONAL; the destination never is. `null` means
-                      render nothing — never 0, never a dash (lib/navcounts.ts). */}
+                      render nothing, never 0, never a dash (lib/navcounts.ts). */}
                   {(() => {
                     const b = badgeFor(item.to, counts);
-                    // Badges survive the collapse — they are the reason to glance at a rail at all.
+                    // Badges survive the collapse, they are the reason to glance at a rail at all.
                     if (collapsed) {
                       return b === null ? null : (
                         <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-accent-400" />
@@ -188,12 +188,12 @@ function NavGroups({
 }
 
 /**
- * SidebarNav renders every destination in every nav mode. `navMode` changes how the groups are PRESENTED — a
- * drawer behind a menu button, a compact rail, or the full labelled rail — and never WHICH destinations exist.
+ * SidebarNav renders every destination in every nav mode. `navMode` changes how the groups are PRESENTED, a
+ * drawer behind a menu button, a compact rail, or the full labelled rail, and never WHICH destinations exist.
  *
  * ⚠ THE DRAWER IS `hidden` WHEN CLOSED, DELIBERATELY, and that is not a contradiction of "never remove".
  * An off-canvas panel whose links stay in the accessible tree is a keyboard trap: tab order walks through
- * destinations the user cannot see. So the closed drawer is genuinely absent — and the invariant it must
+ * destinations the user cannot see. So the closed drawer is genuinely absent, and the invariant it must
  * satisfy is that OPENING it yields the SAME destination set as the widest rail. That is what the responsive
  * contract asserts: it clicks the menu button at `triage` and compares the set. A destination dropped from the
  * narrow build fails there.
@@ -307,7 +307,7 @@ function SidebarNav({
   const [drawerOpen, setDrawerOpen] = useState(false);
   // ⛔ USER-CONTROLLED, AND PERSISTED AT THE DESIGNER'S OWN KEY. `navMode` narrows the rail when the
   // VIEWPORT is small; this is the operator narrowing it on a wide screen and having it remembered.
-  // Read once at mount so the first paint is already correct — a sidebar that expands and then
+  // Read once at mount so the first paint is already correct, a sidebar that expands and then
   // snaps shut is worse than one that never remembered.
   const [collapse, setCollapse] = useState<NavCollapse>(() =>
     readNavCollapse(typeof window === "undefined" ? null : window.localStorage),
@@ -321,7 +321,7 @@ function SidebarNav({
     );
   };
   // The narrow-viewport rail already has no room for labels, so it reads as collapsed regardless
-  // of the preference — the preference governs the WIDE case, which is what it was missing.
+  // of the preference, the preference governs the WIDE case, which is what it was missing.
   const collapsed = navMode === "rail" || collapse === "closed";
 
   if (navMode === "drawer") {
@@ -360,7 +360,7 @@ function SidebarNav({
     // ⛔ THE BRAND HEADER SITS OUTSIDE <nav>, AND THE RESPONSIVE CONTRACT IS WHY.
     //
     // The wordmark links to /dashboard, so putting it inside `#main-nav` added a SECOND link to a
-    // destination that was already there — and the contract, which compares the nav's destination
+    // destination that was already there, and the contract, which compares the nav's destination
     // SET across breakpoints, caught it immediately (10 where it expected 9).
     //
     // It was right to. A brand mark that happens to navigate is not a nav destination, and
@@ -372,7 +372,7 @@ function SidebarNav({
     >
       {/* ⛔ TWO TARGETS, TWO MEANINGS. The MARK toggles the rail; the WORDMARK goes to Overview.
           One combined click-target would have to pick one, and whichever it picked would surprise
-          half the people who clicked it. Collapsed, only the mark remains — and it is still the
+          half the people who clicked it. Collapsed, only the mark remains, and it is still the
           toggle, which is the only way back out. */}
       <div
         className={`mb-3 flex items-center ${
@@ -394,7 +394,7 @@ function SidebarNav({
           <NavLink
             to="/dashboard"
             className="min-w-0 leading-none"
-            // ⛔ NOT "Overview" — the nav already has a link to /dashboard with that exact name, so
+            // ⛔ NOT "Overview", the nav already has a link to /dashboard with that exact name, so
             // two links shared one accessible name and a screen reader announced them identically.
             // Playwright's strict mode caught it as an ambiguous locator, which is the same defect
             // wearing a test's clothes. The brand is a HOME affordance, not the destination's label.
@@ -402,7 +402,7 @@ function SidebarNav({
           >
             <Logo size={26} wordmarkOnly />
             {/* The design sets the tagline directly under the wordmark, 8.5px/1.6. Shared with the
-                desktop client through brand.tsx — one definition, so it cannot drift. */}
+                desktop client through brand.tsx, one definition, so it cannot drift. */}
             <Tagline className="mt-1" />
           </NavLink>
         )}
@@ -431,7 +431,7 @@ function SidebarNav({
  * The triage bottom bar: the on-call subset, one tap away, at `triage` only.
  *
  * It is a SECOND surface carrying destinations that already exist in the drawer, so it is derived from
- * NAV_DESTINATIONS rather than re-listed — a hand-written copy is how the two drift apart.
+ * NAV_DESTINATIONS rather than re-listed, a hand-written copy is how the two drift apart.
  */
 function TriageBar() {
   const items = NAV_DESTINATIONS.filter((i) => TRIAGE_SET.includes(i.to));
@@ -462,7 +462,7 @@ export function AppShell() {
   const email = state.status === "authed" ? state.user.email : "";
 
   async function onLogout() {
-    // ⛔ THE DESKTOP ARM IS GONE (S14.20 step 4) — this shell is dashboard chrome and the client
+    // ⛔ THE DESKTOP ARM IS GONE (S14.20 step 4), this shell is dashboard chrome and the client
     // never mounts it. Signing out of the CLIENT is `auth.logout()` on its own Settings pane, which
     // is where the credential and the keychain actually live.
     await logout();
@@ -502,15 +502,15 @@ export function AppShell() {
             </div>
           </header>
 
-          {/* ⛔ NO max-width. README: "Page body max content width: none — grids fill available width."
+          {/* ⛔ NO max-width. README: "Page body max content width: none, grids fill available width."
             The previous `max-w-3xl` capped EVERY screen at 768px, which is why S14.2's `columns` budget was
-            computed, asserted, and never consumable — dormant machinery in our own new code (docs/laws.md).
+            computed, asserted, and never consumable, dormant machinery in our own new code (docs/laws.md).
             Padding and gap are the README's: 20px 24px 28px, flex column, gap 14. */}
           <main
             className="tnx-page flex min-h-0 flex-1 flex-col gap-3.5 px-6 pb-[30px] pt-[34px] overflow-y-auto"
             data-columns={columns}
           >
-            {/* data-columns publishes the column BUDGET so a page grid can consume it — which nothing could do
+            {/* data-columns publishes the column BUDGET so a page grid can consume it, which nothing could do
               while this element capped the width at 768px. */}
             {state.status === "authed" && !state.user.email_verified && (
               <VerifyEmailBanner />

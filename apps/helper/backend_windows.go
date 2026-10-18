@@ -49,12 +49,12 @@ func hasV6Default(allowedIPs []string) bool {
 }
 
 // windowsBackend implements Backend on Windows: wireguard-go over a wintun adapter, a WFP
-// kill-switch (the vendored internal/wfp — the wireguard-windows filter set on a S6.7 PERSISTENT
+// kill-switch (the vendored internal/wfp, the wireguard-windows filter set on a S6.7 PERSISTENT
 // non-dynamic session + fixed provider GUID, so the block genuinely survives process death), and
 // winipcfg for addressing/routes. It mirrors backend_darwin's ordering and the BOUNDED
 // fail-closed model: the WFP objects are KERNEL-RESIDENT and outlive the process; Down / CleanStale
 // / `tunnex-helper --wfp-clean` remove them by enumerate-and-delete under our fixed provider GUID
-// (idempotent, no persisted token — the GUID IS the durable key); the Supervisor's dead-man + the
+// (idempotent, no persisted token, the GUID IS the durable key); the Supervisor's dead-man + the
 // auto-start service's startup CleanStale + reboot bound an un-recovered crash.
 type windowsBackend struct {
 	resolverMu sync.Mutex // serializes scoped resolver writes across reconnects
@@ -71,16 +71,16 @@ type windowsBackend struct {
 	epNH     netip.Addr
 	epPinned bool
 	// applied is the per-session BELIEF CACHE (S8.5 reduce) of the OS route-targets we believe are in the
-	// kernel — set on Up, reconciled by SetAllowedIPs, cleared on Down. NEVER persisted. See reconcileRoutes.
+	// kernel, set on Up, reconciled by SetAllowedIPs, cleared on Down. NEVER persisted. See reconcileRoutes.
 	applied map[string]bool
-	// peer* track the CURRENT gateway peer for a WF-A re-home (SetGatewayPeer) — the key to swap out plus
+	// peer* track the CURRENT gateway peer for a WF-A re-home (SetGatewayPeer), the key to swap out plus
 	// the allowed_ips/keepalive to preserve onto the new peer. Mirrors backend_darwin: peerPubKey seeds on
 	// Up + advances on each re-home; peerAllowedIPs seeds on Up + advances on every SetAllowedIPs push.
 	peerPubKey     string
 	peerAllowedIPs []string
 	peerKeepalive  int
 	// fullTunnel records whether the live tunnel is full (WFP kill-switch armed). A full-tunnel WF-A re-home
-	// needs a WFP CP carve-out (D-WFA-4) that is DEFERRED on Windows (S8.6b-win-carveout) — so SetGatewayPeer
+	// needs a WFP CP carve-out (D-WFA-4) that is DEFERRED on Windows (S8.6b-win-carveout), so SetGatewayPeer
 	// refuses full-tunnel here; split-tunnel re-home is a bare peer swap and works.
 	fullTunnel bool
 }
@@ -96,7 +96,7 @@ func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 	}
 
 	// Full tunnel is supported on Windows (S6.7): the WFP kill-switch is a PERSISTENT block
-	// that survives process death — proven live (taskkill /F mid-tunnel → zero cleartext
+	// that survives process death, proven live (taskkill /F mid-tunnel → zero cleartext
 	// egress v4+v6 on a physical-NIC pcap → recovery restores). The S6.9 guard + both dev
 	// bypass flags were removed together when that gate passed.
 
@@ -138,7 +138,7 @@ func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 		}
 	}
 
-	// CLEAN any stale Tunnex WFP kill-switch (S6.7: PERSISTENT — survives a prior crash) before
+	// CLEAN any stale Tunnex WFP kill-switch (S6.7: PERSISTENT, survives a prior crash) before
 	// (re)arming: a re-arm with our fixed GUID would else fail ALREADY_EXISTS, and a stale
 	// full-tunnel block must not persist under a new SPLIT tunnel. Idempotent enumerate-and-delete.
 	wfp.DisableFirewall()
@@ -157,17 +157,17 @@ func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 	}
 	luid := nt.LUID()
 
-	// ARM the kill-switch FIRST (before any routing) — ONLY for a full tunnel (a
+	// ARM the kill-switch FIRST (before any routing), ONLY for a full tunnel (a
 	// split tunnel leaves the rest of the user's traffic on the cleartext default BY
 	// DESIGN). EnableFirewall permits the tunnel adapter, loopback, DHCP/NDP, and THIS
 	// process, and blocks everything else. NOTE: the WFP permit lets our encrypted
 	// packets PASS the filter, but it does NOT stop the routing table from sending them
-	// into the tunnel — so a full tunnel STILL needs the physical endpoint route pinned
+	// into the tunnel, so a full tunnel STILL needs the physical endpoint route pinned
 	// below (review #1). The filters are kernel-resident and survive process death; removed by
 	// wfp.DisableFirewall (Down / CleanStale / --wfp-clean) by enumerate-and-delete under our
 	// fixed provider GUID. dnsRestrict (parsed up front) is EnableFirewall's restrictToDNSServers
 	// so blockDNS forces DNS to the tunnel resolver only; the 2nd param STAYS false (doNotRestrict
-	// — true would disarm the whole kill-switch).
+	//, true would disarm the whole kill-switch).
 	if cfg.FullTunnel {
 		if err := wfp.EnableFirewall(luid, false, dnsRestrict); err != nil {
 			_ = tdev.Close()
@@ -176,7 +176,7 @@ func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 			// aborts on failure, so there's no partial block). This must NOT be reported as
 			// fail-closed: FailClosed() here would be a no-op (b.dev is unset) and the Supervisor
 			// would set StateFailed = "kill-switch installed" while the box is on cleartext
-			// routing (review — false fail-closed). Surface a CLEAN pre-arm code so the Supervisor
+			// routing (review, false fail-closed). Surface a CLEAN pre-arm code so the Supervisor
 			// stays Down and the UI honestly says "not connected", not "protected".
 			return &ProtocolError{Code: "wfp_arm_failed", Msg: fmt.Sprintf("could not arm the Windows kill-switch: %v", err)}
 		}
@@ -219,7 +219,7 @@ func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 		dev.Close()
 		return fmt.Errorf("set address: %w", err)
 	}
-	// Baked routes go through the ONE reconciler (S8.5 reduce, #9/#10) — same delete-before-add + per-route
+	// Baked routes go through the ONE reconciler (S8.5 reduce, #9/#10), same delete-before-add + per-route
 	// discipline + single next-hop derivation as the pushed ranges. luid must be set first (routeCmd reads it).
 	b.luid = luid
 	b.applied = map[string]bool{}
@@ -232,7 +232,7 @@ func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 
 	// Pin the endpoint route on the PHYSICAL interface (review #1): with 0.0.0.0/1 on
 	// the tunnel, wireguard-go's own encrypted packets to the endpoint would otherwise
-	// match the tunnel route and loop — conn.NewDefaultBind() does NOT bind the socket
+	// match the tunnel route and loop, conn.NewDefaultBind() does NOT bind the socket
 	// to the physical NIC, so the loop is real, not merely theoretical.
 	if cfg.FullTunnel {
 		if epHost, _ := splitEndpoint(cfg.Endpoint); epHost != "" {
@@ -247,9 +247,9 @@ func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 
 	// FULL TUNNEL: point the system resolver at the tunnel DNS ON THE WINTUN ADAPTER
 	// (Story A). Adapter-scoped, so it AUTO-VANISHES when the adapter is torn down (Down /
-	// crash) — no backup/restore/strand, unlike macOS's per-service networksetup. Without
+	// crash), no backup/restore/strand, unlike macOS's per-service networksetup. Without
 	// this the OS keeps resolving via the (now WFP-blocked) LAN DNS and names don't
-	// resolve. v6 DNS only when a v6 default is tunnelled (else v6 stays dropped — no
+	// resolve. v6 DNS only when a v6 default is tunnelled (else v6 stays dropped, no
 	// NAT66, matching macOS). domains=nil (full tunnel = all DNS to the resolver).
 	if cfg.FullTunnel {
 		if len(dnsV4) > 0 {
@@ -276,7 +276,7 @@ func (b *windowsBackend) Up(cfg *TunnelConfig) error {
 }
 
 // SetAllowedIPs live-updates the peer's AllowedIPs (S8.5): the SAME uapi update as macOS (dev.IpcSet,
-// no handshake reset) — the crypto-route path is platform-identical. The OS-route full-sweep DIFFERS by
+// no handshake reset), the crypto-route path is platform-identical. The OS-route full-sweep DIFFERS by
 // platform: Windows reconciles via winipcfg AddRoute/DeleteRoute on the tunnel LUID (macOS uses the
 // `route` CLI). Never touches the device identity, the peer's keys/endpoint, or the WFP kill-switch.
 func (b *windowsBackend) SetAllowedIPs(peerPubKey string, allowedIPs []string) error {
@@ -293,7 +293,7 @@ func (b *windowsBackend) SetAllowedIPs(peerPubKey string, allowedIPs []string) e
 		return &ProtocolError{Code: "allowed_ips_apply_failed", Msg: err.Error()}
 	}
 	// Advance the peer cache so a subsequent WF-A re-home carries the LIVE routing, not the baked set.
-	// (review #5 — advancing before reconcileRoutes is correct: the cache feeds only the re-home crypto
+	// (review #5, advancing before reconcileRoutes is correct: the cache feeds only the re-home crypto
 	// allowed_ips, and a re-home never touches OS routes. See the darwin SetAllowedIPs note.)
 	b.peerAllowedIPs = append([]string(nil), allowedIPs...)
 	// OS-route full-sweep through the ONE reconciler (S8.5 reduce): delete-before-add, delete-stale-first,
@@ -301,16 +301,16 @@ func (b *windowsBackend) SetAllowedIPs(peerPubKey string, allowedIPs []string) e
 	return reconcileRoutes(b.applied, routeSet(allowedIPs), b.routeCmd)
 }
 
-// SetGatewayPeer live re-homes the tunnel onto a new gateway peer (WF-A) — a peer SWAP (the SAME uapi
+// SetGatewayPeer live re-homes the tunnel onto a new gateway peer (WF-A), a peer SWAP (the SAME uapi
 // swap as macOS: add-new-before-remove-old, no handshake reset) with the current peer's allowed_ips/
 // keepalive preserved. The device identity and the interface address are UNTOUCHED. OS routes point at the
 // LUID, not the peer, so a split-tunnel swap needs NO route reconcile. FULL-TUNNEL is REFUSED
 // (rehome_full_tunnel_unsupported): the WFP CP carve-out that a full-tunnel re-home needs (D-WFA-4, so the
-// control channel + the new gateway are permitted) is DEFERRED on Windows (S8.6b-win-carveout) — until then
+// control channel + the new gateway are permitted) is DEFERRED on Windows (S8.6b-win-carveout), until then
 // a Windows full-tunnel device stranded on a dead hub needs a manual reconnect. Split-tunnel is unaffected.
 func (b *windowsBackend) SetGatewayPeer(newPubKey, newEndpoint string) error {
 	// Resolve BEFORE taking b.mu (review #1): DNS latency must never hold a lock the fail-closed path needs
-	// (the kill-switch-no-unbounded-I/O law — see the darwin backend's SetGatewayPeer note).
+	// (the kill-switch-no-unbounded-I/O law, see the darwin backend's SetGatewayPeer note).
 	ep, err := resolveEndpoint(newEndpoint)
 	if err != nil {
 		return err
@@ -333,7 +333,7 @@ func (b *windowsBackend) SetGatewayPeer(newPubKey, newEndpoint string) error {
 	if err := b.dev.IpcSet(uapi); err != nil {
 		return &ProtocolError{Code: "gateway_peer_apply_failed", Msg: err.Error()}
 	}
-	// WF-A-obs-1: breadcrumb for a successful swap (pubkeys are public) — a succeeded vs a silently-looped
+	// WF-A-obs-1: breadcrumb for a successful swap (pubkeys are public), a succeeded vs a silently-looped
 	// re-home must be distinguishable in the logs.
 	log.Printf("gateway_peer_swapped: pubkey %s -> %s, endpoint -> %s, full_tunnel=%v (no bounce)", b.peerPubKey, newPubKey, ep, b.fullTunnel)
 	b.peerPubKey = newPubKey
@@ -341,7 +341,7 @@ func (b *windowsBackend) SetGatewayPeer(newPubKey, newEndpoint string) error {
 }
 
 // routeCmd is the windows per-target route seam for reconcileRoutes: add|delete a route on the tunnel LUID
-// (winipcfg). The next-hop family (unspecified on-link, v4/v6 by target) is derived HERE ONCE — #10 reduce
+// (winipcfg). The next-hop family (unspecified on-link, v4/v6 by target) is derived HERE ONCE, #10 reduce
 // (it was copy-pasted across Up's loop + SetAllowedIPs' add + delete). #9/#10: Up's baked routes AND the
 // pushed ranges go through this ONE path, so they can never install with different attributes.
 func (b *windowsBackend) routeCmd(add bool, target string) error {
@@ -369,7 +369,7 @@ func (b *windowsBackend) routeCmd(add bool, target string) error {
 // pinEndpointRoute installs a host route for the endpoint via the PHYSICAL default
 // next-hop (the lowest-metric default route NOT on the tunnel adapter), so WG's own
 // encrypted packets egress physically instead of matching the tunnel's split-default.
-// Idempotent (a prior FailClosed/crash may have left it — the route is on the physical
+// Idempotent (a prior FailClosed/crash may have left it, the route is on the physical
 // interface and survives the wintun teardown, like the macOS endpoint route).
 func (b *windowsBackend) pinEndpointRoute(ep netip.Addr, tunnelLUID uint64) error {
 	fam := winipcfg.AddressFamily(windows.AF_INET)
@@ -407,7 +407,7 @@ func (b *windowsBackend) pinEndpointRoute(ep netip.Addr, tunnelLUID uint64) erro
 	}
 	selected, found := selectPhysicalDefaultRoute(candidates)
 	if !found {
-		return nil // no physical default — nothing to loop through
+		return nil // no physical default, nothing to loop through
 	}
 	luid := winipcfg.LUID(selected.LUID)
 	nh := selected.NextHop
@@ -444,7 +444,7 @@ func (b *windowsBackend) Down() error {
 		// has zero egress while the UI shows "Disconnected". Report it (with the recovery hint)
 		// instead of a silent strand; keep b.armed=true so a later CleanStale/reboot still targets it.
 		if err := wfp.Clean(); err != nil {
-			return fmt.Errorf("removing the kill-switch failed — networking may be blocked; recover with `tunnex-helper --wfp-clean` (or reboot): %w", err)
+			return fmt.Errorf("removing the kill-switch failed, networking may be blocked; recover with `tunnex-helper --wfp-clean` (or reboot): %w", err)
 		}
 		b.armed = false
 	}
@@ -463,7 +463,7 @@ func (b *windowsBackend) FailClosed() error {
 		b.dev, b.tunDev = nil, nil
 	}
 	// UNCONDITIONAL (S8.5 #3): clear luid + the belief map on EVERY terminal transition, even when Up failed
-	// LATE (pinEndpointRoute/SetDNS after the route reconcile seeded `applied`, before b.dev was assigned) —
+	// LATE (pinEndpointRoute/SetDNS after the route reconcile seeded `applied`, before b.dev was assigned) ,
 	// FailClosed's `if b.dev != nil` guard would otherwise leave a populated map for a destroyed adapter.
 	b.luid, b.applied = 0, nil
 	b.relay = nil
@@ -473,9 +473,9 @@ func (b *windowsBackend) FailClosed() error {
 func (b *windowsBackend) CleanStale() error {
 	// Release a PERSISTENT Tunnex WFP block stranded by a PRIOR process that exited without a
 	// graceful Down (crash / kill). wfp.Clean enumerate-and-deletes every object under our fixed
-	// provider GUID — idempotent (not-found = success). This is the reboot/startup RECOVERY: the
+	// provider GUID, idempotent (not-found = success). This is the reboot/startup RECOVERY: the
 	// service is auto-start, so a boot runs it before serving and un-wedges the host (same code
-	// path as --wfp-clean). RETURN the error — a boot-time self-heal that FAILS must not be
+	// path as --wfp-clean). RETURN the error, a boot-time self-heal that FAILS must not be
 	// silent; the Supervisor's SelfHeal logs it (main.go), so a wedged host is diagnosable.
 	b.mu.Lock()
 	defer b.mu.Unlock()

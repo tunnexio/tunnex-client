@@ -9,13 +9,13 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 // ⛔ EVERY `var(--tnx-*)` MUST NAME A TOKEN THAT EXISTS.
 //
 // THE DEFECT THIS CLOSES, found on a founder's screen and not by any gate. `NodeLink` rendered
-// `fill="var(--tnx-accent-500)"`. There is no `--tnx-accent-500` — the token is `--tnx-accent`. CSS does not
+// `fill="var(--tnx-accent-500)"`. There is no `--tnx-accent-500`, the token is `--tnx-accent`. CSS does not
 // error on an undefined custom property: `var()` with no fallback resolves to the *initial* value, so the
 // fill silently became BLACK. Two enormous black discs on a dark panel.
 //
 // ⚠ AND IT HAD BEEN SHIPPING SINCE S14.3 IN A SECOND PLACE: the Donut's `neutral` slice used
-// `var(--tnx-ink-600)`, which also does not exist. Every neutral slice on the Overview — a screen already
-// reviewed and approved — has been rendering black.
+// `var(--tnx-ink-600)`, which also does not exist. Every neutral slice on the Overview, a screen already
+// reviewed and approved, has been rendering black.
 //
 // WHY NOTHING CAUGHT IT:
 //   · tsc          a string is a string
@@ -24,7 +24,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 //   · the gallery  a black disc on a near-black panel looks like a deliberate dark dot
 //
 // THE CLASS: A TYPO IN A STRING THAT THE PLATFORM TREATS AS VALID. The same shape as the pf-anchor
-// double-escape and the `NET :=` default — no error anywhere, just a silently wrong result.
+// double-escape and the `NET :=` default, no error anywhere, just a silently wrong result.
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const e of readdirSync(dir)) {
@@ -59,7 +59,7 @@ describe("⛔ CSS custom-property references are held to the generated token set
   const defined = definedTokens();
   const referenced = referencedTokens();
 
-  it("the parse is non-trivial — a census over zero tokens cannot fail", () => {
+  it("the parse is non-trivial, a census over zero tokens cannot fail", () => {
     // Both sides, so neither a broken regex nor an empty source can make this vacuously green.
     expect(defined.size).toBeGreaterThanOrEqual(20);
     expect(referenced.size).toBeGreaterThanOrEqual(3);
@@ -71,7 +71,7 @@ describe("⛔ CSS custom-property references are held to the generated token set
       .map(([name, files]) => `${name}  (${[...new Set(files)].join(", ")})`);
     expect(
       dead,
-      `dead token references — CSS resolves these to the INITIAL value (usually black), silently:\n  ${dead.join("\n  ")}`,
+      `dead token references, CSS resolves these to the INITIAL value (usually black), silently:\n  ${dead.join("\n  ")}`,
     ).toEqual([]);
   });
 });

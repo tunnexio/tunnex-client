@@ -1,5 +1,5 @@
 #!/bin/bash
-# S6.5a — produce the UNSIGNED installable artifact end to end:
+# S6.5a, produce the UNSIGNED installable artifact end to end:
 #   web bundle → client main/preload (tsc) → staged helper → electron-builder → SHA256SUMS
 # Usage: pack.sh [mac|win]   (default: current platform)
 set -euo pipefail
@@ -19,10 +19,10 @@ bash scripts/stage-helper.sh "$TARGET"
 
 echo ">> [4/5] electron-builder ($TARGET, UNSIGNED)"
 # CSC_IDENTITY_AUTO_DISCOVERY=false: never pick up a stray Developer ID from the
-# keychain — S6.5a is deliberately unsigned (signing is S6.5b).
+# keychain, S6.5a is deliberately unsigned (signing is S6.5b).
 CSC_IDENTITY_AUTO_DISCOVERY=false npx electron-builder --"$TARGET" --config electron-builder.yml
 
 echo ">> [5/5] checksums"
 bash scripts/sha256sums.sh
 
-echo ">> DONE — artifacts + SHA256SUMS in $HERE/release"
+echo ">> DONE, artifacts + SHA256SUMS in $HERE/release"

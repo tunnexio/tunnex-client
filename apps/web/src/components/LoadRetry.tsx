@@ -1,4 +1,4 @@
-// LoadRetry — the shared "a load FAILED, here is a legible retry" affordance (S7.4a no-false-empty
+// LoadRetry, the shared "a load FAILED, here is a legible retry" affordance (S7.4a no-false-empty
 // discipline). Extracted from the byte-identical copies Access + Sites carried (review #7) so a styling
 // or a11y fix lands in one place. A transient API error must be legible + retryable, never rendered as
 // "none / not an admin".

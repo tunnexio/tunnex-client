@@ -13,7 +13,7 @@ import { Button, ErrorText, Field, Input } from "../components/ui";
  * Accepting provisions/links the user and adds the membership. It does NOT auto-login
  * (the link is admin-visible in the dashboard, so a session must never be minted from
  * it): the invitee sets a password here, then signs in explicitly and lands in the
- * org (RequireOrg passes — the membership now exists).
+ * org (RequireOrg passes, the membership now exists).
  */
 export default function AcceptInvite() {
   const [params] = useSearchParams();

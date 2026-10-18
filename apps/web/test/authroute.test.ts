@@ -3,9 +3,9 @@ import { resolveMfaGateRoute } from "../src/lib/authroute";
 
 // Pins the MFA-enrollment gate's client routing in BOTH directions (S7.5.5 D8 + the WF-3 UI-walk
 // finding). The original code had only the confinement direction; a user whose gate had cleared while
-// on /enroll-mfa was stranded there with no exit. The WF-3 case below is the release journey — it
+// on /enroll-mfa was stranded there with no exit. The WF-3 case below is the release journey, it
 // fails loudly if the release branch is ever removed, so the trap cannot silently return.
-describe("resolveMfaGateRoute — MFA-enrollment gate routing (confine + release)", () => {
+describe("resolveMfaGateRoute, MFA-enrollment gate routing (confine + release)", () => {
   it("gated user OFF the ceremony → confined to /enroll-mfa", () => {
     expect(resolveMfaGateRoute(true, "/dashboard")).toBe("/enroll-mfa");
     expect(resolveMfaGateRoute(true, "/settings")).toBe("/enroll-mfa");

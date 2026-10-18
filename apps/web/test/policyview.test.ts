@@ -60,12 +60,12 @@ describe("D-a4 mode-enable confirm = pure function of the rule COUNT", () => {
     expect(c.body).toMatch(/your own access/i);
   });
   it("never computes a blast radius (no device names / counts of affected devices)", () => {
-    // Copy is a function of the RULE count only — it must not claim which devices are hit.
+    // Copy is a function of the RULE count only, it must not claim which devices are hit.
     expect(modeEnableConfirm(5).body).not.toMatch(/device/i);
   });
 });
 
-describe("policyGate — enterprise + RBAC + verified-email", () => {
+describe("policyGate, enterprise + RBAC + verified-email", () => {
   it("open edition → nothing, even for an owner", () => {
     const g = policyGate({
       role: "owner",
@@ -108,7 +108,7 @@ describe("policyGate — enterprise + RBAC + verified-email", () => {
   });
 });
 
-describe("D-a6 rule label — NEVER omit; DELETED ≠ UNRESOLVED", () => {
+describe("D-a6 rule label, NEVER omit; DELETED ≠ UNRESOLVED", () => {
   const groups = [G("g-eng", "Engineering"), G("g-db", "Databases")];
   const resources = [R("r-net", "10.0.5.0/24")];
 
@@ -135,7 +135,7 @@ describe("D-a6 rule label — NEVER omit; DELETED ≠ UNRESOLVED", () => {
     );
   });
 
-  it("carries managed_by_operator onto the row (S10.2 D2 cond 1 — badge + withhold-edit source)", () => {
+  it("carries managed_by_operator onto the row (S10.2 D2 cond 1, badge + withhold-edit source)", () => {
     const managed = {
       id: "m",
       src_group_id: "g-eng",
@@ -177,7 +177,7 @@ describe("D-a6 rule label — NEVER omit; DELETED ≠ UNRESOLVED", () => {
   });
 
   it("WF-8: site rules resolve to NAMES, and two UUIDv7-prefix-sharing sites render distinguishably", () => {
-    // UUIDv7 (time-ordered) — created seconds apart, so they SHARE the first 8 chars (the demo bug).
+    // UUIDv7 (time-ordered), created seconds apart, so they SHARE the first 8 chars (the demo bug).
     const azure = {
       id: "019f762b-b62b-7aa8-9362-249ecf231395",
       name: "azure-site",
@@ -223,10 +223,10 @@ describe("D-a6 rule label — NEVER omit; DELETED ≠ UNRESOLVED", () => {
     expect(row.src.state).toBe("deleted");
     expect(row.src.label).toMatch(/deleted group/i);
     expect(row.broken).toBe(true);
-    expect(row.id).toBe("3"); // still present — never hidden
+    expect(row.id).toBe("3"); // still present, never hidden
   });
 
-  it("set FAILED TO LOAD → 'unresolved — refresh', NOT 'deleted' (no false alarm)", () => {
+  it("set FAILED TO LOAD → 'unresolved, refresh', NOT 'deleted' (no false alarm)", () => {
     const rule: PolicyRule = {
       id: "4",
       src_group_id: "g-eng",
@@ -258,7 +258,7 @@ describe("D-a6 rule label — NEVER omit; DELETED ≠ UNRESOLVED", () => {
   });
 });
 
-describe("S8.7 ruleRow — cidr source: literal label + read-time warn badge (served verbatim, no client re-derivation)", () => {
+describe("S8.7 ruleRow, cidr source: literal label + read-time warn badge (served verbatim, no client re-derivation)", () => {
   const grp = [G("g1", "Eng")];
   const cidrRule = (outside: boolean): PolicyRule =>
     ({
@@ -273,21 +273,21 @@ describe("S8.7 ruleRow — cidr source: literal label + read-time warn badge (se
     const row = ruleRow(cidrRule(false), grp, [], [], [], LOADED);
     expect(row.src.label).toBe("172.31.17.64/32");
     expect(row.src.state).toBe("ok");
-    expect(row.broken).toBe(false); // an out-of-world cidr is NOT broken — a valid rule that WARNS
+    expect(row.broken).toBe(false); // an out-of-world cidr is NOT broken, a valid rule that WARNS
   });
-  it("the warn badge is the SERVED field verbatim — appears when outside, clears when inside (both directions)", () => {
+  it("the warn badge is the SERVED field verbatim, appears when outside, clears when inside (both directions)", () => {
     expect(
       ruleRow(cidrRule(true), grp, [], [], [], LOADED).cidrOutsideRanges,
     ).toBe(true);
     expect(
       ruleRow(cidrRule(false), grp, [], [], [], LOADED).cidrOutsideRanges,
     ).toBe(false);
-    // still not "broken" even when warning — warn-not-refuse
+    // still not "broken" even when warning, warn-not-refuse
     expect(ruleRow(cidrRule(true), grp, [], [], [], LOADED).broken).toBe(false);
   });
 });
 
-describe("S10.3 ruleRow — k8s_service dst: FQDN label + vanished warn badge (served verbatim)", () => {
+describe("S10.3 ruleRow, k8s_service dst: FQDN label + vanished warn badge (served verbatim)", () => {
   const grp = [G("g1", "Eng")];
   const svc = [
     {
@@ -347,7 +347,7 @@ describe("S10.3 ruleRow — k8s_service dst: FQDN label + vanished warn badge (s
   });
 });
 
-describe("loadOne — the class armed-guard: a failure NEVER reads as absence", () => {
+describe("loadOne, the class armed-guard: a failure NEVER reads as absence", () => {
   it("non-2xx (error present, data undefined) → NOT ok (never a reassuring empty)", async () => {
     const r = await loadOne(async () => ({
       data: undefined,
@@ -374,7 +374,7 @@ describe("loadOne — the class armed-guard: a failure NEVER reads as absence", 
   });
 });
 
-describe("S8.3 rulesSummary — states enumerated, derived from Loaded<T> (failed never reads as 0-rules)", () => {
+describe("S8.3 rulesSummary, states enumerated, derived from Loaded<T> (failed never reads as 0-rules)", () => {
   const ok = <T>(data: T): Loaded<T> => ({ ok: true, data });
   const fail: Loaded<never> = { ok: false, error: "boom" };
 
@@ -409,7 +409,7 @@ describe("S8.3 rulesSummary — states enumerated, derived from Loaded<T> (faile
     expect(s.loud).toBe(true);
     expect(s.text).toMatch(/denied/i);
   });
-  it("enforcing + N rules → 'N rules — default-deny active', not loud; singular at 1", () => {
+  it("enforcing + N rules → 'N rules, default-deny active', not loud; singular at 1", () => {
     expect(
       rulesSummary({ modeResult: ok("enforcing"), rulesResult: ok(3) }).text,
     ).toMatch(/3 rules/);
@@ -422,7 +422,7 @@ describe("S8.3 rulesSummary — states enumerated, derived from Loaded<T> (faile
   });
 });
 
-describe("S8.2c D5 ruleBody — the Access builder now creates SITE-subject rules (via the API, not a DB insert)", () => {
+describe("S8.2c D5 ruleBody, the Access builder now creates SITE-subject rules (via the API, not a DB insert)", () => {
   const base = {
     src: "g1",
     srcUser: "u1",
@@ -520,11 +520,11 @@ describe("S8.2c D5 ruleBody — the Access builder now creates SITE-subject rule
   });
 });
 
-describe("[291] sectionRender — legibility signals COMPOSE, never compete", () => {
+describe("[291] sectionRender, legibility signals COMPOSE, never compete", () => {
   it("loadError + notice both set → retry shows AND notice STILL shows (content hidden)", () => {
     const v = sectionRender(
       "couldn't load",
-      "old rule still active — retry removal",
+      "old rule still active, retry removal",
     );
     expect(v.showRetry).toBe(true);
     expect(v.showNotice).toBe(true); // the partial-swap warning is NOT masked by the load failure
@@ -546,7 +546,7 @@ describe("[291] sectionRender — legibility signals COMPOSE, never compete", ()
   });
 });
 
-describe("notices reduction — derived from staleRuleIds (single source of truth)", () => {
+describe("notices reduction, derived from staleRuleIds (single source of truth)", () => {
   const R = (id: string) => ({ id }) as PolicyRule;
 
   it("staleNoticeText: none → null; one → the partial message; many → a count line", () => {
@@ -559,13 +559,13 @@ describe("notices reduction — derived from staleRuleIds (single source of trut
     );
   });
 
-  it("[371] a clean create never drops the warning — the set is only pruned by pruneStaleRuleIds", () => {
+  it("[371] a clean create never drops the warning, the set is only pruned by pruneStaleRuleIds", () => {
     // onDone(clean) adds nothing; the derived notice still reflects the live set.
     const set = ["X"];
     expect(staleNoticeText(set)).not.toBeNull(); // still shown after any unrelated success
   });
 
-  it("[A] pruneStaleRuleIds NEVER clears on a FAILED load (loadOk=false) — persists", () => {
+  it("[A] pruneStaleRuleIds NEVER clears on a FAILED load (loadOk=false), persists", () => {
     expect(pruneStaleRuleIds(["X"], false, [])).toEqual(["X"]);
     expect(pruneStaleRuleIds(["X"], false, [R("Y")])).toEqual(["X"]);
   });
@@ -575,13 +575,13 @@ describe("notices reduction — derived from staleRuleIds (single source of trut
     expect(pruneStaleRuleIds(["X"], true, [R("X"), R("Y")])).toEqual(["X"]); // unrelated Y present, X kept
   });
 
-  it("[B] sequential partials — per-id prune, the first stale id is NOT orphaned", () => {
+  it("[B] sequential partials, per-id prune, the first stale id is NOT orphaned", () => {
     // Two partials tracked; a successful load where only Z resolved keeps X.
     expect(pruneStaleRuleIds(["X", "Z"], true, [R("X")])).toEqual(["X"]);
   });
 });
 
-describe("[75]+[101] accessView — upsell needs only edition; role in-flight is not the gate", () => {
+describe("[75]+[101] accessView, upsell needs only edition; role in-flight is not the gate", () => {
   const base = {
     fatal: false,
     loadError: false,
@@ -596,7 +596,7 @@ describe("[75]+[101] accessView — upsell needs only edition; role in-flight is
   // ⛔ [75] IS REVERSED, AND IT PINNED THE DEFECT. It asserted "non-enterprise + members-fail -> upsell, NOT
   // role_retry", on the reasoning that role is irrelevant once the edition gate fires. THAT REASONING IS THE
   // BUG (S14.12 D2): the server answers `forbidden` to an open-edition MEMBER and `edition_required` to an
-  // open-edition OWNER, so the role decides WHICH refusal is true — and when the role failed to load we do
+  // open-edition OWNER, so the role decides WHICH refusal is true, and when the role failed to load we do
   // not know which. `upsell` there asserts "you would get this if you upgraded", which is FALSE for a member.
   it("⛔ non-enterprise + role UNKNOWN -> role_retry, because which refusal is true depends on the role", () => {
     expect(
@@ -609,7 +609,7 @@ describe("[75]+[101] accessView — upsell needs only edition; role in-flight is
     ).toBe("role_retry");
   });
 
-  it("⛔ OPEN + MEMBER -> member_gate, NEVER upsell — the S14.12 defect, measured on the open stack", () => {
+  it("⛔ OPEN + MEMBER -> member_gate, NEVER upsell, the S14.12 defect, measured on the open stack", () => {
     // GET /policies as member@ on :8081 answers 403 forbidden, not edition_required. Selling Enterprise to a
     // caller whose role forbids the feature on ANY edition is the S14.5 halt running forward.
     expect(
@@ -622,7 +622,7 @@ describe("[75]+[101] accessView — upsell needs only edition; role in-flight is
     ).toBe("member_gate");
   });
 
-  it("OPEN + OWNER -> upsell — the upsell reaches whoever could actually use it", () => {
+  it("OPEN + OWNER -> upsell, the upsell reaches whoever could actually use it", () => {
     // Both arms of the same gate. Without this, "always member_gate" would satisfy the assertion above.
     expect(
       accessView({
@@ -634,7 +634,7 @@ describe("[75]+[101] accessView — upsell needs only edition; role in-flight is
     ).toBe("upsell");
   });
 
-  it("ENTERPRISE + member -> member_gate — the role answer is the same on both editions", () => {
+  it("ENTERPRISE + member -> member_gate, the role answer is the same on both editions", () => {
     expect(
       accessView({
         ...base,
@@ -665,7 +665,7 @@ describe("[75]+[101] accessView — upsell needs only edition; role in-flight is
   });
 });
 
-describe("[0] roleFromMembers — a FAILED members load is NOT 'member' (no false lockout)", () => {
+describe("[0] roleFromMembers, a FAILED members load is NOT 'member' (no false lockout)", () => {
   const me = "u-me";
   it("failed load → failed:true, NO role (caller shows retry, not the manage-gate)", () => {
     const res = roleFromMembers(
@@ -688,7 +688,7 @@ describe("[0] roleFromMembers — a FAILED members load is NOT 'member' (no fals
   });
 });
 
-describe("D-a5 swapRule — CREATE-THEN-DELETE, gap-free, LEGIBLE partial", () => {
+describe("D-a5 swapRule, CREATE-THEN-DELETE, gap-free, LEGIBLE partial", () => {
   it("happy path: create then delete → replaced", async () => {
     const calls: string[] = [];
     const out = await swapRule(
@@ -731,7 +731,7 @@ describe("D-a5 swapRule — CREATE-THEN-DELETE, gap-free, LEGIBLE partial", () =
       oldId: "old-1",
       error: "delete failed",
     });
-    // Caller uses this to show BOTH rules + a retry — never a silent duplicate.
+    // Caller uses this to show BOTH rules + a retry, never a silent duplicate.
   });
 });
 
@@ -816,7 +816,7 @@ describe("S7.5.4 extendErrorCopy", () => {
   });
 });
 
-describe("S7.5.4 attributionLabel (rider 1 — absence is visible)", () => {
+describe("S7.5.4 attributionLabel (rider 1, absence is visible)", () => {
   it("device present + user unresolved shows 'device X · user unknown', never blank", () => {
     expect(attributionLabel({ deviceId: "dev-abc12345", userId: null })).toBe(
       "device dev-abc1… · user unknown",
@@ -858,7 +858,7 @@ describe("S7.5.4 activeMembers (D1 picker constraint)", () => {
 
 import { canEditRuleInModal } from "../src/lib/policyview";
 
-describe("canEditRuleInModal — site rules are NOT editable in the group/resource modal (S8.1 dst, S8.2 src)", () => {
+describe("canEditRuleInModal, site rules are NOT editable in the group/resource modal (S8.1 dst, S8.2 src)", () => {
   it("group and resource rules (with a group/user source) are editable", () => {
     expect(canEditRuleInModal({ src_kind: "group", dst_kind: "group" })).toBe(
       true,
@@ -867,7 +867,7 @@ describe("canEditRuleInModal — site rules are NOT editable in the group/resour
       true,
     );
   });
-  it("a site-DST rule is NOT editable here (would silently rewrite it — write-guard, not display)", () => {
+  it("a site-DST rule is NOT editable here (would silently rewrite it, write-guard, not display)", () => {
     expect(canEditRuleInModal({ src_kind: "group", dst_kind: "site" })).toBe(
       false,
     );
@@ -881,10 +881,10 @@ describe("canEditRuleInModal — site rules are NOT editable in the group/resour
 
 // (The duplicate `import { ruleRow }` that stood here was removed 2026-08-01: it re-imported the SAME symbol
 // already imported at the top of this file, from the same module. A genuine TS2300 that no gate had ever seen,
-// because tsconfig included only `src`. Behaviourally benign — both bindings resolved to production `ruleRow`,
+// because tsconfig included only `src`. Behaviourally benign, both bindings resolved to production `ruleRow`,
 // so these assertions were exercising production all along.)
 
-describe("ruleRow — a site-dst rule renders as a site, NEVER a broken 'deleted resource' (S8.1 #2)", () => {
+describe("ruleRow, a site-dst rule renders as a site, NEVER a broken 'deleted resource' (S8.1 #2)", () => {
   it("dst_kind='site' → site label, state ok, not broken", () => {
     const rule = {
       id: "r1",
@@ -919,7 +919,7 @@ import {
   ruleSourceReady,
 } from "../src/lib/policyview";
 
-describe("defaultSrcKind / defaultDstKind — the modal opens on a kind that HAS options (re-review #4)", () => {
+describe("defaultSrcKind / defaultDstKind, the modal opens on a kind that HAS options (re-review #4)", () => {
   it("an editing rule's kind always wins", () => {
     expect(
       defaultDstKind({
@@ -1008,7 +1008,7 @@ describe("disableConfirmText (F3)", () => {
 
 import { resPortsValid } from "../src/lib/policyview";
 
-describe("resPortsValid (Feature 1 — resource port scope, client UX gate; server authoritative)", () => {
+describe("resPortsValid (Feature 1, resource port scope, client UX gate; server authoritative)", () => {
   it("both blank = all ports (valid)", () =>
     expect(resPortsValid("", "")).toBe(true));
   it("a high without a low is invalid", () =>
@@ -1027,7 +1027,7 @@ describe("resPortsValid (Feature 1 — resource port scope, client UX gate; serv
     expect(resPortsValid("80.5", "")).toBe(false));
 });
 
-describe("grantControls — the withhold decision (M3)", () => {
+describe("grantControls, the withhold decision (M3)", () => {
   it("withholds every mutation on a managed grant, offers them otherwise", () => {
     expect(grantControls({ managedByOperator: true }).withheld).toBe(true);
     expect(
@@ -1073,10 +1073,10 @@ describe("grantControls — the withhold decision (M3)", () => {
 });
 
 // ── D3: THE THREE EMPTY STATES, BOTH DIRECTIONS ─────────────────────────────────────────────────────────
-// The founder's framing is the assertion: "failed — retry" says WE DO NOT KNOW; "0 rules while enforcing"
+// The founder's framing is the assertion: "failed, retry" says WE DO NOT KNOW; "0 rules while enforcing"
 // says WE KNOW, AND THE ANSWER IS EVERYTHING IS DENIED. Rendering the first as the second is
 // reassuring-empty; rendering the second as the first is alarming about a state that is correct.
-describe("rulesEmptyState — three claims about knowledge, never one message", () => {
+describe("rulesEmptyState, three claims about knowledge, never one message", () => {
   const ok = <T>(data: T) => ({ ok: true as const, data });
   const bad = { ok: false as const, error: "boom" };
 
@@ -1110,7 +1110,7 @@ describe("rulesEmptyState — three claims about knowledge, never one message", 
     expect(c.text).not.toMatch(/could not|refresh/i);
   });
 
-  it("⛔ 0 rules with mode OFF denies NOTHING — the old copy asserted the opposite", () => {
+  it("⛔ 0 rules with mode OFF denies NOTHING, the old copy asserted the opposite", () => {
     // `rules.length === 0` used to print "under Enforcing, all device-to-device traffic is denied"
     // regardless of mode. The demo org's mode is `off`, so that sentence was false.
     const c = rulesEmptyCopy(
@@ -1124,7 +1124,7 @@ describe("rulesEmptyState — three claims about knowledge, never one message", 
     expect(c.text).toMatch(/nothing is being denied/i);
   });
 
-  it("an UNKNOWN mode is `failed` — the consequence sentence depends on it", () => {
+  it("an UNKNOWN mode is `failed`, the consequence sentence depends on it", () => {
     expect(
       rulesEmptyState({ rulesResult: ok(0), modeResult: bad, renderedCount: 0 })
         .kind,
@@ -1154,8 +1154,8 @@ describe("rulesEmptyState — three claims about knowledge, never one message", 
   });
 });
 
-describe("flowGraphState — the threshold is a variable, not a constant", () => {
-  it("⛔ BOTH SIDES OF THE THRESHOLD, in one test — mechanism ⑨", () => {
+describe("flowGraphState, the threshold is a variable, not a constant", () => {
+  it("⛔ BOTH SIDES OF THE THRESHOLD, in one test, mechanism ⑨", () => {
     // A test that only ever sees the graph drawn cannot tell a threshold from a constant. Asserting the
     // boundary exactly is what makes it a threshold.
     expect(flowGraphState(FLOW_GRAPH_MAX_RULES).kind).toBe("draw");
@@ -1174,12 +1174,12 @@ describe("flowGraphState — the threshold is a variable, not a constant", () =>
     expect(flowGraphNote(flowGraphState(3))).toBeNull();
   });
 
-  it("zero rules is WITHHELD-EMPTY, not withheld-too-many — different reasons, different copy", () => {
+  it("zero rules is WITHHELD-EMPTY, not withheld-too-many, different reasons, different copy", () => {
     expect(flowGraphState(0).kind).toBe("withheld_empty");
     expect(flowGraphNote(flowGraphState(0))).not.toMatch(/too many/i);
   });
 
-  it("the threshold is DERIVED, so it is pinned — changing it silently must fail", () => {
+  it("the threshold is DERIVED, so it is pinned, changing it silently must fail", () => {
     // The derivation lives beside the constant; this pins the value so a bump is a deliberate edit with a
     // test change, never a drive-by.
     expect(FLOW_GRAPH_MAX_RULES).toBe(24);
@@ -1234,7 +1234,7 @@ describe("a deactivated per-user subject is a FACT, never a warning", () => {
   });
 });
 
-describe("flowLayout — the cap and the ordering, both ours to design", () => {
+describe("flowLayout, the cap and the ordering, both ours to design", () => {
   const e = (id: string, src: string, dst: string, temp = false) => ({
     id,
     src,
@@ -1244,7 +1244,7 @@ describe("flowLayout — the cap and the ordering, both ours to design", () => {
     dstKind: "resource" as const,
   });
 
-  it("⛔ THE CAP AT BOTH SIDES — 4 fits whole, 5 is capped and the remainder is COUNTED", () => {
+  it("⛔ THE CAP AT BOTH SIDES, 4 fits whole, 5 is capped and the remainder is COUNTED", () => {
     const four = flowLayout(
       ["a", "b", "c", "d"].map((x) => e(x, "s" + x, "d" + x)),
     );
@@ -1275,7 +1275,7 @@ describe("flowLayout — the cap and the ordering, both ours to design", () => {
   });
 
   it("⛔ THE PROPERTY, NOT THE PROXY: crossings go DOWN versus insertion order, counted", () => {
-    // "the ordering function ran" is a proxy. "crossings went down" is the property — the same distinction
+    // "the ordering function ran" is a proxy. "crossings went down" is the property, the same distinction
     // the coverage threshold turns on. MEASURED on the live 11-rule fixture: insertion 8 -> ordered 2.
     //
     // ⛔ AND IT DOES NOT REACH ZERO, WHICH IS HONEST. A bipartite graph with genuinely tangled edges cannot;
@@ -1318,7 +1318,7 @@ describe("flowLayout — the cap and the ordering, both ours to design", () => {
     expect(after).toBeLessThanOrEqual(2); // pinned at the measured value; a regression is a red
   });
 
-  it("⛔ A KNOWN-CROSSING INPUT COMES OUT ORDERED — the cap alone does not fix the tangle", () => {
+  it("⛔ A KNOWN-CROSSING INPUT COMES OUT ORDERED, the cap alone does not fix the tangle", () => {
     // Deliberately reversed: insertion order puts every destination opposite its source.
     const edges = [
       e("1", "s1", "d4"),
@@ -1351,9 +1351,9 @@ describe("flowLayout — the cap and the ordering, both ours to design", () => {
   });
 });
 
-describe("flowGlyph / flowTag — every arm of BOTH unions, exhaustively", () => {
+describe("flowGlyph / flowTag, every arm of BOTH unions, exhaustively", () => {
   // ⛔ THE DEFECT THIS REPLACES: the kind was guessed by matching the label against members, and
-  // `label.startsWith(m.name)` is ALWAYS TRUE when a member has an empty name — which `users.name`
+  // `label.startsWith(m.name)` is ALWAYS TRUE when a member has an empty name, which `users.name`
   // (NOT NULL DEFAULT '') produces for 144 rows. Every resource rendered as USER.
   //   A WRONG TYPE TAG IS NOT STYLING. IT IS A FALSE CLAIM ABOUT WHAT A RULE POINTS AT.
   const SRC = ["group", "user", "site", "cidr"] as const; // policy_rules_src_kind_check
@@ -1366,7 +1366,7 @@ describe("flowGlyph / flowTag — every arm of BOTH unions, exhaustively", () =>
     for (const g of glyphs) expect(g).toMatch(/^[A-Z]$/);
   });
 
-  it("⛔ a RESOURCE is never labelled USER — the exact defect, both arms", () => {
+  it("⛔ a RESOURCE is never labelled USER, the exact defect, both arms", () => {
     expect(flowGlyph("resource")).toBe("R");
     expect(flowTag("resource")).toBe("RESOURCE");
     expect(flowGlyph("user")).toBe("U");
@@ -1415,7 +1415,7 @@ describe("the SECOND threshold is COVERAGE, not count", () => {
     expect(flowGraphState(10, 4).kind).toBe("withheld_unrepresentative");
   });
 
-  it("a HUB-AND-SPOKE set stays drawn no matter how many rules — the whole argument", () => {
+  it("a HUB-AND-SPOKE set stays drawn no matter how many rules, the whole argument", () => {
     // 20 rules, all through one source: top-4 covers everything, so nothing is withheld.
     const edges = Array.from({ length: 20 }, (_, i) => ({
       id: String(i),
@@ -1429,7 +1429,7 @@ describe("the SECOND threshold is COVERAGE, not count", () => {
     expect(flowGraphState(edges.length, l.shown.length).kind).toBe("draw");
   });
 
-  it("a FULLY-DISTINCT set of the same size is withheld — same N, opposite verdict", () => {
+  it("a FULLY-DISTINCT set of the same size is withheld, same N, opposite verdict", () => {
     // Same 20 rules, every pair distinct: top-4 x top-4 covers a minority.
     const edges = Array.from({ length: 20 }, (_, i) => ({
       id: String(i),
@@ -1445,7 +1445,7 @@ describe("the SECOND threshold is COVERAGE, not count", () => {
     );
   });
 
-  it("the withheld note names the drawn count AND the total — never just disappears", () => {
+  it("the withheld note names the drawn count AND the total, never just disappears", () => {
     const n = flowGraphNote(flowGraphState(20, 8))!;
     expect(n).toContain("8");
     expect(n).toContain("20");
@@ -1458,7 +1458,7 @@ describe("the SECOND threshold is COVERAGE, not count", () => {
   });
 });
 
-describe("srcGroupEmptyWarn — the fourth warn kind, admitted by the test that refused the third", () => {
+describe("srcGroupEmptyWarn, the fourth warn kind, admitted by the test that refused the third", () => {
   it("⛔ BOTH DIRECTIONS: an empty source group warns, a populated one does NOT", () => {
     // A warn kind that only ever fires cannot be told from a constant.
     expect(srcGroupEmptyWarn(0)).toBe("empty");
@@ -1467,7 +1467,7 @@ describe("srcGroupEmptyWarn — the fourth warn kind, admitted by the test that 
     expect(srcGroupEmptyBadge(srcGroupEmptyWarn(3))).toBeNull();
   });
 
-  it("⛔ a FAILED or UNFETCHED count is `unknown` and NEVER warns — 'could not check' is not 'empty'", () => {
+  it("⛔ a FAILED or UNFETCHED count is `unknown` and NEVER warns, 'could not check' is not 'empty'", () => {
     // The third loadOne arm, one level over. Warning here would call a WORKING rule broken.
     expect(srcGroupEmptyWarn(null)).toBe("unknown");
     expect(srcGroupEmptyWarn(undefined)).toBe("unknown");
@@ -1480,7 +1480,7 @@ describe("srcGroupEmptyWarn — the fourth warn kind, admitted by the test that 
     expect(srcGroupEmptyWarn(0)).not.toBe(srcGroupEmptyWarn(null));
   });
 
-  it("the explanation says what compiles and what to do — never just 'empty'", () => {
+  it("the explanation says what compiles and what to do, never just 'empty'", () => {
     const t = srcGroupEmptyExplain("empty")!;
     expect(t).toMatch(/matches no device/i);
     expect(t).toMatch(/grants nothing/i);
@@ -1488,7 +1488,7 @@ describe("srcGroupEmptyWarn — the fourth warn kind, admitted by the test that 
   });
 });
 
-describe("cascadeConfirmCopy — names only server-owned impact", () => {
+describe("cascadeConfirmCopy, names only server-owned impact", () => {
   it("states that rules are deleted and names the server-owned agent count", () => {
     const c = cascadeConfirmCopy("group", "Interns", 2, 0);
     expect(c.body).toMatch(/deletes every access rule/i);
@@ -1503,7 +1503,7 @@ describe("cascadeConfirmCopy — names only server-owned impact", () => {
     expect(c.impactKnown).toBe(false);
   });
 
-  it("says rules VANISH rather than becoming reviewable-broken — the measured behaviour", () => {
+  it("says rules VANISH rather than becoming reviewable-broken, the measured behaviour", () => {
     // ON DELETE CASCADE: the rows go. An operator who expects orphaned-but-visible rules is wrong.
     expect(cascadeConfirmCopy("group", "X", 0, 0).body).toMatch(/do not remain/i);
   });
@@ -1533,7 +1533,7 @@ describe("cascadeConfirmCopy — names only server-owned impact", () => {
     ).toBe(false);
   });
 
-  it("⛔ the typed guard requires an EXACT name — both directions", () => {
+  it("⛔ the typed guard requires an EXACT name, both directions", () => {
     expect(cascadeConfirmSatisfied("Interns", "Interns")).toBe(true);
     expect(cascadeConfirmSatisfied("interns", "Interns")).toBe(false);
     expect(cascadeConfirmSatisfied("Intern", "Interns")).toBe(false);

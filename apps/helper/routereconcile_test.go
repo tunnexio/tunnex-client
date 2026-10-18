@@ -43,12 +43,12 @@ func (f *fakeRoutes) cmd(add bool, target string) error {
 
 func kernelSet(f *fakeRoutes) []string { return sortedKeys(f.kernel) }
 
-// RED #1 — partial-add then retry CONVERGES: r2's add fails, but r1 stays applied so the retry re-attempts
+// RED #1, partial-add then retry CONVERGES: r2's add fails, but r1 stays applied so the retry re-attempts
 // ONLY r2 and never re-issues `route add r1` (which would fail "File exists"). Routes converge.
 func TestReconcilePartialAddThenRetryConverges(t *testing.T) {
 	applied := map[string]bool{}
 	f := newFakeRoutes()
-	f.existsErr = true // a re-add of an already-present route WOULD fail — proves we don't re-add r1
+	f.existsErr = true // a re-add of an already-present route WOULD fail, proves we don't re-add r1
 	f.failAdd["10.2.0.0/24"] = true
 	want := map[string]bool{"10.1.0.0/24": true, "10.2.0.0/24": true}
 
@@ -68,7 +68,7 @@ func TestReconcilePartialAddThenRetryConverges(t *testing.T) {
 	}
 	for _, c := range f.calls {
 		if c == "add 10.1.0.0/24" {
-			t.Fatalf("retry re-added r1 (the #1 wedge — would fail File exists): %v", f.calls)
+			t.Fatalf("retry re-added r1 (the #1 wedge, would fail File exists): %v", f.calls)
 		}
 	}
 	if got := kernelSet(f); !eq(got, []string{"10.1.0.0/24", "10.2.0.0/24"}) {
@@ -76,7 +76,7 @@ func TestReconcilePartialAddThenRetryConverges(t *testing.T) {
 	}
 }
 
-// RED #3 — a PRE-EXISTING identical route (home-LAN collision) → apply SUCCEEDS via delete-before-add,
+// RED #3, a PRE-EXISTING identical route (home-LAN collision) → apply SUCCEEDS via delete-before-add,
 // never fails "File exists". The user's home LAN 192.168.1.0/24 already has a route; our add of the same
 // range must delete-first then add (our route wins while up), not error.
 func TestReconcileDeleteBeforeAddIdempotent(t *testing.T) {
@@ -96,7 +96,7 @@ func TestReconcileDeleteBeforeAddIdempotent(t *testing.T) {
 	}
 }
 
-// RED #4 — a poll that ADDS A (fails) and REMOVES B: the delete-sweep of B must run REGARDLESS of A's add
+// RED #4, a poll that ADDS A (fails) and REMOVES B: the delete-sweep of B must run REGARDLESS of A's add
 // failure (no early return), so B's stale route is gone even though A errored.
 func TestReconcileSweepRunsDespiteAddFailure(t *testing.T) {
 	applied := map[string]bool{"10.9.0.0/24": true} // B, previously applied, now de-advertised
@@ -115,7 +115,7 @@ func TestReconcileSweepRunsDespiteAddFailure(t *testing.T) {
 	}
 }
 
-// RED — no-op when applied already equals want (idempotent steady state, ZERO commands).
+// RED, no-op when applied already equals want (idempotent steady state, ZERO commands).
 func TestReconcileNoOpWhenConverged(t *testing.T) {
 	applied := map[string]bool{"10.1.0.0/24": true}
 	f := newFakeRoutes("10.1.0.0/24")

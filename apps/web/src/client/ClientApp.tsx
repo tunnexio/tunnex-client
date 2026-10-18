@@ -26,8 +26,9 @@ import {
   type ReleaseCheck,
 } from "../lib/desktop";
 import { Logo, Tagline } from "../brand";
-import { Icon } from "../components/Icon";
+import { Icon, type IconName } from "../components/Icon";
 import "./client-workspace.css";
+import "./client.css";
 import { drawGraph, pushRate, rateBetween } from "./throughput";
 import {
   createHyperState,
@@ -36,13 +37,15 @@ import {
   type HyperMode,
 } from "./hyperdrive";
 
+const HELPER_ACCESS_MESSAGE = "This app cannot access the Tunnex helper. Open the installed Tunnex app, or repair the helper installation for this development build.";
+
 const REMOVE_DEVICE_RETRY_MESSAGE =
   "Device removal did not finish. The saved enrollment was kept; try Remove device again or check Logs.";
 const FOREIGN_ENROLLMENT_MESSAGE =
   "An unfinished enrollment belongs to another account. Sign out, then sign in with the account that started it and use Connect to resume recovery.";
 
 /**
- * ClientApp — the desktop client's whole UI.
+ * ClientApp, the desktop client's whole UI.
  *
  * Home owns the connection controls and the one-time Beam review inbox.
  *
@@ -50,18 +53,19 @@ const FOREIGN_ENROLLMENT_MESSAGE =
  * formatting helpers, and the desktop bridge type.
  */
 export function ClientApp() {
+  const windowsAppearancePreview = import.meta.env.DEV && new URLSearchParams(window.location.search).get("platform") === "windows";
   const preview = useMemo(() => parsePreviewState(window.location.search), []);
   const previewIPv6 = useMemo(() => new URLSearchParams(window.location.search).get("ip") === "ipv6", []);
   const [live, setLive] = useState<ClientState>("disconnected");
   const [postureFailures, setPostureFailures] = useState<Array<{ kind: string; mode: string }>>([]);
   const [fullTunnel, setFullTunnel] = useState(false);
-  const [showActionHint, setShowActionHint] = useState(true);
+  const [statsOpen, setStatsOpen] = useState(false);
   // ⛔ REAL COUNTERS NOW, AND THE `n/a` IS NO LONGER PERMANENT. These were hard-wired to null with
   // a comment saying they would arrive "in step 3"; step 3 came and went and they never did, so the
   // panel showed `n/a` in every field forever while the plot beside it drew invented traffic.
   //
   // rx/tx/handshake come from the helper's `wg show` through the bridge. There is no PACKET counter
-  // anywhere in that chain — helper, protocol or preload — so that row was a field that could never
+  // anywhere in that chain, helper, protocol or preload, so that row was a field that could never
   // be filled, and it is gone rather than reserved.
   const [stats, setStats] = useState<{
     rate: number | null;
@@ -92,8 +96,8 @@ export function ClientApp() {
 
   // ⛔ THE SURFACE ASKED THE TUNNEL AND NEVER ASKED THE SESSION.
   //
-  // It called `tunnel.status()` alone, so a device with NO CREDENTIAL rendered "Disconnected" —
-  // a healthy-looking idle state — with a Connect button. Pressing it threw `not_authenticated`
+  // It called `tunnel.status()` alone, so a device with NO CREDENTIAL rendered "Disconnected" ,
+  // a healthy-looking idle state, with a Connect button. Pressing it threw `not_authenticated`
   // from main, unhandled, into a terminal log. The renderer showed nothing at all.
   //
   // Auth is read FIRST and WINS: signed-out is not a kind of disconnected, it is the reason
@@ -101,29 +105,9 @@ export function ClientApp() {
   const [serverUrl, setServerUrl] = useState<string | null>(null);
   const [identity, setIdentity] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [helperAccessBlocked, setHelperAccessBlocked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (state !== "disconnected" || busy) {
-      setShowActionHint(false);
-      return;
-    }
-    let hideTimer = 0;
-    let repeatTimer = 0;
-    const cycle = () => {
-      setShowActionHint(true);
-      hideTimer = window.setTimeout(() => {
-        setShowActionHint(false);
-        repeatTimer = window.setTimeout(cycle, 9000);
-      }, 4500);
-    };
-    cycle();
-    return () => {
-      window.clearTimeout(hideTimer);
-      window.clearTimeout(repeatTimer);
-    };
-  }, [busy, state]);
 
   function showProblem(error: unknown, message = clientErrorMessage(error)): void {
     // Keep the implementation detail in the client log / developer console. The
@@ -180,7 +164,7 @@ export function ClientApp() {
     void (async () => {
       const ok = await refreshAuth();
       if (ok) applyTunnelStatus(await d.tunnel.status());
-    })();
+    })().catch(error => showProblem(error));
     const stopStatus = d.tunnel.onStatusChanged(applyTunnelStatus);
     const stopOrganizationSelection = d.tunnel.onOrganizationSelectionRequired(
       () => {
@@ -200,7 +184,8 @@ export function ClientApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preview]);
 
-  function applyTunnelStatus(s: { state?: string; last_handshake_sec?: number; failed_checks?: Array<{ kind: string; mode: string }> }): void {
+  function applyTunnelStatus(s: { helper_error?: string; state?: string; last_handshake_sec?: number; failed_checks?: Array<{ kind: string; mode: string }> }): void {
+    setHelperAccessBlocked(s.helper_error === "caller_untrusted");
     setLive(mapStatus(s));
     setPostureFailures(s.failed_checks ?? []);
   }
@@ -235,7 +220,7 @@ export function ClientApp() {
    * so a surface driven only by transitions shows the numbers from the moment of connection and
    * then never moves. Polling is the right instrument here precisely because nothing pushes.
    *
-   * The rate is a DELTA between readings, not a field — no counter reports bytes/sec.
+   * The rate is a DELTA between readings, not a field, no counter reports bytes/sec.
    */
   const prevCounter = useRef<{ bytes: number; at: number } | null>(null);
   useEffect(() => {
@@ -246,6 +231,8 @@ export function ClientApp() {
       try {
         const st = await d.tunnel.status();
         if (stop) return;
+        setHelperAccessBlocked(st?.helper_error === "caller_untrusted");
+        if (st?.helper_error) setLive("failed");
         // Warn mode leaves the tunnel up. It must keep reporting real counters and
         // animating the live connection rather than look disconnected.
         const up = st?.state === "up" || st?.state === "posture_warning";
@@ -282,7 +269,7 @@ export function ClientApp() {
           history: pushRate(p.history, rate),
         }));
       } catch {
-        /* a failed poll is not a state change — the last known numbers stand */
+        /* a failed poll is not a state change, the last known numbers stand */
       }
     };
     void tick();
@@ -311,28 +298,28 @@ export function ClientApp() {
   const elapsed = displayStats.since
     ? Math.floor((Date.now() - displayStats.since) / 1000)
     : null;
-  // last_handshake_sec is an ABSOLUTE unix second, not an age — trayview.ts documents the same trap.
+  // last_handshake_sec is an ABSOLUTE unix second, not an age, trayview.ts documents the same trap.
   const handshakeAge =
     displayStats.handshakeSec && displayStats.handshakeSec > 0
       ? Math.max(0, Math.floor(Date.now() / 1000) - displayStats.handshakeSec)
       : null;
-  const visibleStats: Array<{ label: string; value: string }> = [
-    { label: "Bytes in", value: displayStats.rx === null ? "—" : formatBytes(displayStats.rx) },
-    { label: "Bytes out", value: displayStats.tx === null ? "—" : formatBytes(displayStats.tx) },
-    { label: "Duration", value: elapsed === null ? "—" : formatDuration(elapsed) },
-    { label: "Last handshake", value: handshakeAge === null ? "—" : `${handshakeAge}s ago` },
-    { label: "Tunnel IP", value: displayStats.address ?? "—" },
+  const visibleStats: Array<{ label: string; value: string | null; icon: IconName }> = [
+    { label: "Bytes in", value: displayStats.rx === null ? null : formatBytes(displayStats.rx), icon: "download" },
+    { label: "Bytes out", value: displayStats.tx === null ? null : formatBytes(displayStats.tx), icon: "upload" },
+    { label: "Duration", value: elapsed === null ? null : formatDuration(elapsed), icon: "timer" },
+    { label: "Last handshake", value: handshakeAge === null ? null : `${handshakeAge}s ago` , icon: "clock-3" },
+    { label: "Tunnel IP", value: displayStats.address ?? null, icon: "globe" },
   ];
   /**
-   * ⛔ THE VERB HAD NO HANDLER AT ALL — the button rendered and did nothing.
+   * ⛔ THE VERB HAD NO HANDLER AT ALL, the button rendered and did nothing.
    *
    * Two paths, and they are genuinely different rather than one faked:
    *
    *  · IN ELECTRON the bridge exists, so this calls the real `tunnel.up` / `tunnel.down`. The
-   *    renderer holds no secret and no config — main resolves the WG config and forwards it to the
+   *    renderer holds no secret and no config, main resolves the WG config and forwards it to the
    *    privileged helper; we only ever see status back.
    *  · IN A BROWSER there is no bridge and there never will be. Rather than a dead button, the
-   *    surface drives its OWN state so the transitions and the hyperdrive are reviewable — and
+   *    surface drives its OWN state so the transitions and the hyperdrive are reviewable, and
    *    says on screen that it is doing so. A simulated transition presented as a real one would be
    *    the render-floor violation this epic keeps catching.
    */
@@ -346,7 +333,7 @@ export function ClientApp() {
     }
     if (d) {
       // ⛔ EVERY BRIDGE CALL IS AWAITED INSIDE A try. Before this, a rejected `tunnel.up` became an
-      // unhandled rejection in main's log and the window did not move — the user pressed a button
+      // unhandled rejection in main's log and the window did not move, the user pressed a button
       // and the product said nothing. A verb that can fail must be able to SAY it failed.
       setProblem(null);
       setBusy(true);
@@ -393,17 +380,17 @@ export function ClientApp() {
   }
 
   /**
-   * ⛔ CHANGE SERVER — THE LAST CAPABILITY THE STEP-3 FLIP STRANDED.
+   * ⛔ CHANGE SERVER, THE LAST CAPABILITY THE STEP-3 FLIP STRANDED.
    *
    * `config.setServerUrl` has been on the preload allowlist since S6.2, and after the client stopped
    * loading the web dashboard NOTHING CALLED IT. Pointing the app at a different control plane meant
-   * deleting `~/Library/Application Support/@tunnex/client` by hand — an app with a documented verb
+   * deleting `~/Library/Application Support/@tunnex/client` by hand, an app with a documented verb
    * and no way to reach it, which is the S14.12 class exactly.
    *
    * ⚠ THE SERVER CHANGE REVOKES THE CREDENTIAL, AND THE UI MUST SAY SO BEFORE IT HAPPENS. Main
    * stops the monitors, tears the tunnel down and clears the credential BEFORE persisting the new
    * URL, so there is no window where a new origin holds an old bearer. `reloginRequired` is that
-   * fact coming back — it is not advice, it has already happened.
+   * fact coming back, it is not advice, it has already happened.
    */
   const [editingServer, setEditingServer] = useState(false);
   const [draftServer, setDraftServer] = useState("");
@@ -434,7 +421,7 @@ export function ClientApp() {
   /**
    * ⛔ THREE PANES, BECAUSE THE MAIN SCREEN WAS GROWING BY ONE SECTION PER REQUEST.
    *
-   * Routing mode, then a server form, then a footer of buttons — each defensible alone, and together
+   * Routing mode, then a server form, then a footer of buttons, each defensible alone, and together
    * a column you scroll to find anything in. A VPN client's home screen answers one question ("am I
    * connected, and what do I press") and everything else is somewhere you go on purpose.
    *
@@ -492,7 +479,7 @@ export function ClientApp() {
     if (!d) return;
     try {
       const path = await d.diag.exportLog();
-      // null is a CANCELLED dialog, not a failure — saying "exported" there would be the UI
+      // null is a CANCELLED dialog, not a failure, saying "exported" there would be the UI
       // claiming an action it did not perform.
       setExported(path);
     } catch (e) {
@@ -732,7 +719,7 @@ export function ClientApp() {
     };
     frame();
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [statsOpen, pane, state]);
 
   const historyRef = useRef<number[]>([]);
   useEffect(() => {
@@ -741,28 +728,36 @@ export function ClientApp() {
 
   return (
     // The native window owns the frame; only its selected pane scrolls.
-    <div className="client-workspace relative flex h-dvh flex-col overflow-hidden bg-bg text-ink-body">
+    <div data-platform-preview={windowsAppearancePreview ? "windows" : undefined} data-pane={pane} data-stats-open={statsOpen} className="client-workspace tnx-client-shell relative flex h-dvh flex-col overflow-hidden bg-bg text-ink-body">
       {/* ── TITLE ─────────────────────────────────────────────────────────────────────────── */}
       {/* ⛔ CLEARS THE TRAFFIC LIGHTS, AND IS THE DRAG HANDLE. With `titleBarStyle: hiddenInset` the
-          page paints under the window buttons, so content at the top-left would sit BEHIND them —
+          page paints under the window buttons, so content at the top-left would sit BEHIND them ,
           the wordmark was going to end up with three coloured circles on it. `pt-8` is the inset
           macOS reserves.
 
           ⚠ AND THE WINDOW MUST STILL BE DRAGGABLE. A hidden title bar removes the strip people grab,
-          so this header declares itself the drag region — with the interactive children opting back
+          so this header declares itself the drag region, with the interactive children opting back
           OUT, since a button inside a drag region swallows the click. */}
+      {windowsAppearancePreview && (
+        <div className="tnx-windows-caption" aria-label="Windows appearance preview">
+          <span className="tnx-windows-caption-drag" />
+          <button type="button" aria-label="Minimize window preview" disabled><svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M1 6h10" /></svg></button>
+          <button type="button" aria-label="Maximize unavailable in fixed size window" disabled><svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" /></svg></button>
+          <button type="button" aria-label="Close window preview" disabled><svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="m1 1 10 10M11 1 1 11" /></svg></button>
+        </div>
+      )}
       <div
-        className="client-titlebar flex items-center gap-2 px-3 pt-7"
+        className="client-titlebar tnx-client-header flex items-center gap-2 px-3 pt-7"
         style={{ WebkitAppRegion: "drag" } as CSSProperties}
       >
-        {/* ⛔ THE REAL MARK, via the shared Logo — the previous version drew a bare <img> at 22px
+        {/* ⛔ THE REAL MARK, via the shared Logo, the previous version drew a bare <img> at 22px
             and lost the wordmark entirely. Logo derives both dimensions from the asset ratios, so
             it cannot be squashed the way a hand-sized img was. */}
         {/* ⛔ THE MARK IS THE IDENTITY AND IT WAS BEING TRIMMED. It rendered at 22px inside a
             `rounded-lg` crop, so the shape lost its corners at the one size where it can least
-            afford to. Bigger, uncropped, and paired with the WORDMARK rather than a mono caption —
+            afford to. Bigger, uncropped, and paired with the WORDMARK rather than a mono caption ,
             the brand kit draws the name; retyping it in a monospace font was a different logo. */}
-        {/* ⛔ THE WORDMARK, NOT THE MARK — AND THE REASON IS IN THE ASSET, NOT IN THE CSS.
+        {/* ⛔ THE WORDMARK, NOT THE MARK, AND THE REASON IS IN THE ASSET, NOT IN THE CSS.
             `tunnex-logo.svg` bakes in `<rect width="577" height="551" fill="#0A0A0A">` and its
             glyph runs corner to corner, so at any size it renders as a dark plated tile with zero
             breathing room. Removing `rounded-lg` stopped US cropping it; nothing in CSS can give
@@ -782,12 +777,12 @@ export function ClientApp() {
           <Icon name="menu" size={18} />
         </button>
         <span className="flex flex-col justify-center">
-          <Logo size={24} wordmarkOnly />
+          <Logo size={48} wordmarkOnly />
           <Tagline className="mt-0.5" />
         </span>
         {/* The tray appearance is shown in-window too, so a reviewer can see what the icon WOULD
-            be without needing the tray — which is the part no instrument of ours can verify. */}
-        {/* ⛔ THE RAW APPEARANCE NAME IS GONE. It printed "grey" / "solid" next to the dot —
+            be without needing the tray, which is the part no instrument of ours can verify. */}
+        {/* ⛔ THE RAW APPEARANCE NAME IS GONE. It printed "grey" / "solid" next to the dot ,
             internal vocabulary for how the TRAY ICON is drawn, shown to a user who has no reason to
             know the tray has appearances, three lines above a status word that already says
             "Connected". A debug readout that survived into the product.
@@ -801,8 +796,8 @@ export function ClientApp() {
         <span
           data-tray={tray}
           className="flex items-center gap-1.5"
-          title={view.label}
-          aria-label={`Status: ${view.label}`}
+          title={helperAccessBlocked ? "Helper unavailable" : view.label}
+          aria-label={`Status: ${helperAccessBlocked ? "Helper unavailable" : view.label}`}
         >
           <span
             className={
@@ -884,10 +879,10 @@ export function ClientApp() {
           </aside>
         </div>
       )}
-      <main className="client-main flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <main className="client-main tnx-client-main flex min-h-0 flex-1 flex-col overflow-y-auto">
         {authed === true && enrollmentBlockedByOtherUser && (
           <div className="client-notice client-notice-warning text-warn">
-            <p role="status">{FOREIGN_ENROLLMENT_MESSAGE}</p>
+            <p role="status"><Icon name="circle-alert" size={16} className="client-notice-icon" />{FOREIGN_ENROLLMENT_MESSAGE}</p>
             <button
               type="button"
               disabled={busy}
@@ -898,11 +893,12 @@ export function ClientApp() {
             </button>
           </div>
         )}
-        {problem && (
+        {problem && !helperAccessBlocked && (
           <p
             role="alert"
             className="client-notice client-notice-danger text-danger"
           >
+            <Icon name="circle-alert" size={16} className="client-notice-icon" />
             {problem}
           </p>
         )}
@@ -910,37 +906,7 @@ export function ClientApp() {
         {pane === "beam" && <BeamPanel />}
         {pane === "home" && (
           <div className="client-home">
-            {/* ── STATUS HEAD ─────────────────────────────────────────────────────────────────── */}
-            <section className="client-home-status">
-              <h1
-                data-state={state}
-                className={
-                  "client-connection-state text-[26px] font-semibold leading-tight " +
-                  (view.severity === "loud"
-                    ? "text-danger"
-                    : view.severity === "ok"
-                      ? "text-accent-400"
-                      : view.severity === "warn"
-                        ? "text-warn"
-                        : "text-ink-heading")
-                }
-              >
-                {view.label}
-              </h1>
-              {state !== "connected" && (
-                <p className="mt-1 text-sm text-ink-secondary" data-status-detail>{view.detail}</p>
-              )}
-              {state === "connected" && displayStats.connectionPath && (
-                <p className="mt-1 text-sm text-ink-secondary" data-connection-path>
-                  Connection: {displayStats.connectionPath}
-                </p>
-              )}
-              {postureReason && (state === "posture_warning" || state === "posture_blocked") && (
-                <p className="mt-2 text-sm text-warn" data-posture-reason>{postureReason}</p>
-              )}
-            </section>
-
-            <div className="client-connection-visual relative" data-animation-control>
+            <div className="client-connection-visual tnx-client-hero relative" data-animation-control>
               <canvas
                 ref={hyperRef}
                 id="tnxHyper"
@@ -957,7 +923,6 @@ export function ClientApp() {
                   aria-label={view.action}
                   title={view.action}
                   onClick={() => {
-                    setShowActionHint(false);
                     void onAction();
                   }}
                   disabled={busy || managedConnectBlocked}
@@ -981,47 +946,75 @@ export function ClientApp() {
                     className={"tnx-connect-orb " + (view.action === "Disconnect" ? "tnx-connect-orb-live" : "tnx-connect-orb-idle")}
                     aria-hidden
                   />
-                  <span className={"client-connect-label " + (showActionHint ? "client-connect-label-hint" : "")} aria-hidden>{view.action}</span>
+                  <span className="tnx-action-caption" aria-hidden>{view.action}</span>
                 </button>
               ) : null}
             </div>
-            <section className="client-section client-connection-metrics" data-connection-metrics>
-              <div className="client-section-header flex items-baseline justify-between">
-                <span className="client-section-title text-ink-secondary">
-                  Connection stats
-                </span>
-                <span className="client-connection-rate text-ink-heading tabular-nums">
-                  {displayStats.rate === null ? "—" : formatRate(displayStats.rate)}
-                </span>
-              </div>
-              <canvas ref={graphRef} id="tnxGraph" aria-hidden className="mt-2 block h-10 w-full" />
-              <div
-                className="client-rate-summary mt-1 flex min-h-4 justify-between text-xs text-ink-secondary"
-                data-connection-rate-summary
+            {/* ── STATUS HEAD ─────────────────────────────────────────────────────────────────── */}
+            <section className="client-home-status tnx-client-status" aria-live="polite">
+              {state === "disconnected" && <p className="tnx-status-eyebrow">Ready to connect</p>}
+              <h1
+                data-state={state}
+                className={
+                  "client-connection-state text-[26px] font-semibold leading-tight " +
+                  (view.severity === "loud"
+                    ? "text-danger"
+                    : view.severity === "ok"
+                      ? "text-accent-400"
+                      : view.severity === "warn"
+                        ? "text-warn"
+                        : "text-ink-heading")
+                }
               >
-                {displayStats.rate !== null && (
-                  <>
-                    <span>{formatRate(displayStats.peak)} peak</span>
-                    <span>{formatRate(displayStats.rate)}</span>
-                  </>
-                )}
-              </div>
+                {helperAccessBlocked ? "Helper unavailable" : view.label}
+              </h1>
+              {!helperAccessBlocked && state !== "connected" && (
+                <p className="mt-1 text-sm text-ink-secondary" data-status-detail>{view.detail}</p>
+              )}
+              {helperAccessBlocked && (
+                <details className="tnx-helper-details">
+                  <summary>How to restore access <Icon name="chevron-right" size={12} /></summary>
+                  <p>{HELPER_ACCESS_MESSAGE}</p>
+                </details>
+              )}
+              {state === "connected" && displayStats.connectionPath && (
+                <p className="mt-1 text-sm text-ink-secondary" data-connection-path>
+                  Connection: {displayStats.connectionPath}
+                </p>
+              )}
+              {postureReason && (state === "posture_warning" || state === "posture_blocked") && (
+                <p className="mt-2 text-sm text-warn" data-posture-reason>{postureReason}</p>
+              )}
+            </section>
+
+            <section className="tnx-client-stats" data-connection-metrics>
+              <button type="button" className="tnx-stats-toggle" aria-expanded={statsOpen} aria-controls="tnx-stats-content" onClick={() => setStatsOpen((open) => !open)}>
+                <span><Icon name="chart-no-axes-column-increasing" size={18} />Connection stats</span>
+                <Icon name="chevron-right" size={18} className={statsOpen ? "tnx-chevron tnx-chevron-open" : "tnx-chevron"} style={{ rotate: "90deg" }} />
+              </button>
+              <div id="tnx-stats-content" hidden={!statsOpen}>
+                <div className="tnx-live-rate" hidden={displayStats.rate === null || (state !== "connected" && state !== "posture_warning")}>
+                  <canvas ref={graphRef} id="tnxGraph" aria-hidden className="block h-10 w-full" />
+                  <span data-connection-rate-summary>{displayStats.rate === null ? null : formatRate(displayStats.rate)}</span>
+                </div>
               <dl className="client-facts" data-connection-stat-rows>
-                {visibleStats.map(({ label, value }) => (
+                {visibleStats.map(({ label, value, icon }) => (
                   <div key={label} className={label === "Tunnel IP" ? "client-fact-wide" : ""}>
                     <dt data-stat-label>
+                      <Icon name={icon} size={16} strokeWidth={1.6} />
                       {label}
                     </dt>
                     <dd
                       className="tabular-nums"
-                      title={value}
+                      title={value ?? "No data yet"}
                       data-stat-value
                     >
-                      {value}
+                      {value ?? <><span className="tnx-stat-placeholder" aria-hidden="true" /><span className="sr-only">No data yet</span></>}
                     </dd>
                   </div>
                 ))}
               </dl>
+              </div>
             </section>
 
           </div>
@@ -1041,12 +1034,12 @@ export function ClientApp() {
 
             > **A USER WHO BELIEVES THEY ARE FULLY TUNNELLED AND IS NOT HAS A WORSE PROBLEM THAN ONE
             > WHO KNOWS THEY ARE SPLIT.** The inverted label pointed the error at the dangerous side,
-            > and a checkbox cannot say which state is which — the unchecked box has no words on it.
+            > and a checkbox cannot say which state is which, the unchecked box has no words on it.
 
             Two named options now, each stating what it DOES to traffic. No inference from a tick. */}
             {pane === "settings" && <fieldset className="client-section">
               <legend className="client-section-title">
-                Routing
+                <Icon name="arrow-right-left" size={15} /> Routing
               </legend>
               {(
                 [
@@ -1081,7 +1074,7 @@ export function ClientApp() {
                   </span>
                 </label>
               ))}
-              {/* Changing this re-mints the device config (deviceconfig.ts) — it is not a live switch. */}
+              {/* Changing this re-mints the device config (deviceconfig.ts), it is not a live switch. */}
               <p className="mt-2 text-[11px] text-ink-secondary">
                 Changing this while connected refreshes the device configuration.
               </p>
@@ -1089,12 +1082,12 @@ export function ClientApp() {
 
             {/* ⛔ THE FAILURE SENTENCE. `not_authenticated` became a STATE above; anything else is shown
             verbatim rather than swallowed. A raw message is worse than a written one and far better
-            than silence — and it names the verb that produced it. */}
+            than silence, and it names the verb that produced it. */}
             {/* ── PROFILE ─────────────────────────────────────────────────────────────────────
                 ⛔ FOUNDER-RULED AFTER I ARGUED AGAINST IT, AND THE OBJECTION IS BUILT IN RATHER
                 THAN DROPPED. A `.conf` downloaded at device creation now connects. What it cannot
                 do is carry a device identity, so the monitors that keep a tunnel honest have
-                nothing to poll — which is stated here and on the connection screen instead of
+                nothing to poll, which is stated here and on the connection screen instead of
                 being left in a design note. */}
             {pane === "profiles" && <div className="client-pane-stack">
               {(() => {
@@ -1103,7 +1096,7 @@ export function ClientApp() {
                   <section className="client-section" data-connection-source>
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h2 className="text-sm font-medium text-ink-heading">Tunnex account</h2>
+                        <h2 className="text-sm font-medium text-ink-heading"><Icon name="shield" size={15} /> Tunnex account</h2>
                         <p className="mt-0.5 text-[11px] text-ink-secondary">
                           {activeProfile
                             ? "Switch to your enrolled device or sign in. Imported files stay saved."
@@ -1139,7 +1132,7 @@ export function ClientApp() {
                         id="managed-organizations-heading"
                         className="text-sm font-medium text-ink-heading"
                       >
-                        Organizations
+                        <Icon name="building-2" size={15} /> Organizations
                       </h2>
                       <p className="mt-0.5 text-[11px] text-ink-secondary">
                         Choose where a new managed device is enrolled.
@@ -1267,7 +1260,7 @@ export function ClientApp() {
               <section className="client-section">
                 <div className="client-section-header flex items-center justify-between gap-3">
                   <h2 className="client-section-title">
-                    Imported profiles
+                    <Icon name="file-text" size={15} /> Imported profiles
                   </h2>
                   <button
                     type="button"
@@ -1280,10 +1273,10 @@ export function ClientApp() {
                   </button>
                 </div>
                 <p className="mt-2 text-[11px] text-ink-secondary">
-                  Keep separate WireGuard files for different devices or gateways. Switching disconnects the current tunnel; imported profiles do not report posture or monitor revocation in this app.
+                  Connect using a WireGuard configuration file. Switching profiles disconnects the current tunnel.
                 </p>
                 {importedProfiles.length === 0 ? (
-                  <p className="client-empty">No imported profiles yet.</p>
+                  <div className="tnx-profile-empty"><Icon name="file-text" size={22} strokeWidth={1.5} /><div><p>No imported profiles</p><span>Import a .conf file to add a connection.</span></div></div>
                 ) : (
                   <ul className="client-record-list" aria-label="Imported profiles">
                     {importedProfiles.map((profile) => (
@@ -1308,13 +1301,14 @@ export function ClientApp() {
                     ))}
                   </ul>
                 )}
+                <p className="tnx-profile-footnote">Imported profiles do not report device health or monitor access revocation.</p>
               </section>
             </div>}
 
             {/* ── SERVER ──────────────────────────────────────────────────────────────────── */}
             {pane === "settings" && <section className="client-section">
               <h2 className="client-section-title">
-                Server
+                <Icon name="globe" size={15} /> Server
               </h2>
               <p className="client-server-address mt-2 text-sm text-ink-body">
                 {serverUrl ?? "n/a"}
@@ -1386,7 +1380,7 @@ export function ClientApp() {
                     className="client-field mt-2"
                   />
                   {/* ⛔ SAID BEFORE THE BUTTON IS PRESSED, NOT AFTER. Changing origin revokes the stored
-                  credential — the user must know that is the cost, not discover it. */}
+                  credential, the user must know that is the cost, not discover it. */}
                   <p className="mt-2 text-[11px] text-warn">
                     Switching servers signs you out and tears down the tunnel. A
                     credential is only ever valid for the server it was issued by.
@@ -1413,15 +1407,14 @@ export function ClientApp() {
 
             {pane === "settings" && <section className="client-section">
               <h2 className="client-section-title">
-                About
+                <Icon name="circle-alert" size={15} /> About Tunnex
               </h2>
               <p className="mt-2 text-sm text-ink-body" data-version>
                 Tunnex {appInfo ? `v${appInfo.version}` : "version n/a"}
               </p>
               {appInfo && appInfo.update.kind !== "ready" && (
                 <p className="mt-2 text-[11px] text-ink-secondary">
-                  <span className="text-warn">{appInfo.update.reason}</span>{" "}
-                  Updates are manual in this build. Check Tunnex for a newer version.
+                  <span title={appInfo.update.reason}>Updates are installed manually in this build.</span>
                 </p>
               )}
               {releaseCheck?.kind === "available" && (
@@ -1465,15 +1458,15 @@ export function ClientApp() {
 
         {pane === "logs" && (
           <section className="client-logs flex min-h-0 flex-1 flex-col">
-            <h1 className="client-pane-title">Logs</h1>
+            <header className="tnx-logs-heading"><h1 className="client-pane-title">Logs</h1><p>Activity and diagnostics from this device.</p></header>
             <div className="client-section-header flex items-center gap-2">
               <h2 className="client-section-title">
-                Client log
+                <Icon name="file-text" size={15} /> Client log
               </h2>
               <button
                 type="button"
                 data-refreshlogs
-                aria-label="Refresh"
+                aria-label="Refresh logs"
                 title="Refresh"
                 onClick={() => void loadLog()}
                 className="client-button ml-auto"
@@ -1486,7 +1479,7 @@ export function ClientApp() {
                 onClick={() => void onExportLog()}
                 className="client-button"
               >
-                Export
+                <Icon name="download" size={13} /> Export
               </button>
               <button
                 type="button"
@@ -1494,7 +1487,7 @@ export function ClientApp() {
                 onClick={() => void desktop()?.diag.openLogs()}
                 className="client-button"
               >
-                Reveal
+                <Icon name="file-text" size={13} /> Reveal
               </button>
             </div>
             {exported && (
@@ -1507,10 +1500,13 @@ export function ClientApp() {
                 the window itself from becoming scrollable. */}
             <pre
               data-logview
+              tabIndex={0}
+              aria-label="Client log output"
               className="client-log-output min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-all font-mono text-xs leading-relaxed text-ink-secondary"
             >
-              {logText || "The log is empty."}
+              {logText || "No activity recorded yet. Refresh to check for new entries."}
             </pre>
+            <footer className="tnx-logs-footer"><span>{logText ? `${logText.trimEnd().split("\n").length.toLocaleString()} lines` : "No entries"}</span><span>Refresh to load the latest activity</span></footer>
           </section>
         )}
 
@@ -1535,6 +1531,7 @@ export function ClientApp() {
           </div>
         )}
       </main>
+      {simulated && <footer className="tnx-client-footer">{windowsAppearancePreview ? "Windows appearance preview · No network changes" : "Interactive preview · No network changes"}</footer>}
     </div>
   );
 }
@@ -1581,6 +1578,7 @@ function isForeignEnrollmentError(error: unknown): boolean {
 export function clientErrorMessage(error: unknown): string {
   if (isForeignEnrollmentError(error)) return FOREIGN_ENROLLMENT_MESSAGE;
   const raw = error instanceof Error ? error.message : String(error);
+  if (raw.includes("caller_untrusted")) return HELPER_ACCESS_MESSAGE;
   if (raw.includes("revoke_device_failed")) {
     return REMOVE_DEVICE_RETRY_MESSAGE;
   }

@@ -29,7 +29,7 @@ function inv(over: Partial<Invitation> = {}): Invitation {
 
 // ⛔ FOUR STATES, THREE STORED. The table holds accepted_at and revoked_at and nothing else;
 // `expired` is DERIVED from expires_at against the clock, which is why the server does not store
-// it — a stored status is correct at write time and wrong a day later.
+// it, a stored status is correct at write time and wrong a day later.
 describe("invitationState", () => {
   it("derives expired from the clock, not from a column", () => {
     expect(
@@ -40,7 +40,7 @@ describe("invitationState", () => {
 
   it("⛔ treats an accepted-and-past-expiry row as ACCEPTED, not expired", () => {
     // Redemption already happened, so the clock is no longer interesting. Getting this backwards
-    // would offer Resend/Revoke on a row that is already a member — controls the server ignores.
+    // would offer Resend/Revoke on a row that is already a member, controls the server ignores.
     const row = inv({
       accepted_at: iso("2026-07-20T00:00:00Z"),
       expires_at: iso("2026-07-25T00:00:00Z"),
@@ -65,7 +65,7 @@ describe("invitationState", () => {
 
 // ⛔ CONTROLS ONLY WHERE THE SERVER WOULD ACT. RevokeInvitationByOrgEmail updates
 // `WHERE … accepted_at IS NULL AND revoked_at IS NULL`, so on a terminal row it matches zero rows,
-// changes nothing, and returns success — a button that lies is worse than no button.
+// changes nothing, and returns success, a button that lies is worse than no button.
 describe("canResend / canRevoke", () => {
   it("offers nothing on a terminal row", () => {
     for (const s of ["accepted", "revoked"] as const) {
@@ -74,7 +74,7 @@ describe("canResend / canRevoke", () => {
     }
   });
 
-  it("⛔ offers RESEND on an expired row — it is the only recovery path", () => {
+  it("⛔ offers RESEND on an expired row, it is the only recovery path", () => {
     // Resend mints a NEW token and invalidates the old one. There is no "extend", so withholding
     // it here would strand the row with no way forward but a fresh invite.
     expect(canResend("expired")).toBe(true);
@@ -100,7 +100,7 @@ describe("inviteGate", () => {
   });
 });
 
-// ⛔ THE COUNT THE PANEL MAY NAME. Only outstanding rows — pending plus expired. An accepted
+// ⛔ THE COUNT THE PANEL MAY NAME. Only outstanding rows, pending plus expired. An accepted
 // invitation is a member now and is already counted on the roster.
 describe("outstandingCount", () => {
   it("counts pending and expired, never accepted or revoked", () => {
@@ -168,7 +168,7 @@ describe("orderInvitations", () => {
   });
 });
 
-// ⛔ THE INVITER CAN BE GONE — invited_by_user_id is ON DELETE SET NULL, and the query LEFT JOINs
+// ⛔ THE INVITER CAN BE GONE, invited_by_user_id is ON DELETE SET NULL, and the query LEFT JOINs
 // so the row survives. An inner join would DROP it, hiding an outstanding invitation precisely
 // because its sender left, which is the failure this whole endpoint exists to end.
 describe("inviterLabel", () => {
@@ -188,7 +188,7 @@ describe("inviterLabel", () => {
 describe("REVOKED_CAUSE_NOTE", () => {
   it("⛔ names the OTHER cause without claiming which one happened", () => {
     // SupersedePendingInvites revokes on a domain-capture JIT join, and the table records no
-    // cause — so asserting "this was superseded" would be a second source of truth.
+    // cause, so asserting "this was superseded" would be a second source of truth.
     expect(REVOKED_CAUSE_NOTE).toMatch(/either/i);
     expect(REVOKED_CAUSE_NOTE).toMatch(/superseded/i);
     expect(REVOKED_CAUSE_NOTE).toMatch(/domain/i);
@@ -203,11 +203,11 @@ describe("stateLabel", () => {
   });
 });
 
-// Codes READ OFF invites.Service, not guessed — the first draft invented two the service cannot
+// Codes READ OFF invites.Service, not guessed, the first draft invented two the service cannot
 // emit, which is untestable against the server by definition.
 describe("inviteErrorCopy", () => {
   it("points a duplicate-invite conflict at the list that now exists", () => {
-    // invites.go:109 has always said "resend or revoke it" — advice about two verbs that had no
+    // invites.go:109 has always said "resend or revoke it", advice about two verbs that had no
     // surface, on a row nobody could see.
     expect(inviteErrorCopy("invite_pending")).toMatch(/resend or revoke/i);
   });

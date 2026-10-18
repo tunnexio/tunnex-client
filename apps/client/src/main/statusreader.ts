@@ -51,3 +51,37 @@ export class SingleFlightStatusReader<T> {
     if (this.inFlight === request) this.inFlight = null;
   }
 }
+
+export interface HelperAccessBlocked {
+  state: "failed";
+  helper_error: "caller_untrusted";
+}
+
+// A trust refusal is an expected installation problem, not a transport verdict.
+// Preserve that distinction and retry without hammering the privileged helper.
+export class HelperAccessStatusReader<T> {
+  private retryAt = 0;
+  private blocked = false;
+  constructor(
+    private readonly readStatus: () => Promise<T>,
+    private readonly now: () => number = Date.now,
+    private readonly onBlocked: () => void = () => {},
+  ) {}
+
+  async read(): Promise<T | HelperAccessBlocked> {
+    if (this.now() < this.retryAt) return { state: "failed", helper_error: "caller_untrusted" };
+    try {
+      const status = await this.readStatus();
+      this.retryAt = 0;
+      this.blocked = false;
+      return status;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/^caller_untrusted:/.test(message)) throw error;
+      this.retryAt = this.now() + 30_000;
+      if (!this.blocked) this.onBlocked();
+      this.blocked = true;
+      return { state: "failed", helper_error: "caller_untrusted" };
+    }
+  }
+}

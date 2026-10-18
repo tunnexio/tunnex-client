@@ -12,7 +12,7 @@ import {
 } from "../src/lib/routedrangesview";
 import type { Site, SiteSubnet } from "../src/lib/api";
 
-// ⛔ MECHANISM ⑨ — ONE-SIDED OBSERVATION — IS THE THING THIS FILE IS WRITTEN AGAINST.
+// ⛔ MECHANISM ⑨, ONE-SIDED OBSERVATION, IS THE THING THIS FILE IS WRITTEN AGAINST.
 //
 // The S14.6 `aria-pressed` mutation survived because the test only ever observed the UNSELECTED value: a
 // test that sees one value of a two-valued thing cannot tell the variable from the constant, and mutation
@@ -60,7 +60,7 @@ describe("canonicalCidr", () => {
       "10.20.0/24", // three octets
       "10.20.0.0.0/24", // five octets
       "10.20.0.256/24", // octet out of range
-      "fd00::/8", // IPv6 — not silently accepted
+      "fd00::/8", // IPv6, not silently accepted
       "", // empty
     ])
       expect(canonicalCidr(bad), bad).toBeNull();
@@ -68,7 +68,7 @@ describe("canonicalCidr", () => {
 });
 
 describe("attributeRanges", () => {
-  it("is `loading` before the fan-out resolves, and NOT loading after — null is not the same as empty", () => {
+  it("is `loading` before the fan-out resolves, and NOT loading after, null is not the same as empty", () => {
     const ranges = ["10.20.0.0/24"];
 
     // THE DISTINCTION THE UNION EXISTS FOR, ASSERTED AS A DIFFERENCE.
@@ -77,7 +77,7 @@ describe("attributeRanges", () => {
 
     expect(inFlight[0].attribution.kind).toBe("loading");
     expect(resolvedEmpty[0].attribution.kind).toBe("unmatched");
-    // If the implementation collapsed null and [] the two would be equal — so assert they are not.
+    // If the implementation collapsed null and [] the two would be equal, so assert they are not.
     expect(inFlight[0].attribution.kind).not.toBe(
       resolvedEmpty[0].attribution.kind,
     );
@@ -121,7 +121,7 @@ describe("attributeRanges", () => {
     expect(rows[1].attribution.kind).toBe("unmatched");
   });
 
-  it("degrades EVERY unmatched row to `unknown` when ANY site's fetch failed — a negative needs a complete census", () => {
+  it("degrades EVERY unmatched row to `unknown` when ANY site's fetch failed, a negative needs a complete census", () => {
     const ranges = ["10.20.0.0/24", "10.99.0.0/24"];
     const complete: SubnetFetch[] = [
       { ok: true, siteId: "s1", subnets: [subnet("s1", "10.20.0.0/24")] },
@@ -129,7 +129,7 @@ describe("attributeRanges", () => {
     ];
     const partial: SubnetFetch[] = [
       { ok: true, siteId: "s1", subnets: [subnet("s1", "10.20.0.0/24")] },
-      { ok: false, siteId: "s2" }, // s2 might own 10.99.0.0/24 — we cannot say it does not.
+      { ok: false, siteId: "s2" }, // s2 might own 10.99.0.0/24, we cannot say it does not.
     ];
 
     // The MATCHED row is unaffected: a positive answer stays knowable, because finding it required only the
@@ -178,7 +178,7 @@ describe("attributeRanges", () => {
 });
 
 describe("attributionLabel / attributionClass", () => {
-  it("gives all four arms a distinct label — no two states read the same", () => {
+  it("gives all four arms a distinct label, no two states read the same", () => {
     const labels = [
       attributionLabel({ kind: "site", siteId: "s1", siteName: "Sydney" }),
       attributionLabel({ kind: "loading" }),
@@ -234,7 +234,7 @@ describe("forwardsEmptyCopy", () => {
     }
   });
 
-  it("distinguishes 'nothing is routed' from 'nothing reachable' — the two have different fixes", () => {
+  it("distinguishes 'nothing is routed' from 'nothing reachable', the two have different fixes", () => {
     expect(forwardsEmptyCopy(0)).not.toBe(forwardsEmptyCopy(1));
     expect(forwardsEmptyCopy(0)).toMatch(/no ranges are routed/i);
   });
@@ -280,8 +280,8 @@ const a = (
   label: `${kind}:${cidr}`,
 });
 
-describe("mapAddressSpace — the three defects the panel was cut and rebuilt for", () => {
-  it("⛔ ①: a /24 lights its cell PARTIAL, a /16 lights it FULL — the two are distinguishable", () => {
+describe("mapAddressSpace, the three defects the panel was cut and rebuilt for", () => {
+  it("⛔ ①: a /24 lights its cell PARTIAL, a /16 lights it FULL, the two are distinguishable", () => {
     // The handoff keyed 10.20.0.0/24 by its second octet, painting a 65,536-address block for a 256-address
     // LAN. Both cases in ONE test, so a model returning a constant fails whichever it is not.
     const partial = mapAddressSpace([a("10.31.0.0/24")]).blocks[0];
@@ -304,7 +304,7 @@ describe("mapAddressSpace — the three defects the panel was cut and rebuilt fo
     expect(m.blocks[2].lit[0].index).toBe(4);
   });
 
-  it("⛔ ③: the DEVICE POOL and CLUSTER VIPs occupy cells — a dark cell must mean genuinely free", () => {
+  it("⛔ ③: the DEVICE POOL and CLUSTER VIPs occupy cells, a dark cell must mean genuinely free", () => {
     // THE DEFECT THE FOUNDER'S QUESTION EXPOSED. The live pool is 10.99.0.0/24; drawing only site subnets
     // left cell 99 dark, i.e. "yours to take", and the server refuses it.
     const m = mapAddressSpace([
@@ -337,7 +337,7 @@ describe("mapAddressSpace — the three defects the panel was cut and rebuilt fo
     expect(whole.utilised).toBe(1);
   });
 
-  it("the STRONGER claim wins a shared cell — both directions", () => {
+  it("the STRONGER claim wins a shared cell, both directions", () => {
     // Precedence approved > pool > vip > pending. A cell that is partly the device pool must not read as
     // merely pending: the pool is the harder constraint to discover.
     const poolOverPending = mapAddressSpace([
@@ -345,7 +345,7 @@ describe("mapAddressSpace — the three defects the panel was cut and rebuilt fo
       a("10.5.2.0/24", "pool"),
     ]).blocks[0];
     expect(poolOverPending.lit[0].kind).toBe("pool");
-    // And order must not decide it — the reverse input gives the same answer.
+    // And order must not decide it, the reverse input gives the same answer.
     const reversed = mapAddressSpace([
       a("10.5.2.0/24", "pool"),
       a("10.5.1.0/24", "pending"),
@@ -360,7 +360,7 @@ describe("mapAddressSpace — the three defects the panel was cut and rebuilt fo
 
   it("utilisation counts ROUTED addresses only; `claimed` counts everything", () => {
     // Two distinct numbers, and conflating them is the trap: a pending range is withheld and the pool is not
-    // routed LAN traffic, so folding them into "utilised" would overstate what goes down the tunnel — while
+    // routed LAN traffic, so folding them into "utilised" would overstate what goes down the tunnel, while
     // ignoring them in "claimed" would understate what a new range must avoid.
     const m = mapAddressSpace([
       a("10.1.0.0/16"),
@@ -385,7 +385,7 @@ describe("mapAddressSpace — the three defects the panel was cut and rebuilt fo
   });
 });
 
-describe("nextFreeRange — the answer the picture cannot give", () => {
+describe("nextFreeRange, the answer the picture cannot give", () => {
   const block = BLOCKS[0]; // 10.0.0.0/8
 
   it("skips every occupied range REGARDLESS OF CLASS", () => {
@@ -396,9 +396,9 @@ describe("nextFreeRange — the answer the picture cannot give", () => {
     expect(nextFreeRange(allocs, block, 24)).toBe("10.1.1.0/24");
   });
 
-  it("⛔ finds a /24 INSIDE a partly-used /16 — where the grid is one zoom level too coarse", () => {
+  it("⛔ finds a /24 INSIDE a partly-used /16, where the grid is one zoom level too coarse", () => {
     // THE WHOLE REASON THIS IS ARITHMETIC AND NOT A CELL SCAN. Cell 0 is full and cell 1 is only PARTLY used
-    // (one /24 of 256). A cell-based search sees both as "lit" and answers 10.2.0.0/24 — wasting the 255
+    // (one /24 of 256). A cell-based search sees both as "lit" and answers 10.2.0.0/24, wasting the 255
     // usable /24s inside cell 1. The correct answer is inside a cell the picture draws as occupied.
     const allocs = [a("10.0.0.0/16"), a("10.1.0.0/24")];
     const answer = nextFreeRange(allocs, block, 24);
@@ -408,7 +408,7 @@ describe("nextFreeRange — the answer the picture cannot give", () => {
 
   it("does NOT skip a free cell just because a later one is used", () => {
     // The inverse, and it caught a wrong expectation in this very file: with only 10.1.0.0/24 taken, the
-    // first free /24 is 10.0.0.0/24 — the block does not start at the first ALLOCATION.
+    // first free /24 is 10.0.0.0/24, the block does not start at the first ALLOCATION.
     expect(nextFreeRange([a("10.1.0.0/24")], block, 24)).toBe("10.0.0.0/24");
   });
 
@@ -480,7 +480,7 @@ describe("the block table itself", () => {
 describe("utilisationLabel / allocationLabel", () => {
   it("never prints a bare 0.0% for a real allocation, and says 0 for a real zero", () => {
     // A /24 in a /8 is 0.0000015%; toFixed(1) renders "0.0%", which reads as NOTHING IS ROUTED beside a lit
-    // cell — the numeric form of the reassuring-empty defect. The two cases mean different things.
+    // cell, the numeric form of the reassuring-empty defect. The two cases mean different things.
     expect(
       utilisationLabel(mapAddressSpace([a("10.1.0.0/24")]).blocks[0]),
     ).toBe("<0.1% of /8");

@@ -4,7 +4,7 @@
 // default-src 'none', scripts only from the bundle (no remote/eval), styles
 // self + inline (the built CSS + any inlined styles), images/fonts self + data:.
 // This is the primary hardening control against an XSS/supply-chain injection in
-// the bundled SPA — without it, injected JS could pull remote code and drive the
+// the bundled SPA, without it, injected JS could pull remote code and drive the
 // auto-attached bearer against the API.
 export function cspFor(serverOrigin: string): string {
   const connect = ["'self'"];

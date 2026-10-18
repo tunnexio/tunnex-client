@@ -266,7 +266,7 @@ export async function runTerminalRevocationFlow(
   }
 
   // JavaScript permits throwing any value, including undefined. Presence of the
-  // captured key—not its truthiness—is the teardown verdict.
+  // captured key,not its truthiness,is the teardown verdict.
   const cleanupFailed = Object.prototype.hasOwnProperty.call(problems, "cleanupError");
   const outcome: TerminalRevocationOutcome = cleanupFailed ? "failed" : "revoked";
   try {

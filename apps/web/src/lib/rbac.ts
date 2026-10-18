@@ -2,7 +2,7 @@ import type { Role } from "./api";
 import rbacPolicy from "./rbac-policy.json";
 
 // Client-side MIRROR of the server RBAC policy. This gates what CONTROLS render
-// — it is UX, never enforcement. Every action is still authorized server-side;
+//, it is UX, never enforcement. Every action is still authorized server-side;
 // the UI simply must not offer what the server forbids (S4.4 watch-item a).
 //
 // The grant table is NOT hand-copied: rbac-policy.json is GENERATED from the Go
@@ -21,7 +21,7 @@ export function can(role: Role | undefined, perm: string): boolean {
 }
 
 // NOTE: the drift guard covers the GRANT TABLE above (generated from Go) but NOT
-// the relational logic below — canManageMembership is control flow, not data, so
+// the relational logic below, canManageMembership is control flow, not data, so
 // it can't be a fixture. It is the one surface still mirrored BY HAND; if you
 // change rbac.CanManageMembership in Go, change it here too (no build will catch
 // it). Keep the two in lockstep manually.

@@ -1520,7 +1520,7 @@ test("resolveTunnelConfig: mode change does not bypass a server-revoked cached d
   assert.equal(store.get(origin)?.revoked, true);
 });
 
-// S7.3: a pending device GATES the tunnel — resolveTunnelConfig throws PendingApprovalError
+// S7.3: a pending device GATES the tunnel, resolveTunnelConfig throws PendingApprovalError
 // (so tunnel.up() never arms the helper), persists the device with pending=true, and a
 // re-resolve while still pending RE-THROWS instead of minting a duplicate (deviceExists
 // returns false for pending and would otherwise false-heal into a second create).
@@ -1585,7 +1585,7 @@ test("resolveTunnelConfig: mode change while pending keeps the same pending devi
 });
 
 // Finding #1-#5 (stamping): a LEGACY stored config (no orgId, from a pre-orgId build) is
-// opportunistically STAMPED with its org on reuse — migrating onto the hardened direct path.
+// opportunistically STAMPED with its org on reuse, migrating onto the hardened direct path.
 
 // D14 belt: connect() owns the exact current-user scan + revoke-first migration.
 // If ConfigProvider sees a no-orgId record directly, it retains and refuses it;
@@ -1615,7 +1615,7 @@ test("resolveTunnelConfig: a no-orgId legacy config is retained and refused, nev
   assert.equal(store.get(origin)?.deviceId, "00000000-0000-4000-8000-000000000109");
 });
 
-// REDUCTION 2 harden — REVOKE-FIRST migration. The revoke frees the cap slot the next connect
+// REDUCTION 2 harden, REVOKE-FIRST migration. The revoke frees the cap slot the next connect
 // needs, so it runs BEFORE clearing and the config is cleared ONLY on revoke success.
 test("legacy no-org proof is opaque and revoke+clear rechecks lease and record around the POST", async () => {
   const store = new TunnelConfigStore(fakeSafe(), fakePersist(), false);
@@ -1894,7 +1894,7 @@ test("migrateLegacyConfig: revoke ok -> config cleared (slot freed before next c
 });
 
 // The permanence case, now self-healing: a revoke BLIP keeps the config (throws), and the
-// NEXT attempt (working revoke) succeeds — no admin-reap, no lockout.
+// NEXT attempt (working revoke) succeeds, no admin-reap, no lockout.
 test("migrateLegacyConfig: a revoke blip KEEPS the config; retry self-heals (no lockout)", async () => {
   const store = new TunnelConfigStore(fakeSafe(), fakePersist(), false);
   const origin = "https://legacy.example";
@@ -1909,7 +1909,7 @@ test("migrateLegacyConfig: a revoke blip KEEPS the config; retry self-heals (no 
 
   const ok = { discoverLegacyDevice: async () => "00000000-0000-4000-8000-000000000205", revokeDevice: async () => {} };
   await migrateLegacyConfig(origin, "00000000-0000-4000-8000-000000000109", USER_A, ok, store, () => {}); // retry
-  assert.equal(store.get(origin), null); // now cleared — self-recovered, no admin-reap
+  assert.equal(store.get(origin), null); // now cleared, self-recovered, no admin-reap
 });
 
 test("migrateLegacyConfig: an in-flight replacement is retained without revoke", async () => {

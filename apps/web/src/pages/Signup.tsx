@@ -22,7 +22,7 @@ export default function Signup() {
     });
     setBusy(false);
     // Signup returns 202 identically whether the email is new or already
-    // registered (enumeration resistance) — we ONLY branch on a validation error
+    // registered (enumeration resistance), we ONLY branch on a validation error
     // (e.g. weak_password), never on account existence.
     if (error) {
       setError(apiErrorMessage(error, "Could not create the account."));

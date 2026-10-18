@@ -28,13 +28,13 @@ type Status = {
 /**
  * ⭐ AN OPERATOR WHO PASTES A KEY AND SEES NOTHING CANNOT TELL SUCCESS FROM SILENCE.
  *
- * So this always renders the CURRENT entitlement — tier, gateway ceiling, expiry — and re-renders it from
+ * So this always renders the CURRENT entitlement, tier, gateway ceiling, expiry, and re-renders it from
  * the install response. The change is visible in the same place the action happened.
  *
  * ⛔ AND "unlicensed" IS NOT AN ERROR STATE. A deployment with no key is a complete, supported Community
  * deployment. Rendering it as a problem would be a false claim about a working product.
  */
-// ⚠ NO orgId. The licence is DEPLOYMENT-WIDE and the org-scoped URL it used to call was an error — the
+// ⚠ NO orgId. The licence is DEPLOYMENT-WIDE and the org-scoped URL it used to call was an error, the
 // org was never passed to the manager, only to authorization and the audit row. Taking an orgId here would
 // have kept implying a per-tenant licence that the data cannot hold.
 export function LicenceCard({ canManage }: { canManage: boolean }) {
@@ -50,7 +50,7 @@ export function LicenceCard({ canManage }: { canManage: boolean }) {
     })();
   }, []);
 
-  // Closes only after the install is confirmed — a licence that failed to apply must leave the key and
+  // Closes only after the install is confirmed, a licence that failed to apply must leave the key and
   // the reason on screen, not vanish behind a closed dialog.
   async function install(e?: React.FormEvent, onDone?: () => void) {
     e?.preventDefault();
@@ -61,7 +61,7 @@ export function LicenceCard({ canManage }: { canManage: boolean }) {
     });
     setBusy(false);
     if (err) {
-      // ⚠ The server's message names WHICH half was wrong and what to do — a truncated key and a key for
+      // ⚠ The server's message names WHICH half was wrong and what to do, a truncated key and a key for
       // another deployment need opposite actions. Surfacing it verbatim rather than "invalid key".
       setError(
         (err as { error?: { message?: string } }).error?.message ??
@@ -104,11 +104,11 @@ export function LicenceCard({ canManage }: { canManage: boolean }) {
 
   return (
     // ⛔ THE TIER IS THE ANSWER MOST VISITS COME FOR; the ceilings, expiry and state copy are what you
-    // read when that answer is surprising. So the row states the tier and the dialog holds the rest —
+    // read when that answer is surprising. So the row states the tier and the dialog holds the rest ,
     // including the key field, which is the one control here and is owner-only.
     <SettingDialogRow
       label="Licence key"
-      description="Install or replace the key. Takes effect immediately — no restart."
+      description="Install or replace the key. Takes effect immediately, no restart."
       value={
         status ? (
           // A lapsed licence is not an "active" one, and the row is where that difference is cheapest to see.
@@ -184,13 +184,13 @@ export function LicenceCard({ canManage }: { canManage: boolean }) {
           {status.grace_ends_at
             ? ` and its grace period ends ${status.grace_ends_at.slice(0, 10)}`
             : ""}
-          . Nothing has stopped — everything keeps working until then.
+          . Nothing has stopped, everything keeps working until then.
         </p>
       )}
       {status?.state === "lapsed" && (
         <p className="mt-3 text-explainer text-warn">
           The grace period has ended, so this deployment is back to Community
-          limits. Gateways and organizations already running are unaffected —
+          limits. Gateways and organizations already running are unaffected ,
           only enrolling new ones is.
         </p>
       )}
@@ -203,7 +203,7 @@ export function LicenceCard({ canManage }: { canManage: boolean }) {
       {status?.clock_went_backwards && (
         <p className="mt-2 text-explainer text-warn">
           This server's clock moved backwards. Licence dates may read
-          incorrectly until it is corrected — nothing has been refused because
+          incorrectly until it is corrected, nothing has been refused because
           of it.
         </p>
       )}

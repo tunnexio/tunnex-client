@@ -7,7 +7,7 @@ import { stripJsComments } from "./support/source";
 // ⛔ THE ORG SEAM CENSUS (S12.5).
 //
 // Fourteen files independently fetched `GET /api/v1/organizations` and independently took index zero. They
-// did not get there by copy-paste — they got there because **there was nowhere else to get an org from**,
+// did not get there by copy-paste, they got there because **there was nowhere else to get an org from**,
 // and each author solved the same problem the same obvious way.
 //
 // > ## ⛔ **A MISSING SEAM IS NOT A GAP IN THE CODE. IT IS A GAP EVERY FUTURE CALL SITE FALLS INTO,
@@ -15,7 +15,7 @@ import { stripJsComments } from "./support/source";
 //
 // So the seam alone does not fix this. The seam plus something that notices when a page stops using it does.
 //
-// ⚠ THE SUBJECT IS THE CAPABILITY, NOT THE STRING. It would be easy — and useless — to grep for `[0]`.
+// ⚠ THE SUBJECT IS THE CAPABILITY, NOT THE STRING. It would be easy, and useless, to grep for `[0]`.
 // `[0]` is shape: it appears legitimately all over this codebase (`live[0]`, `ms[0]`, `members[0]`), and a
 // page can reintroduce this defect without writing it at all (`.find(() => true)`, `.at(0)`, `.shift()`).
 // The capability is **"which organization does this screen act on"**, and there is exactly one legitimate
@@ -39,13 +39,13 @@ function filesReadingTheOrgList(): string[] {
       }
       if (!/\.tsx?$/.test(p)) continue;
       scanned++;
-      // ⛔ STRIPPED, NOT RAW — and the repo's census-of-censuses caught this file reading raw source
+      // ⛔ STRIPPED, NOT RAW, and the repo's census-of-censuses caught this file reading raw source
       // before a human did. THIS VERY FILE explains the endpoint it hunts for, in prose, several times.
       // A raw read would have matched its own comments and reported `test/orgseam.test.tsx` as a page
       // picking its own organization: the census accusing its own explanation.
       //
       // ⭐ THE GENERAL FORM IS WORSE THAN THE INSTANCE. Any census that greps source will, sooner or
-      // later, describe what it looks for — and from that moment it reports the description as the thing.
+      // later, describe what it looks for, and from that moment it reports the description as the thing.
       const src = stripJsComments(readFileSync(p, "utf8"));
       // The READ of the collection. `POST "/api/v1/organizations"` (create) and every
       // `"/api/v1/organizations/{orgId}/..."` scoped route are different endpoints and are not in scope.
@@ -56,7 +56,7 @@ function filesReadingTheOrgList(): string[] {
   };
   walk(WEB_SRC);
 
-  // ⛔ THE VACUITY FLOOR. A census that scans nothing reports a clean bill of health forever — and this one
+  // ⛔ THE VACUITY FLOOR. A census that scans nothing reports a clean bill of health forever, and this one
   // is a regex away from matching nothing at all if the client's call style changes.
   expect(scanned).toBeGreaterThan(20);
   return hits.sort();
@@ -67,7 +67,7 @@ const ALLOWED: Record<string, string> = {
   "lib/useOrg.tsx":
     "IS the seam. Reads the list once for the whole shell and hands out the selected org.",
   "App.tsx":
-    "RequireOrg / RequireNoOrg — asks WHETHER you have any organization, never WHICH. It routes the " +
+    "RequireOrg / RequireNoOrg, asks WHETHER you have any organization, never WHICH. It routes the " +
     "onboarding funnel and runs BEFORE the provider mounts, so it cannot read from it.",
   "pages/CreateOrg.tsx":
     "Re-reads after a 201 to confirm read-your-writes before handing off to the shell. It is not " +
@@ -85,7 +85,7 @@ describe("the org seam", () => {
         `These files read GET /api/v1/organizations directly:\n` +
         rogue.map((f) => `  ${f}`).join("\n") +
         `\n\nWhichever org they choose will NOT follow the switcher, so a user in more than one ` +
-        `organization sees this screen bound to a tenant they did not select — silently, and only on ` +
+        `organization sees this screen bound to a tenant they did not select, silently, and only on ` +
         `this screen. Read \`useOrg()\` instead.\n\n` +
         `If the file genuinely needs the whole list for some other reason, add it to ALLOWED with the ` +
         `reason, so the next reader can tell a decision from an oversight.`,

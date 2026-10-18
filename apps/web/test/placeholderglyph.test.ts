@@ -6,8 +6,8 @@ import { stripJsComments } from "./support/source";
 // ⛔ THE EM-DASH IS BANNED AS A PLACEHOLDER GLYPH, AND THAT RULE WAS ALREADY RESOLVED ONCE.
 //
 // S14.5 (docs/laws.md → WHEN ONE RULE REQUIRES REWRITING THE EXPRESSION OF ANOTHER): `hubsetview` rendered
-// `"—"` as an absent-marker under the honesty rule, the copy rule bans the glyph outright, and it resolved to
-// `"n/a"` — because an em-dash "is not READ as 'we have no value' by anyone who has not been told that it
+// `"\u2014"` as an absent-marker under the honesty rule, the copy rule bans the glyph outright, and it resolved to
+// `"n/a"` \u2014 because an em-dash "is not READ as 'we have no value' by anyone who has not been told that it
 // means that. It reads as a dash, as a minus, or as NOTHING AT ALL to a screen reader."
 //
 // ⛔ IT REGRESSED ANYWAY, on THREE merged screens, and `Kubernetes.tsx` carried a WRITTEN EXEMPTION for
@@ -16,13 +16,13 @@ import { stripJsComments } from "./support/source";
 //
 //   A RULE RESOLVED IN PROSE REGRESSED IN CODE. THIS TEST IS THE DIFFERENCE.
 //
-// SCOPE, deliberately narrow: only the em-dash used AS A VALUE — `? "—"`, `?? "—"`, `: "—"`, `{"—"}`. Prose
+// SCOPE, deliberately narrow: only the em-dash used AS A VALUE \u2014 `? "\u2014"`, `?? "\u2014"`, `: "\u2014"`, `{"\u2014"}`. Prose
 // em-dashes inside sentences are a SEPARATE obligation (the global sweep + lint rule at EPIC 14 close,
 // docs/DEFERRAL-REGISTER.md) and are NOT this test's business. Conflating them is what let a resolved rule
 // ride an unresolved one's schedule.
 //
 // One intentionally visible exception exists: the desktop client's labelled connection-metrics table uses
-// `—` for an unavailable measurement. This was a founder-approved desktop convention: it preserves the
+// `\u2014` for an unavailable measurement. This was a founder-approved desktop convention: it preserves the
 // fixed telemetry grid without inventing a number, and every row has its metric label plus an icon. It is
 // not available to arbitrary product surfaces.
 
@@ -42,9 +42,9 @@ function walk(dir: string): string[] {
 // The em-dash standing alone as a rendered VALUE. Comments are stripped first: `postureview.ts` documents a
 // past fix by quoting the old code, and a guard that fails on its own changelog teaches people to delete
 // the changelog.
-const AS_A_VALUE = /(\?\?|\?|:)\s*"—"|\{\s*"—"\s*\}|>\s*—\s*</;
+const AS_A_VALUE = /(\?\?|\?|:)\s*"\u2014"|\{\s*"\u2014"\s*\}|>\s*\u2014\s*</;
 const CLIENT_METRICS = join(SRC, "client", "ClientApp.tsx");
-const APPROVED_CLIENT_METRIC_VALUE = /value: .*"—"|(?:stats|displayStats)\.rate === null \? "—"/;
+const APPROVED_CLIENT_METRIC_VALUE = /value: .*"\u2014"|(?:stats|displayStats)\.rate === null \? "\u2014"/;
 
 describe("the em-dash is never a placeholder value", () => {
   const files = walk(SRC);

@@ -21,24 +21,24 @@ import {
 } from "../src/lib/postureview";
 import type { HealthCheck } from "../src/lib/api";
 
-describe("postureBadge — the three-way legibility rider", () => {
+describe("postureBadge, the three-way legibility rider", () => {
   it("renders NOTHING when the surface is inactive (no health fields = org has no checks)", () => {
     expect(postureBadge({})).toBeNull();
   });
 
-  it("unknown is FIRST-CLASS and distinct — never a pass", () => {
+  it("unknown is FIRST-CLASS and distinct, never a pass", () => {
     const never = postureBadge({
       health_state: "unknown",
       health_blocked: false,
     });
     expect(never).toEqual({ label: "posture not reported", tone: "unknown" });
     // ⛔ THIS ASSERTION ENCODED THE DEFECT (corrected S14.10). It gave a device with a present
-    // `health_reported_at` and NO FACTS AT ALL the label "posture stale" — the tri-state case, where the
+    // `health_reported_at` and NO FACTS AT ALL the label "posture stale", the tri-state case, where the
     // device reported and simply could not determine the fact. It is current and incomplete, not silent.
     //
     // A test can pin a defect as firmly as it pins a behaviour, and this one did: it is why the mislabel
     // survived a green suite. FACTS ARE NOW PRESENT, which is what actually makes a report stale.
-    // STALE is marked by the NULLABLE fact being present — os_version is NOT NULL and so cannot discriminate.
+    // STALE is marked by the NULLABLE fact being present, os_version is NOT NULL and so cannot discriminate.
     const stale = postureBadge({
       health_state: "unknown",
       health_blocked: false,
@@ -93,7 +93,7 @@ describe("postureFailureSummary", () => {
   });
 });
 
-describe("diskFactLabel — per-fact tri-state", () => {
+describe("diskFactLabel, per-fact tri-state", () => {
   it("an absent fact reads 'not reported', never a guessed value", () => {
     expect(diskFactLabel(undefined)).toBe("not reported");
     expect(diskFactLabel(true)).toBe("encrypted");
@@ -101,8 +101,8 @@ describe("diskFactLabel — per-fact tri-state", () => {
   });
 });
 
-describe("osVersionCoverage — the ratified coverage indicator", () => {
-  it("names an unconstrained platform explicitly — never a silent gap", () => {
+describe("osVersionCoverage, the ratified coverage indicator", () => {
+  it("names an unconstrained platform explicitly, never a silent gap", () => {
     const lines = osVersionCoverage({ macos: "14.0", windows: "" });
     expect(lines).toHaveLength(2); // every reporting platform enumerated
     expect(lines.find((l) => l.platform === "macos")).toEqual({
@@ -138,7 +138,7 @@ describe("buildOsVersionParam", () => {
   });
 });
 
-describe("osVersionMins / checkModeOf — config round-trip", () => {
+describe("osVersionMins / checkModeOf, config round-trip", () => {
   const checks: HealthCheck[] = [
     {
       kind: "os_version",
@@ -159,7 +159,7 @@ describe("osVersionMins / checkModeOf — config round-trip", () => {
   });
 });
 
-describe("wouldFailCopy — honest blast-radius copy", () => {
+describe("wouldFailCopy, honest blast-radius copy", () => {
   it("require says WHEN blocking lands and that non-reporters stay unaffected", () => {
     const c = wouldFailCopy("require", 3)!;
     expect(c).toContain("3 devices");
@@ -175,7 +175,7 @@ describe("wouldFailCopy — honest blast-radius copy", () => {
   });
 });
 
-describe("the verbatim honesty line (D6 — locked copy)", () => {
+describe("the verbatim honesty line (D6, locked copy)", () => {
   it("carries the three load-bearing claims verbatim", () => {
     expect(POSTURE_HONESTY_LINE).toContain("deter honest non-compliance");
     expect(POSTURE_HONESTY_LINE).toContain(
@@ -185,23 +185,23 @@ describe("the verbatim honesty line (D6 — locked copy)", () => {
   });
 });
 
-// ── S14.10 ITEM 1 — THREE CAUSES, THREE LABELS ──────────────────────────────────────────────────────────
+// ── S14.10 ITEM 1, THREE CAUSES, THREE LABELS ──────────────────────────────────────────────────────────
 //
-// The old arm emitted TWO labels on a presence check of `health_reported_at`, so the tri-state case — a
-// device that reported seconds ago but could not determine a fact — rendered "posture stale". THE
+// The old arm emitted TWO labels on a presence check of `health_reported_at`, so the tri-state case, a
+// device that reported seconds ago but could not determine a fact, rendered "posture stale". THE
 // REASSURING-INVERSE: it told an operator the device was silent while it was talking.
-describe("unknownPostureLabel — TWO reachable causes, and the third is unreachable BY SCHEMA", () => {
+describe("unknownPostureLabel, TWO reachable causes, and the third is unreachable BY SCHEMA", () => {
   const base = {
     health_reported_at: undefined,
     health_os_version: undefined,
     health_disk_encrypted: undefined,
   };
 
-  it("⛔ CAUSE 1 — never reported", () => {
+  it("⛔ CAUSE 1, never reported", () => {
     expect(unknownPostureLabel(base)).toBe("posture not reported");
   });
 
-  it("⛔ CAUSE 2 — reported: the server judged it past the TTL", () => {
+  it("⛔ CAUSE 2, reported: the server judged it past the TTL", () => {
     // With a row present, `evaluated_state` is NOT NULL and CHECK-constrained to compliant|noncompliant, so
     // `healthInfoFor` can only reach `unknown` via staleness. No client clock is used or needed.
     expect(
@@ -212,9 +212,9 @@ describe("unknownPostureLabel — TWO reachable causes, and the third is unreach
     ).toBe("posture stale");
   });
 
-  it("⛔ THE THIRD CAUSE THE SPEC CLAIMS IS UNREACHABLE — a fact-absent report is COMPLIANT, not unknown", () => {
+  it("⛔ THE THIRD CAUSE THE SPEC CLAIMS IS UNREACHABLE, a fact-absent report is COMPLIANT, not unknown", () => {
     // The spec says unknown = "no report, stale report, or the fact was reported absent". Measured: the
-    // evaluator does `if f.DiskEncrypted == nil { continue }` — "absence never blocks" — so the check is
+    // evaluator does `if f.DiskEncrypted == nil { continue }`, "absence never blocks", so the check is
     // SKIPPED and the device evaluates COMPLIANT. It never becomes unknown.
     //
     // This test exists so the next reader does not rebuild the third label from the spec's prose, as I did.
@@ -239,9 +239,9 @@ describe("unknownPostureLabel — TWO reachable causes, and the third is unreach
   });
 });
 
-// ── S14.10 ITEM 2 — THE ADDRESS PLACEHOLDER ─────────────────────────────────────────────────────────────
+// ── S14.10 ITEM 2, THE ADDRESS PLACEHOLDER ─────────────────────────────────────────────────────────────
 describe("addressLabel", () => {
-  it("⛔ NEVER returns an empty string — blank pixels cannot say 'no address'", () => {
+  it("⛔ NEVER returns an empty string, blank pixels cannot say 'no address'", () => {
     // The regression this pins: `?? ""` made "has no address" and "the cell failed to render" identical.
     for (const absent of [undefined, null, ""])
       expect(addressLabel(absent).length).toBeGreaterThan(0);
@@ -253,7 +253,7 @@ describe("addressLabel", () => {
     expect(addressLabel(undefined)).toBe(NO_ADDRESS);
   });
 
-  it("names the STATE, not a CAUSE — it is absent on four different paths", () => {
+  it("names the STATE, not a CAUSE, it is absent on four different paths", () => {
     // revoked (swept) · rejected (RejectDevice NULLs it) · pending · never assigned. "released" would be
     // wrong for a device that never had one; "revoked" would be wrong for three of the four.
     expect(NO_ADDRESS).not.toMatch(/revoked|released|freed|expired/i);
@@ -262,9 +262,9 @@ describe("addressLabel", () => {
 
 // ── S14.10 ITEMS 4 & 5 ──────────────────────────────────────────────────────────────────────────────────
 describe("deviceProtocol", () => {
-  it("⛔ derives OpenVPN from an ABSENT WireGuard key — there is no protocol field on Device", () => {
+  it("⛔ derives OpenVPN from an ABSENT WireGuard key, there is no protocol field on Device", () => {
     // An OpenVPN device is minted with "no WireGuard key". `public_key` is REQUIRED, so it cannot go absent
-    // without a schema change — which is what makes this derivation safe rather than a guess.
+    // without a schema change, which is what makes this derivation safe rather than a guess.
     expect(deviceProtocol("Zm9vYmFy")).toBe("WireGuard");
     expect(deviceProtocol("")).toBe("OpenVPN");
     expect(deviceProtocol(undefined)).toBe("OpenVPN");
@@ -272,7 +272,7 @@ describe("deviceProtocol", () => {
 });
 
 describe("posturePlatformSupported", () => {
-  it("⛔ darwin AND macos both report — the API serves both spellings", () => {
+  it("⛔ darwin AND macos both report, the API serves both spellings", () => {
     // REPORTING_PLATFORMS lists only `macos`, and the seeded `blocked-device` is `darwin` and DOES report.
     // Treating darwin as non-reporting would mark real macOS desktops "n/a" and hide a live posture state.
     expect(posturePlatformSupported("darwin")).toBe(true);
@@ -285,7 +285,7 @@ describe("posturePlatformSupported", () => {
       expect(posturePlatformSupported(p), p).toBe(false);
   });
 
-  it("an UNKNOWN platform is assumed to report — fail towards showing the absence", () => {
+  it("an UNKNOWN platform is assumed to report, fail towards showing the absence", () => {
     // Marking an unrecognised platform N/A would excuse a real gap instead of surfacing it.
     expect(posturePlatformSupported("freebsd")).toBe(true);
     expect(posturePlatformSupported(undefined)).toBe(true);
@@ -298,7 +298,7 @@ describe("needsAttention / applyDeviceFilter", () => {
 
   it("⛔ REVOKED IS NOT ATTENTION, even carrying every other trigger", () => {
     // A revoked device is DONE. Surfacing it as actionable is an instruction to act on a device that cannot
-    // come back — the same defect as showing it a re-export badge.
+    // come back, the same defect as showing it a re-export badge.
     expect(
       needsAttention(
         d({
@@ -334,7 +334,7 @@ describe("needsAttention / applyDeviceFilter", () => {
     expect(c.attention).toBe(applyDeviceFilter(rows, "attention").length);
     expect(c.revoked).toBe(applyDeviceFilter(rows, "revoked").length);
     expect(c.all).toBe(rows.length);
-    // `all` INCLUDES revoked while the others do not, so the three never sum to `all` — which is why the
+    // `all` INCLUDES revoked while the others do not, so the three never sum to `all`, which is why the
     // screen states it rather than leaving a reader to arithmetic.
     expect(c.attention + c.revoked).not.toBe(c.all);
   });

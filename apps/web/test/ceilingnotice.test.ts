@@ -13,7 +13,7 @@ describe("the standing ceiling notice", () => {
     expect(s).toContain("permanent");
     // ⛔ AND IT STATES THE PRECONDITION, NOT AN OUTAGE. Since S12.12 the revoke is REFUSED while devices
     // are homed there, so an operator who reads "disconnects everyone" is being warned about something
-    // that can no longer happen — and is NOT being told about the work that will.
+    // that can no longer happen, and is NOT being told about the work that will.
     expect(s).toContain("cannot be retired while devices are homed to it");
     expect(s).toContain("move them to another gateway first");
     // ⚠ THE RE-ISSUE IS THE PART THAT SURPRISES, and the ceiling is the last moment it can be planned for.
@@ -23,7 +23,7 @@ describe("the standing ceiling notice", () => {
     expect(s).not.toContain("disconnects every device");
   });
 
-  // ⭐ THE ONE THAT MATTERS TODAY. At 6 against 1, revoking a gateway frees NOTHING — five would still be
+  // ⭐ THE ONE THAT MATTERS TODAY. At 6 against 1, revoking a gateway frees NOTHING, five would still be
   // over. Telling that operator "no room left" invites them to revoke one and retry, which fails, and now
   // they have destroyed a working gateway for nothing.
   it("past the ceiling, says how far over and does NOT offer revoking", () => {

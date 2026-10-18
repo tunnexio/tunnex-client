@@ -8,7 +8,7 @@ import { TunnelConfigStore } from "./tunnelstore";
 
 // Build the real CredentialStore over Electron's safeStorage (Keychain / DPAPI /
 // libsecret) and a file in userData. The raw credential file is 0600; but the
-// OS-encryption is the real protection — the 0600 is defense in depth.
+// OS-encryption is the real protection, the 0600 is defense in depth.
 export function buildCredentialStore(allowInsecure: boolean): CredentialStore {
   const file = path.join(app.getPath("userData"), "credential.bin");
   const persist: Persistence = {

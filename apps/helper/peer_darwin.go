@@ -18,7 +18,7 @@ import (
 const peerAuthKind = "native"
 
 // NewPeerResolver (macOS) authenticates the caller via LOCAL_PEERPID on the unix
-// socket → the peer's pid → proc_pidpath (libproc). cgo — verified in the macOS
+// socket → the peer's pid → proc_pidpath (libproc). cgo, verified in the macOS
 // smoke, not the linux CI cross-compile (a no-cgo stub covers that build).
 func NewPeerResolver() PeerResolver {
 	return func(c net.Conn) (string, error) {

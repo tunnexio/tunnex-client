@@ -33,17 +33,17 @@ import {
   transferConsequence,
 } from "../lib/gatewaysview";
 
-// ── S14.6 — GATEWAYS, THE SECTION PASS ──────────────────────────────────────────────────────────────────
+// ── S14.6, GATEWAYS, THE SECTION PASS ──────────────────────────────────────────────────────────────────
 //
 // Slice 1 promoted this from a component buried in Devices into a screen. This is the layout.
 //
-// ⛔ `Fleet risk` IS CUT (epic open) — the handoff's biggest panel here is a bubble plot of agent version ×
+// ⛔ `Fleet risk` IS CUT (epic open), the handoff's biggest panel here is a bubble plot of agent version ×
 // peer load, and risk scoring is an unbuilt Tier-3 name. Its ruled replacement is the HEALTH-GROUPED LIST,
 // which is what the left column is.
 //
 // ⛔ AND THREE OF THE HANDOFF TABLE'S FIVE COLUMNS HAVE NO DATA BEHIND THEM. `PEERS`, `cloud · region` and
 // `egress ✓` are not fields we serve. They are absent WITH THEIR REASON on the panel grid rather than
-// silently dropped — "redesign the gateway table" sounds like layout work and is actually a column-by-column
+// silently dropped, "redesign the gateway table" sounds like layout work and is actually a column-by-column
 // availability audit.
 //
 // SCALE: one row per gateway, constant height, grouped by what is wrong. A 200-gateway fleet reads the same
@@ -87,7 +87,7 @@ export default function GatewaysPage() {
   const [org, setOrg] = useState<Org | null>(null);
   const [nodes, setNodes] = useState<Node[] | null>(null);
   // Site NAMES for the gateway sub-line. NON-FATAL: a failed sites read leaves the sub-line absent rather
-  // than blanking the fleet — the gateway list is this screen's subject and the site name is a courtesy.
+  // than blanking the fleet, the gateway list is this screen's subject and the site name is a courtesy.
   const [siteNames, setSiteNames] = useState<Record<string, string>>({});
   const [loadError, setLoadError] = useState<string | null>(null);
   // A SUCCESS message, separate from loadError: the transfer's outcome is not an error and must not
@@ -100,7 +100,7 @@ export default function GatewaysPage() {
     gateway_ceiling?: number | null;
   } | null>(null);
 
-  // ⚠ TWO-STEP, NOT window.confirm — the same shape the original control used (WF-S11-9): a confirm dialog
+  // ⚠ TWO-STEP, NOT window.confirm, the same shape the original control used (WF-S11-9): a confirm dialog
   // in a table row is a modal over a list, and the row is the thing being acted on.
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
   const [revoking, setRevoking] = useState(false);
@@ -109,7 +109,7 @@ export default function GatewaysPage() {
     null,
   );
   // The destination an operator picked for the move, per gateway being retired. Kept beside confirmRevoke
-  // rather than inside it because cancelling the revoke must forget the destination too — a stale choice
+  // rather than inside it because cancelling the revoke must forget the destination too, a stale choice
   // silently applied to the NEXT gateway is the shape of mistake this whole screen is trying to prevent.
   const [moveTarget, setMoveTarget] = useState<string>("");
   const [moving, setMoving] = useState(false);
@@ -143,7 +143,7 @@ export default function GatewaysPage() {
     await reload();
   }
 
-  /** D3 — the name is a label and nothing consumes it structurally, which is what makes it safe to edit. */
+  /** D3, the name is a label and nothing consumes it structurally, which is what makes it safe to edit. */
   async function saveName(nodeId: string) {
     if (!org) return;
     setSavingName(true);
@@ -169,11 +169,11 @@ export default function GatewaysPage() {
    * here, and this is the only way past it.
    *
    * ⭐ TRANSFER-FIRST MEANS NOTHING BREAKS IF THE OPERATOR WALKS AWAY. Half-done here is "devices moved, old
-   * gateway still running" — harmless, and they can pick the revoke up later. The other order's half-done
+   * gateway still running", harmless, and they can pick the revoke up later. The other order's half-done
    * state is a disconnected fleet and a gateway that can never come back.
    *
    * ⚠ AND THE RESULT IS REPORTED, NOT SWALLOWED. The server answers with how many configs must be
-   * re-imported, which is a different number from how many rows moved — see the transfer endpoint.
+   * re-imported, which is a different number from how many rows moved, see the transfer endpoint.
    */
   async function moveDevices(fromNodeId: string) {
     if (!org || !moveTarget) return;
@@ -206,7 +206,7 @@ export default function GatewaysPage() {
     await reload();
   }
 
-  /** Revoke, then reload — the row must stop looking live the moment the server says it is not. */
+  /** Revoke, then reload, the row must stop looking live the moment the server says it is not. */
   async function revokeGateway(nodeId: string) {
     if (!org) return;
     setRevoking(true);
@@ -228,7 +228,7 @@ export default function GatewaysPage() {
     // ⛔ THE ORG COMES FROM THE SEAM, NOT FROM INDEX ZERO (S12.5). This used to fetch the org list here and
     // take `[0]`, which meant a user in two organizations could reach only one of them and the switcher in
     // the header would have had nothing to switch.
-    // ⛔ LOADING IS NOT ABSENCE (S12.5). See the note in Dashboard.tsx — three states, not two: still
+    // ⛔ LOADING IS NOT ABSENCE (S12.5). See the note in Dashboard.tsx, three states, not two: still
     // loading (say nothing), the read failed (say THAT), genuinely no membership (say that).
     if (orgLoading) return;
     const first = currentOrg;
@@ -248,21 +248,21 @@ export default function GatewaysPage() {
     // becomes a confident "you have none", on the screen whose job is telling you what is running.
     if (!nRes.ok) return setLoadError(nRes.error);
     setNodes(nRes.data);
-    // ⚠ DEPLOYMENT-SCOPED, so no orgId — the licence belongs to the box, not the tenant. A failed read
+    // ⚠ DEPLOYMENT-SCOPED, so no orgId, the licence belongs to the box, not the tenant. A failed read
     // leaves `lic` null and the notice simply does not render: an unknown ceiling must never be guessed at.
     const lRes = await loadOne(() => api.GET("/api/v1/license"));
     if (lRes.ok)
       setLic(lRes.data as { tier: string; gateway_ceiling?: number | null });
-    // ⛔ THE DEVICES HOMED TO EACH GATEWAY — read so the revoke confirm can COUNT THE PEOPLE IT
+    // ⛔ THE DEVICES HOMED TO EACH GATEWAY, read so the revoke confirm can COUNT THE PEOPLE IT
     // DISCONNECTS. Revoking cascades (`RevokeDevicesForNode`, in the same transaction as the node revoke),
     // so the act is not the tidy-up the ceiling notice made it sound like: it is a disconnection, and the
     // operator must be told the size of it at the moment they click.
     //
-    // ⚠ COUNTED OVER `active` + `pending` ONLY — the two states the cascade actually sweeps
+    // ⚠ COUNTED OVER `active` + `pending` ONLY, the two states the cascade actually sweeps
     // (devices.sql:174). Counting revoked rows here would inflate the warning with devices that already
     // cannot connect, and a warning that overstates is disbelieved the second time.
     //
-    // ⚠ A FAILED READ LEAVES THE MAP NULL, NOT EMPTY. `{}` renders every gateway as "0 devices" — a silent
+    // ⚠ A FAILED READ LEAVES THE MAP NULL, NOT EMPTY. `{}` renders every gateway as "0 devices", a silent
     // all-clear produced by a failure, on the one sentence whose whole job is to stop a destructive click.
     // Null makes the confirm say it could not count instead.
     const dRes = (await loadOne(() =>
@@ -289,7 +289,7 @@ export default function GatewaysPage() {
       setSiteNames(Object.fromEntries(sRes.data.map((x) => [x.id, x.name])));
     }
     // ⚠ currentOrg IS A DEPENDENCY, AND THAT IS THE HALF THAT MAKES THE SWITCHER WORK. Without it the
-    // page keeps rendering the org it mounted with — the control moves, the data does not, and the user is
+    // page keeps rendering the org it mounted with, the control moves, the data does not, and the user is
     // looking at one tenant's screen labelled with another's name.
   }, [currentOrg, orgLoading, orgFailed]);
 
@@ -314,10 +314,10 @@ export default function GatewaysPage() {
       cell: (r: GatewayRow) => (
         <span className="flex flex-col gap-0.5">
           <span className="flex items-center gap-2">
-            {/* ⛔ D3 — THE TYPO WAS PERMANENT UNTIL NOW. Enrolment is a CLI act on the operator's own
+            {/* ⛔ D3, THE TYPO WAS PERMANENT UNTIL NOW. Enrolment is a CLI act on the operator's own
                 server, so the name it supplies was written once and never again; a gateway called
                 `gw-lodnon` stayed that way for the life of the deployment.
-                ⚠ EDITED IN PLACE, on a revoked row too — no. A revoked gateway is terminal and nothing
+                ⚠ EDITED IN PLACE, on a revoked row too, no. A revoked gateway is terminal and nothing
                 will serve it again, so renaming one produces a tidier record of something that does not
                 exist; the server refuses it and the control is not offered. */}
             {renaming === r.id ? (
@@ -382,7 +382,7 @@ export default function GatewaysPage() {
     {
       key: "health",
       header: "State",
-      // ⛔ THE STATE AS TEXT — the cell is a Badge, so without this a search for "revoked" finds nothing.
+      // ⛔ THE STATE AS TEXT, the cell is a Badge, so without this a search for "revoked" finds nothing.
       sortValue: (r: GatewayRow) =>
         r.status === "revoked" ? "revoked" : (r.health?.label ?? "healthy"),
       cell: (r: GatewayRow) =>
@@ -457,15 +457,15 @@ export default function GatewaysPage() {
       header: "",
       sortValue: () => "",
       /**
-       * ⛔ REVOKE, ON EVERY TABLE — AND ITS ABSENCE IS THE DEFECT THIS COLUMN EXISTS FOR.
+       * ⛔ REVOKE, ON EVERY TABLE, AND ITS ABSENCE IS THE DEFECT THIS COLUMN EXISTS FOR.
        *
        * The control has existed since S11 (`POST /nodes/{nodeId}/revoke`, two-step confirm) inside
-       * `EnrolCeremony`'s own list. This page passes `renderList={false}` because it owns the list — so the
+       * `EnrolCeremony`'s own list. This page passes `renderList={false}` because it owns the list, so the
        * action went off with the list, and the tables that replaced it never grew one. Nothing went red:
        * the component still exists and its own tests still pass.
        *
        * ⛔ AND IT IS ON THE HEALTHY TABLE TOO, WHICH IS THE CASE THAT WAS BROKEN. A healthy-but-unused
-       * gateway is exactly the one an operator retires to free a licence slot — the ceiling notice says
+       * gateway is exactly the one an operator retires to free a licence slot, the ceiling notice says
        * "revoke a gateway you no longer use", and revoking genuinely frees a slot (`CountLiveNodes` counts
        * `revoked_at IS NULL`). The remedy was true and the button was missing.
        *
@@ -488,11 +488,11 @@ export default function GatewaysPage() {
           confirmDelete === r.id ? (
             <span className="flex flex-col items-end gap-1">
               {/* ⛔ WHAT A DELETE TAKES WITH IT, INCLUDING THE PART NOBODY EXPECTS. The enrolment token that
-                  produced this gateway is deleted with it (D2) — it would otherwise survive unlinked and
+                  produced this gateway is deleted with it (D2), it would otherwise survive unlinked and
                   still enrol one. Someone may be holding it: it can be in a colleague's terminal history,
                   about to be run, and they will get a refusal with no explanation unless this said so. */}
               <span className="max-w-[19rem] text-right text-micro text-warn">
-                This removes the gateway permanently, along with its enrolment token — if anyone still holds
+                This removes the gateway permanently, along with its enrolment token, if anyone still holds
                 that token, it stops working.
               </span>
               <span className="flex items-center gap-2">
@@ -516,7 +516,7 @@ export default function GatewaysPage() {
           ) : (
             /* ⚠ THE ROW USED TO END HERE WITH NO ACTION AT ALL. A revoked gateway is terminal, so its row
                stayed on the list forever and a deployment silently accumulated dead entries nobody could
-               clear — the same shape as the missing Revoke button one story earlier. */
+               clear, the same shape as the missing Revoke button one story earlier. */
             <button
               type="button"
               onClick={() => setConfirmDelete(r.id)}
@@ -528,16 +528,16 @@ export default function GatewaysPage() {
         ) : confirmRevoke === r.id ? (
           <span className="flex flex-col items-end gap-1">
             {/* ⛔ THE COST OF THE ACT, AT THE MOMENT OF THE ACT. Revoking cascades to every device homed
-                here, so this is a disconnection, not a tidy-up — and the operator reaching for it is
+                here, so this is a disconnection, not a tidy-up, and the operator reaching for it is
                 usually reaching for a licence slot, which is the worst moment to be surprised.
-                ⚠ SILENT WHEN THERE ARE NONE — same shape as the deactivate warning: a caution that fires
+                ⚠ SILENT WHEN THERE ARE NONE, same shape as the deactivate warning: a caution that fires
                 on the harmless case teaches people to click through the dangerous one. */}
             <span className="max-w-[19rem] text-right text-micro text-warn">
               {revokeConsequence(homedCounts, r.id)}
             </span>
             {/* ⛔ THE MOVE, IN PLACE, WHEN THERE IS SOMETHING TO MOVE. The server refuses the revoke while
                 devices are homed here, so a Confirm button in this state is a button whose only outcome is
-                a 409 — and a control that exists only to fail teaches an operator that the screen is
+                a 409, and a control that exists only to fail teaches an operator that the screen is
                 broken rather than that the order is deliberate.
                 ⚠ SHOWN WHEN THE COUNT IS UNKNOWN TOO. A failed read must not hide the step: the operator
                 can still move devices, and the alternative is a Confirm that may be refused for a reason
@@ -574,7 +574,7 @@ export default function GatewaysPage() {
                     {moving ? "Moving…" : "Move devices"}
                   </button>
                 </span>
-                {/* The cost of the MOVE, stated once a destination exists to state it about — including
+                {/* The cost of the MOVE, stated once a destination exists to state it about, including
                     the cross-site policy consequence, which is the clause that turns a maintenance step
                     into an access change (D5). */}
                 {chosen && homed !== null && homed > 0 && (
@@ -584,13 +584,13 @@ export default function GatewaysPage() {
                 )}
               </span>
             )}
-            {/* ⚠ NO DESTINATION EXISTS AND DEVICES ARE HOMED HERE — the one dead end this screen can
+            {/* ⚠ NO DESTINATION EXISTS AND DEVICES ARE HOMED HERE, the one dead end this screen can
                 actually reach, so it is named rather than left as a disabled control with no explanation.
                 Enrolling a gateway is a CLI act on the operator's own server, which is why the sentence
                 points at that rather than at a button. */}
             {homed !== null && homed > 0 && destinations.length === 0 && (
               <span className="max-w-[19rem] text-right text-micro text-ink-tertiary">
-                There is no other live gateway to move them to. Enrol one first — this gateway cannot
+                There is no other live gateway to move them to. Enrol one first, this gateway cannot
                 be retired while anyone is homed to it.
               </span>
             )}
@@ -640,7 +640,7 @@ export default function GatewaysPage() {
       <PageHeader title="Gateways" subtitle={org ? org.name : "…"} />
 
       {/* ⛔ THE STANDING CEILING NOTICE. Shown whenever used >= ceiling, with NO refusal behind it.
-          Gateways enrol by CLI/API — the 403 lands in a terminal on the customer's own server — so an
+          Gateways enrol by CLI/API, the 403 lands in a terminal on the customer's own server, so an
           operator about to add one must learn there is no room HERE, before they go and try. */}
       {lic &&
         nodes &&
@@ -658,7 +658,7 @@ export default function GatewaysPage() {
 
       {loadError && <LoadRetry error={loadError} onRetry={reload} />}
       {/* ⛔ THE MOVE'S OUTCOME, AND IT IS NOT AN ERROR. It carries the only number that says how many people
-          must act — how many configs are now stale — which the row count never could. Rendered above the
+          must act, how many configs are now stale, which the row count never could. Rendered above the
           table because the rows it describes have just been re-drawn underneath it. */}
       {notice && (
         <div className="rounded-card border border-hairline bg-surface-inset p-3">
@@ -731,7 +731,7 @@ export default function GatewaysPage() {
                     // read succeeded.
                     failed={false}
                   />
-                  {/* ⛔ THE NOTES — the epic's KEEP list, rendered ONCE PER GROUP rather than per row.
+                  {/* ⛔ THE NOTES, the epic's KEEP list, rendered ONCE PER GROUP rather than per row.
                       The badge names the state; these say what it MEANS. They are a property of the health
                       KIND, so four `site link down` rows would otherwise carry four copies of one sentence. */}
                   {groupNotes(g.rows).map((n) => (
@@ -742,7 +742,7 @@ export default function GatewaysPage() {
                 </Panel>
               ))}
 
-              {/* ⛔ THE COLUMNS THAT ARE NOT HERE, AND WHY — once, at the panel, not per row.
+              {/* ⛔ THE COLUMNS THAT ARE NOT HERE, AND WHY, once, at the panel, not per row.
                   Absence recorded is a decision; absence unrecorded gets re-proposed at the next review. */}
               <p className="text-micro text-ink-faint">
                 Not shown, and why: <strong>peers</strong> is its own slice (a

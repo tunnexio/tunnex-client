@@ -31,11 +31,11 @@ const allowInsecure = process.argv.includes("--allow-insecure-credential-storage
 
 // APP-LEVEL, not per-window. On macOS the app OUTLIVES the window (window-all-closed
 // does not quit on darwin; the tray keeps it alive), so the tunnel, its monitor, the
-// IPC handlers (ipcMain is app-global — registering per-window throws "second handler"
+// IPC handlers (ipcMain is app-global, registering per-window throws "second handler"
 // on the second window), the tray, and the stores are all app-lifetime singletons.
 // The window is a detachable VIEW: `mainWindow` is the current one (or null when
 // closed); IPC/status resolve it dynamically and no-op when it's gone. The VPN keeps
-// running with no window — reopening re-attaches and re-reads live status.
+// running with no window, reopening re-attaches and re-reads live status.
 let mainWindow: BrowserWindow | null = null;
 let allowInsecureStorage = false; // captured from the store at setup for the setup page
 let primaryConfig: Config | null = null;
@@ -54,13 +54,7 @@ function createWindow(config: Config): BrowserWindow {
     // The compact client keeps its primary state, live facts, and one action in
     // view; Settings and Logs own their internal scroll region.
     height: 740,
-    // ⛔ SEAMLESS TITLE BAR ON macOS ONLY — see windowchrome.ts. The default draws a grey chrome
-    // strip above the content, so a window whose whole point is to be ONE surface arrived with a
-    // second one bolted to the top. Hidden-inset keeps the traffic lights and lets the page paint
-    // underneath them, and the title text goes because the WORDMARK already says the name.
-    //
-    // ⛔ On Windows the same option removes the caption entirely — including CLOSE. Decided by a
-    // pure function so that arm is tested rather than trusted.
+    // Shared dark surface with native controls above the renderer header.
     ...windowChrome(process.platform),
     // ⛔ NOT RESIZABLE. The card is a fixed 400px column; a resize only ever added dead margin, and
     // dragging it narrow clipped the stats grid. A window whose content cannot use the extra space
@@ -98,12 +92,12 @@ function createWindow(config: Config): BrowserWindow {
   if (!config.getServerUrl()) {
     void win.loadURL(setupPageDataUrl(allowInsecureStorage, allowInsecure));
   } else {
-    // ⛔ STEP 3 OF THE MIGRATION. The client used to load the WEB SPA's index.html — the router,
+    // ⛔ STEP 3 OF THE MIGRATION. The client used to load the WEB SPA's index.html, the router,
     // the sidebar, the top bar and every dashboard screen, most of it then hidden behind
     // `isDesktop()` branches. That is why the desktop app showed a login page and org settings.
     // The client's own entry mounts four regions, no router, no page.
     //
-    // ⚠ AND THIS WAS NOT THE ONLY LOAD SITE — see entry.ts. `ipc.ts` loads the renderer again on
+    // ⚠ AND THIS WAS NOT THE ONLY LOAD SITE, see entry.ts. `ipc.ts` loads the renderer again on
     // the first-run branch of config:setServerUrl, and it was still pointing at the dashboard.
     void win.loadURL(CLIENT_ENTRY);
   }
@@ -148,7 +142,7 @@ function initializePrimary(): void {
   initLogging();
 
   // ⛔ THE DOCK ICON IN DEVELOPMENT. A PACKAGED app takes its icon from the bundle, so
-  // electron-builder's `icon:` covers that — but `electron .` runs inside Electron's OWN bundle and
+  // electron-builder's `icon:` covers that, but `electron .` runs inside Electron's OWN bundle and
   // shows Electron's atom, which is what every dev screenshot has been showing. Setting it here
   // costs nothing and makes the dev app look like the product it is.
   //
@@ -167,7 +161,7 @@ function initializePrimary(): void {
   }
   const config = new Config();
   primaryConfig = config;
-  // App-lifetime singletons — built ONCE, not per-window.
+  // App-lifetime singletons, built ONCE, not per-window.
   const store = buildCredentialStore(allowInsecure);
   // Electron's development executable reports its own version; release
   // discovery must compare the Tunnex version in both packaged and dev builds.
@@ -187,12 +181,12 @@ function initializePrimary(): void {
   // Serve the SPA bundle over app://. Every response carries a CSP; every path is
   // (a) lexically contained, (b) symlink-resolved and RE-checked for containment
   // (fs.readFile follows links), and (c) only extension-less paths fall back to
-  // index.html — an asset 404 stays a 404 (never HTML masquerading as a script).
+  // index.html, an asset 404 stays a 404 (never HTML masquerading as a script).
   protocol.handle("app", (request) => {
     const csp = cspFor(config.getServerUrl());
     const htmlHeaders = { "content-type": "text/html; charset=utf-8", "content-security-policy": csp };
     // ⛔ THE FALLBACK IS THE CLIENT ENTRY, NOT index.html (S14.20 step 4). It served the DASHBOARD's
-    // entry for any extension-less path — which was right while the client loaded that dashboard and
+    // entry for any extension-less path, which was right while the client loaded that dashboard and
     // is now both wrong and impossible: `index.html` is no longer packaged. An extension-less path
     // in this app can only be "/", and "/" means the client.
     const serveIndex = () => {
@@ -202,7 +196,7 @@ function initializePrimary(): void {
     };
 
     const url = new URL(request.url);
-    // /api/* is NEVER in the bundle — if it reaches app:// the desktop transport
+    // /api/* is NEVER in the bundle, if it reaches app:// the desktop transport
     // switch was inert (no server configured), so 404 rather than masking the
     // misconfig by serving index.html as a "200".
     if (url.pathname.startsWith("/api/")) {
@@ -232,7 +226,7 @@ function initializePrimary(): void {
 
   // IPC handlers + tunnel controls: registered ONCE. They resolve the live window via
   // the getter (null-safe) so a closed window never breaks the tunnel, and vice versa.
-  // Troubleshooting verbs. Verb-specific like the rest of the allowlist — `openLogs` reveals the
+  // Troubleshooting verbs. Verb-specific like the rest of the allowlist, `openLogs` reveals the
   // file in the OS file manager rather than reading it into the renderer, so the log never crosses
   // into a page and cannot be exfiltrated by one.
   ipcMain.handle("diag:logPath", () => logFilePath());
@@ -244,7 +238,7 @@ function initializePrimary(): void {
   // conversation asks for, and until now the client could not tell you its own.
   ipcMain.handle("diag:appInfo", () => ({
     version: desktopVersion,
-    // `build.publish` is null in package.json — there is no release channel to query — so the
+    // `build.publish` is null in package.json, there is no release channel to query, so the
     // feed is reported as absent rather than assumed present.
     update: updateStatus(AUTOUPDATE_ENABLED, false),
   }));
@@ -303,19 +297,19 @@ function initializePrimary(): void {
   controls.beam.subscribe(()=>tray.updateBeam(controls.beam.activeCount()));
 
   // Graceful quit (S6.8): on a CLEAN exit, bring the tunnel Down BEFORE dying so the
-  // helper restores routing + releases the kill-switch instantly — instead of the app
+  // helper restores routing + releases the kill-switch instantly, instead of the app
   // vanishing, the helper seeing OnPeerLost, and the internet staying blocked for the
   // dead-man window. Bounded (gracefulQuit's timeout) so a hung helper can't wedge quit.
   // teardownDone gates the REAL exit: EVERY before-quit is prevented until the graceful
   // Down actually completes, so a second Cmd-Q mid-teardown can't bypass it and quit
-  // early (which would drop us onto the orphan window — review #2). `quitting` ensures the
+  // early (which would drop us onto the orphan window, review #2). `quitting` ensures the
   // teardown runs once.
   let quitting = false;
   let teardownDone = false;
   app.on("before-quit", (e) => {
     if (teardownDone) return; // teardown finished → let the app actually exit
     e.preventDefault(); // block EVERY quit attempt until Down completes
-    if (quitting) return; // teardown already in flight — just keep blocking
+    if (quitting) return; // teardown already in flight, just keep blocking
     quitting = true;
     appQuitting = true;
     void gracefulQuit(

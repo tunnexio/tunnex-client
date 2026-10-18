@@ -1,13 +1,13 @@
 import type { SVGProps } from "react";
 
-// LUCIDE ICON PATHS — VENDORED, NOT DEPENDED ON. Founder-ruled 2026-08-01.
+// LUCIDE ICON PATHS, VENDORED, NOT DEPENDED ON. Founder-ruled 2026-08-01.
 //
 // The 40 icons the DESIGNER selected, as static 24×24 stroke paths. Attribution: Lucide (https://lucide.dev),
-// ISC licence — see NOTICE. THIS IS NOT A LICENCE REFUSAL: ISC is clean and compatible with both the
+// ISC licence, see NOTICE. THIS IS NOT A LICENCE REFUSAL: ISC is clean and compatible with both the
 // Apache-2.0 core and the enterprise build.
 //
 // WHY VENDORED RATHER THAN `lucide-react`:
-//   · the OpenSSF baseline established this repo has NO JavaScript dependency scanning at all — no npm/pnpm
+//   · the OpenSSF baseline established this repo has NO JavaScript dependency scanning at all, no npm/pnpm
 //     audit, no osv-scanner, no Dependabot, and Trivy covers only the Go API image. Adding a RUNTIME
 //     dependency into an unscanned surface would be the first such decision made AFTER measuring that gap.
 //   · 7 KB of static path data has no supply-chain surface: nothing to scan, update, or hear about from a
@@ -121,7 +121,7 @@ export const ICON_PATHS = {
 /**
  * A Lucide glyph. `aria-hidden` by default and DELIBERATELY so: these icons sit beside text that already
  * names the destination, and announcing both would read the label twice. An icon that is the ONLY label must
- * be given a `title` by its caller — see the nav, where every entry carries visible text.
+ * be given a `title` by its caller, see the nav, where every entry carries visible text.
  */
 export function Icon({
   name,

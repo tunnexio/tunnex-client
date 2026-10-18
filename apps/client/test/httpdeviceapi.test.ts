@@ -486,7 +486,7 @@ test("deviceStatus: requires the current session user to own the stored device",
   stubFetch([current, { match: "/organizations/00000000-0000-4000-8000-000000000024/devices", body: [{ id: "00000000-0000-4000-8000-000000000032", user_id: "00000000-0000-4000-8000-000000000011", status: "revoked" }] }]);
   assert.equal(await api().deviceStatus("00000000-0000-4000-8000-000000000032", "00000000-0000-4000-8000-000000000024"), "gone");
   // absent in its OWN org -> genuinely gone (no cross-org scan that a transient omit could
-  // false-"gone" — finding #4).
+  // false-"gone", finding #4).
   stubFetch([current, { match: "/organizations/00000000-0000-4000-8000-000000000024/devices", body: [{ id: "00000000-0000-4000-8000-000000000034", user_id: "00000000-0000-4000-8000-000000000011", status: "active" }] }]);
   assert.equal(await api().deviceStatus("00000000-0000-4000-8000-000000000032", "00000000-0000-4000-8000-000000000024"), "gone");
   // An org admin can see all device rows, but must not reuse another user's local credential.
@@ -494,7 +494,7 @@ test("deviceStatus: requires the current session user to own the stored device",
   assert.equal(await api().deviceStatus("00000000-0000-4000-8000-000000000032", "00000000-0000-4000-8000-000000000024"), "gone");
 });
 
-test("deviceStatus: THROWS on a non-OK read (fail-safe — a blip never reads as a transition)", async () => {
+test("deviceStatus: THROWS on a non-OK read (fail-safe, a blip never reads as a transition)", async () => {
   stubFetch([{ match: "/auth/me", body: { id: "00000000-0000-4000-8000-000000000011" } }, { match: "/organizations/00000000-0000-4000-8000-000000000024/devices", ok: false, status: 503, body: {} }]);
   await assert.rejects(api().deviceStatus("00000000-0000-4000-8000-000000000032", "00000000-0000-4000-8000-000000000024"), /list_devices_failed/);
 });

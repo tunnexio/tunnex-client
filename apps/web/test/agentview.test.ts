@@ -36,7 +36,7 @@ const release: BootstrapRelease = {
 const agentBootstrapCommand = (token: string, apiURL = "https://cp.example") =>
   buildAgentBootstrapCommand(token, release, apiURL);
 
-describe("the agent surface — S15.3", () => {
+describe("the agent surface, S15.3", () => {
   const row = (o: Partial<AgentRow> = {}): AgentRow => ({
     device_id: o.device_id ?? "d1",
     name: o.name ?? "agent-a",
@@ -48,7 +48,7 @@ describe("the agent surface — S15.3", () => {
     status: o.status ?? "active",
   });
 
-  it("⛔ UNATTRIBUTABLE SORTS FIRST — the one state found nowhere else", () => {
+  it("⛔ UNATTRIBUTABLE SORTS FIRST, the one state found nowhere else", () => {
     const sorted = sortAgents([
       row({ device_id: "d1", name: "aaa-normal" }),
       row({ device_id: "d2", name: "zzz-normal" }),
@@ -67,7 +67,7 @@ describe("the agent surface — S15.3", () => {
     ]);
   });
 
-  it("⛔ THE ABSENCES ARE FIRST-CLASS — no owner and no address stay null, never a guess", () => {
+  it("⛔ THE ABSENCES ARE FIRST-CLASS, no owner and no address stay null, never a guess", () => {
     const [r] = sortAgents([
       row({ owner_email: null, address: null, unattributable: true }),
     ]);
@@ -83,11 +83,11 @@ describe("the agent surface — S15.3", () => {
       expect(n.detail).toMatch(/audit trail, not in access control/i);
     });
 
-    it("⚠ TONE IS warn, NEVER danger — a logging gap is not an access-control failure", () => {
+    it("⚠ TONE IS warn, NEVER danger, a logging gap is not an access-control failure", () => {
       expect(attributionNote({ unattributable: true })!.tone).toBe("warn");
     });
 
-    it("is absent for an attributable agent — without this the note could be a constant", () => {
+    it("is absent for an attributable agent, without this the note could be a constant", () => {
       expect(attributionNote({ unattributable: false })).toBeNull();
     });
   });
@@ -120,9 +120,9 @@ describe("the agent surface — S15.3", () => {
 // recorded at the time and cannot be recovered*. It is NOT "not an agent" (a fact nobody has), NOT "agent"
 // (the defect the marker fixed), and NOT a fault (these nodes work correctly).
 //
-// > **"UNKNOWN" SOFTENING INTO "NONE" IS EXACTLY HOW THE PHRASE WOULD DRIFT INTO A VERDICT** — one is an
+// > **"UNKNOWN" SOFTENING INTO "NONE" IS EXACTLY HOW THE PHRASE WOULD DRIFT INTO A VERDICT**, one is an
 // > absence of knowledge, the other is a claim about the world.
-describe("the Overview card — S15.3", () => {
+describe("the Overview card, S15.3", () => {
   const r = (u: boolean) => ({ unattributable: u });
 
   it("counts, and names the gap only when it exists", () => {
@@ -136,7 +136,7 @@ describe("the Overview card — S15.3", () => {
     expect(s.note).toMatch(/cannot be attributed to a person/i);
   });
 
-  // ⛔ §0 BINDS HARDEST AT CARD SIZE — this is where copy gets shortened until it implies things.
+  // ⛔ §0 BINDS HARDEST AT CARD SIZE, this is where copy gets shortened until it implies things.
   it("⛔ the card's copy makes no detection, per-tool or health claim", () => {
     const copy = agentSummary([r(true)]).note ?? "";
     for (const forbidden of [
@@ -154,7 +154,7 @@ describe("the Overview card — S15.3", () => {
   });
 });
 
-describe("the connect command — S15.3", () => {
+describe("the connect command, S15.3", () => {
   const conf =
     "[Interface]\nPrivateKey = k+ey/with$dollar=\nAddress = 10.99.0.7/32\n";
 
@@ -164,19 +164,19 @@ describe("the connect command — S15.3", () => {
     expect(c).toMatch(/wg-quick up tunnex/);
   });
 
-  it("⛔ THE HEREDOC IS QUOTED — an unquoted one would let the shell mangle a key containing $", () => {
+  it("⛔ THE HEREDOC IS QUOTED, an unquoted one would let the shell mangle a key containing $", () => {
     const c = agentConnectCommand(conf);
     expect(c).toContain("<<'TUNNEXEOF'");
     // the key survives verbatim
     expect(c).toContain("k+ey/with$dollar=");
   });
 
-  it("⚠ the config is chmod 600 — a private key must not be world-readable", () => {
+  it("⚠ the config is chmod 600, a private key must not be world-readable", () => {
     expect(agentConnectCommand(conf)).toMatch(/chmod 600/);
   });
 });
 
-describe("the managed bootstrap command — F03", () => {
+describe("the managed bootstrap command, F03", () => {
   it("shell-quotes token and API URL and never embeds a private key", () => {
     const cmd = agentBootstrapCommand("tok'$danger", "https://cp.example/one path");
     expect(cmd).toContain("--rawfile token");
@@ -505,13 +505,13 @@ esac`);
 });
 
 /**
- * ⛔ AGENT LIVENESS — the five states, and the precedence between two of them.
+ * ⛔ AGENT LIVENESS, the five states, and the precedence between two of them.
  *
  * The whole point of this block is the ONE ordering rule: `unknown` outranks `offline`. Everything else is
  * a straightforward mapping; that rule is the one a refactor silently breaks, and breaking it produces a
  * screen that confidently blames an agent for its gateway's silence.
  */
-describe("agent liveness — S15.3", () => {
+describe("agent liveness, S15.3", () => {
   const now = new Date("2026-08-05T12:00:00Z");
   const ago = (s: number) => new Date(now.getTime() - s * 1000).toISOString();
   const live = (o: Partial<AgentRow> = {}): AgentRow => ({
@@ -527,9 +527,9 @@ describe("agent liveness — S15.3", () => {
     ...o,
   });
 
-  it("⭐ REVOKED OUTRANKS EVERYTHING — a dead credential must never be told to reconnect", () => {
+  it("⭐ REVOKED OUTRANKS EVERYTHING, a dead credential must never be told to reconnect", () => {
     // ⛔ THE EXACT ROW THE LIVE RIG PRODUCED. Revocation keeps the row and the key (config_issued stays
-    // true) and SWEEPS the telemetry (last_handshake_at goes null) — which lands a revoked agent in
+    // true) and SWEEPS the telemetry (last_handshake_at goes null), which lands a revoked agent in
     // `never`, whose copy sends the operator to run the connect command on a machine that is fine, for a
     // credential that was deliberately destroyed.
     const a = live({
@@ -541,7 +541,7 @@ describe("agent liveness — S15.3", () => {
     expect(livenessLabel(a, now).label).toBe("revoked");
     expect(livenessLabel(a, now).detail).not.toMatch(/Run the command/);
     // ⚠ And it outranks the reporter check too: a revoked agent on a silent gateway is still revoked,
-    // not unknown — that fact does not depend on anyone reporting.
+    // not unknown, that fact does not depend on anyone reporting.
     expect(
       agentLiveness(live({ status: "revoked", gateway_reporting: false })),
     ).toBe("revoked");
@@ -549,7 +549,7 @@ describe("agent liveness — S15.3", () => {
     expect(livenessLabel(a, now).tone).not.toBe("danger");
   });
 
-  it("an ACTIVE agent with the same shape still reads never-connected — revoked is doing the work", () => {
+  it("an ACTIVE agent with the same shape still reads never-connected, revoked is doing the work", () => {
     // Without this, the assertion above would pass on a function that returned "revoked" for everything.
     expect(
       agentLiveness(
@@ -565,7 +565,7 @@ describe("agent liveness — S15.3", () => {
     expect(livenessLabel(a, now).tone).toBe("ok");
   });
 
-  it("⛔ NEVER-CONNECTED IS NOT OFFLINE — a command issued and never run is a different fact", () => {
+  it("⛔ NEVER-CONNECTED IS NOT OFFLINE, a command issued and never run is a different fact", () => {
     const a = live({ online: false, last_handshake_at: null });
     expect(agentLiveness(a)).toBe("never");
     expect(livenessLabel(a, now).label).toBe("never connected");
@@ -582,9 +582,9 @@ describe("agent liveness — S15.3", () => {
     expect(livenessLabel(a, now).label).toBe("last seen 10m ago");
   });
 
-  it("⭐ UNKNOWN OUTRANKS OFFLINE — a silent gateway must never be reported as a dead agent", () => {
+  it("⭐ UNKNOWN OUTRANKS OFFLINE, a silent gateway must never be reported as a dead agent", () => {
     // Same row as the offline case in every respect EXCEPT the reporter's own liveness. If the precedence
-    // were reversed this would read "last seen 10m ago" — a confident claim about an agent nobody has
+    // were reversed this would read "last seen 10m ago", a confident claim about an agent nobody has
     // heard from OR about, sending an operator to debug the wrong machine.
     const a = live({
       online: false,
@@ -598,7 +598,7 @@ describe("agent liveness — S15.3", () => {
     expect(livenessLabel(a, now).detail).toMatch(/Check the gateway first/);
   });
 
-  it("⛔ AND UNKNOWN OUTRANKS ONLINE-LOOKING DATA TOO — a stale `online` must not survive a dead reporter", () => {
+  it("⛔ AND UNKNOWN OUTRANKS ONLINE-LOOKING DATA TOO, a stale `online` must not survive a dead reporter", () => {
     // The server derives `online` from a handshake it may have recorded before the gateway went quiet.
     // If the reporter is silent, that derivation is stale by construction and must not be rendered as fact.
     const a = live({
@@ -610,14 +610,14 @@ describe("agent liveness — S15.3", () => {
   });
 
   it("no config issued is distinct from never connected", () => {
-    // ⚠ Nothing was handed over, so there is no command to re-run — the "never connected" advice would be
+    // ⚠ Nothing was handed over, so there is no command to re-run, the "never connected" advice would be
     // wrong here, which is why these are two states and not one.
     const a = live({ config_issued: false });
     expect(agentLiveness(a)).toBe("not-issued");
     expect(livenessLabel(a, now).label).toBe("no config issued");
   });
 
-  it("⛔ NO LIVENESS STATE IS `danger` — a down agent is not a security event", () => {
+  it("⛔ NO LIVENESS STATE IS `danger`, a down agent is not a security event", () => {
     // Fail-closed means a disconnected agent reaches NOTHING. Painting it red claims an incident that has
     // not occurred, and over-alarming is the same defect as under-alarming, facing the other way.
     for (const a of [

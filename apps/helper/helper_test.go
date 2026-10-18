@@ -177,7 +177,7 @@ func TestNegotiate(t *testing.T) {
 		t.Fatalf("code/path: %v %v", m, err)
 	}
 	// Once the helper enforces code_signing, a path_check-only client is REFUSED
-	// (the one-way ratchet — no silent downgrade).
+	// (the one-way ratchet, no silent downgrade).
 	if _, err := Negotiate(AuthModePathCheck, AuthModeCodeSigning); err == nil {
 		t.Fatal("path client against code-signing helper must be refused")
 	}
@@ -236,7 +236,7 @@ func TestValidateRequest(t *testing.T) {
 	if err := ValidateRequest(base()); err != nil {
 		t.Fatalf("valid status request rejected: %v", err)
 	}
-	// Version mismatch — a newer app vs an older helper reports helper_outdated.
+	// Version mismatch, a newer app vs an older helper reports helper_outdated.
 	r := base()
 	r.Version = ProtocolVersion + 1
 	mustCode(t, ValidateRequest(r), "helper_outdated")
@@ -286,7 +286,7 @@ func (f *fakeBackend) Up(cfg *TunnelConfig) error {
 func (f *fakeBackend) Down() error { f.down++; f.armed = false; return nil } // graceful: block released
 func (f *fakeBackend) FailClosed() error {
 	f.failClosed++
-	// Fail-closed KEEPS the block armed (death = enforcement) — does NOT release it.
+	// Fail-closed KEEPS the block armed (death = enforcement), does NOT release it.
 	if f.fc != nil {
 		select {
 		case f.fc <- struct{}{}:
@@ -310,7 +310,7 @@ func (f *fakeBackend) SetGatewayPeer(newPubKey, newEndpoint string) error {
 
 // TestDeadManHoldsAfterUpFailure is the guard for the FAIL-OPEN regression (review
 // #2): a full-tunnel Up that arms the block then fails must keep the block for the
-// FULL dead-man window — not release it on the next tick because the failure path
+// FULL dead-man window, not release it on the next tick because the failure path
 // forgot to beat() (leaving lastBeat stale/zero).
 func TestDeadManHoldsAfterUpFailure(t *testing.T) {
 	fb := &fakeBackend{upErr: &ProtocolError{Code: "x", Msg: "endpoint unreachable"}}
@@ -326,7 +326,7 @@ func TestDeadManHoldsAfterUpFailure(t *testing.T) {
 	if s.State() != StateFailed || !fb.armed {
 		t.Fatalf("up-failure must fail closed with the block armed: state=%s armed=%v", s.State(), fb.armed)
 	}
-	// A tick WELL within the window must NOT release — the block holds (fail-CLOSED).
+	// A tick WELL within the window must NOT release, the block holds (fail-CLOSED).
 	clock = base.Add(30 * time.Second)
 	if s.CheckDeadMan() {
 		t.Fatal("dead-man must NOT fire 30s after an up-failure (fail-OPEN regression)")
@@ -341,7 +341,7 @@ func TestDeadManHoldsAfterUpFailure(t *testing.T) {
 	}
 }
 
-// TestCrashSweepFiresOnDeadManRelease (S8.5 Slice 1) — the crash/owner-loss resolver sweep fires when the
+// TestCrashSweepFiresOnDeadManRelease (S8.5 Slice 1), the crash/owner-loss resolver sweep fires when the
 // dead-man RELEASES the block (session definitively gone), and INHERITS the grace: a wedged owner keeps its
 // resolvers through the full window, swept only when the dead-man actually fires.
 func TestCrashSweepFiresOnDeadManRelease(t *testing.T) {
@@ -372,7 +372,7 @@ func TestCrashSweepFiresOnDeadManRelease(t *testing.T) {
 	}
 }
 
-// TestGracefulDownDoesNotCrashSweep (S8.5 Slice 1) — a graceful Down does NOT crash-sweep; the client
+// TestGracefulDownDoesNotCrashSweep (S8.5 Slice 1), a graceful Down does NOT crash-sweep; the client
 // already sweeps its resolvers via set_resolvers([]) before sending tunnel_down. Only the crash path sweeps.
 func TestGracefulDownDoesNotCrashSweep(t *testing.T) {
 	fb := &fakeBackend{}
@@ -388,7 +388,7 @@ func TestGracefulDownDoesNotCrashSweep(t *testing.T) {
 	}
 }
 
-// TestCrashSweepRunsOutsideLock (S8.5 Slice 1 — the RR2 lesson) — the sweep runs OUTSIDE s.mu, so its
+// TestCrashSweepRunsOutsideLock (S8.5 Slice 1, the RR2 lesson), the sweep runs OUTSIDE s.mu, so its
 // filesystem work can never stall the state machine. Proven by re-entering the Supervisor (State() takes
 // s.mu) from inside the sweep: if the sweep held s.mu, this would DEADLOCK the test.
 func TestCrashSweepRunsOutsideLock(t *testing.T) {
@@ -400,7 +400,7 @@ func TestCrashSweepRunsOutsideLock(t *testing.T) {
 	s.deadMan = 1 * time.Second
 	reentered := false
 	s.SetOnCrashSweep(func() {
-		_ = s.State() // takes s.mu — deadlocks if the sweep is under the lock
+		_ = s.State() // takes s.mu, deadlocks if the sweep is under the lock
 		reentered = true
 	})
 	_ = s.Up(goodConfig())
@@ -413,7 +413,7 @@ func TestCrashSweepRunsOutsideLock(t *testing.T) {
 	}
 }
 
-// TestUpdateAllowedIPsRoutesToBackend (S8.5 Slice 2a) — a split-tunnel UpdateAllowedIPs passes the peer +
+// TestUpdateAllowedIPsRoutesToBackend (S8.5 Slice 2a), a split-tunnel UpdateAllowedIPs passes the peer +
 // the full desired set to the backend live-apply, without disturbing tunnel state.
 func TestUpdateAllowedIPsRoutesToBackend(t *testing.T) {
 	fb := &fakeBackend{}
@@ -435,7 +435,7 @@ func TestUpdateAllowedIPsRoutesToBackend(t *testing.T) {
 	}
 }
 
-// TestUpdateAllowedIPsFullTunnelNoOp (S8.5 Slice 2a) — full-tunnel is a clean no-op: 0.0.0.0/0 subsumes
+// TestUpdateAllowedIPsFullTunnelNoOp (S8.5 Slice 2a), full-tunnel is a clean no-op: 0.0.0.0/0 subsumes
 // every range and the kill-switch (full-tunnel only) must never be touched. The backend is NOT called.
 func TestUpdateAllowedIPsFullTunnelNoOp(t *testing.T) {
 	fb := &fakeBackend{}
@@ -453,7 +453,7 @@ func TestUpdateAllowedIPsFullTunnelNoOp(t *testing.T) {
 	}
 }
 
-// TestUpdateAllowedIPsNotUp (S8.5 Slice 2a) — a down tunnel has no peer to route through → not_up, no
+// TestUpdateAllowedIPsNotUp (S8.5 Slice 2a), a down tunnel has no peer to route through → not_up, no
 // backend call.
 func TestUpdateAllowedIPsNotUp(t *testing.T) {
 	fb := &fakeBackend{}
@@ -466,7 +466,7 @@ func TestUpdateAllowedIPsNotUp(t *testing.T) {
 	}
 }
 
-// TestUpdateGatewayPeerRoutesToBackend (WF-A) — a split-tunnel re-home passes the NEW peer + endpoint to the
+// TestUpdateGatewayPeerRoutesToBackend (WF-A), a split-tunnel re-home passes the NEW peer + endpoint to the
 // backend swap, without disturbing tunnel state (a peer swap, not a bounce).
 func TestUpdateGatewayPeerRoutesToBackend(t *testing.T) {
 	fb := &fakeBackend{}
@@ -511,9 +511,9 @@ func TestUpdateGatewayPeerAdvancesAllowedIPTarget(t *testing.T) {
 	}
 }
 
-// TestUpdateGatewayPeerDelegatesFullTunnel (WF-A / D-WFA-4) — the Supervisor's blanket full-tunnel refusal
+// TestUpdateGatewayPeerDelegatesFullTunnel (WF-A / D-WFA-4), the Supervisor's blanket full-tunnel refusal
 // is RETIRED: full-tunnel now DELEGATES to the backend (which owns the kill-switch and decides). Proves the
-// interim seam is gone — the darwin backend re-points the carve-out; the refusal moved down.
+// interim seam is gone, the darwin backend re-points the carve-out; the refusal moved down.
 func TestUpdateGatewayPeerDelegatesFullTunnel(t *testing.T) {
 	fb := &fakeBackend{}
 	s := NewSupervisor(fb)
@@ -530,7 +530,7 @@ func TestUpdateGatewayPeerDelegatesFullTunnel(t *testing.T) {
 	}
 }
 
-// TestUpdateGatewayPeerPropagatesBackendRefusal (WF-A / D-WFA-4) — when the backend refuses (the honest seam:
+// TestUpdateGatewayPeerPropagatesBackendRefusal (WF-A / D-WFA-4), when the backend refuses (the honest seam:
 // carve-out absent / Windows deferral), the Supervisor returns that typed code VERBATIM so the client's dial
 // tier fail-statics on it.
 func TestUpdateGatewayPeerPropagatesBackendRefusal(t *testing.T) {
@@ -546,7 +546,7 @@ func TestUpdateGatewayPeerPropagatesBackendRefusal(t *testing.T) {
 	}
 }
 
-// TestUpdateGatewayPeerNotUp (WF-A) — a down tunnel has no peer to re-home → not_up, no backend call.
+// TestUpdateGatewayPeerNotUp (WF-A), a down tunnel has no peer to re-home → not_up, no backend call.
 func TestUpdateGatewayPeerNotUp(t *testing.T) {
 	fb := &fakeBackend{}
 	s := NewSupervisor(fb)
@@ -611,7 +611,7 @@ func fullConfig() *TunnelConfig {
 
 // TestSupervisorSelfHeal proves startup recovery (RC1): a kill-switch stranded by a
 // PRIOR crashed process is released when a fresh Supervisor self-heals before it
-// serves — so a KeepAlive restart un-strands the host instead of re-serving the block.
+// serves, so a KeepAlive restart un-strands the host instead of re-serving the block.
 func TestSupervisorSelfHeal(t *testing.T) {
 	fb := &fakeBackend{armed: true} // a block survived a prior crash; no live owner
 	s := NewSupervisor(fb)
@@ -698,7 +698,7 @@ func TestDeadManOrphanVsWedge(t *testing.T) {
 
 	// --- wedge (READ-TIMEOUT, socket still open): OnPeerLost(false) → FULL window ---
 	// A wedged-but-alive app trips the helper's 30s read deadline, so OnPeerLost DOES
-	// fire — but with definitive=false (the socket did not close). It must NOT be treated
+	// fire, but with definitive=false (the socket did not close). It must NOT be treated
 	// as orphaned, or a merely-slow app would be released to cleartext early (review #1).
 	fb = &fakeBackend{}
 	s = NewSupervisor(fb)
@@ -760,7 +760,7 @@ func TestDeadManOrphanClampedToFull(t *testing.T) {
 
 // TestUpPreArmRejectIsCleanReject (S6.9b/S6.7): a backend that fails BEFORE arming anything
 // (e.g. full_tunnel_requires_dns, or wfp_arm_failed when the Windows WFP arm transaction aborts)
-// must be a CLEAN rejection — the Supervisor returns the code as-is, stays StateDown, and does
+// must be a CLEAN rejection, the Supervisor returns the code as-is, stays StateDown, and does
 // NOT fail-closed. Otherwise the UI shows a phantom "failed / kill-switch active" for a request
 // that blocked nothing (a false fail-closed while traffic flows cleartext).
 func TestUpPreArmRejectIsCleanReject(t *testing.T) {

@@ -8,11 +8,11 @@ import {
 } from "@testing-library/react";
 import { Donut, Histogram, NodeLink } from "../src/components/viz";
 
-// S14.3 SLICE C — THE VISUALIZATION CONTRACT.
+// S14.3 SLICE C, THE VISUALIZATION CONTRACT.
 //
 // A chart is the easiest place in a UI to assert a fact nobody measured: a zero baseline LOOKS like data, and
 // "no denials" and "we could not read the denials" draw identically. Both known render-floor violations in
-// this repo are charts — that is the pattern, not a coincidence — so the guards live on the PRIMITIVE.
+// this repo are charts, that is the pattern, not a coincidence, so the guards live on the PRIMITIVE.
 
 afterEach(cleanup);
 
@@ -22,7 +22,7 @@ const SLICES = [
 ];
 const SRC = { endpoint: "/api/v1/organizations/{orgId}/overview" };
 
-describe("⛔ A FAILED LOAD DRAWS NOTHING — never an empty axis, never a flat line at zero", () => {
+describe("⛔ A FAILED LOAD DRAWS NOTHING, never an empty axis, never a flat line at zero", () => {
   it("[Donut] failed renders no figure and no empty message", () => {
     render(
       <Donut
@@ -40,7 +40,7 @@ describe("⛔ A FAILED LOAD DRAWS NOTHING — never an empty axis, never a flat 
   });
 
   it("[Histogram] failed renders nothing, even with bins in hand", () => {
-    // Stale bins under a failed refresh present old data as current — the same lie one step quieter.
+    // Stale bins under a failed refresh present old data as current, the same lie one step quieter.
     render(
       <Histogram
         label="Verdicts"
@@ -68,7 +68,7 @@ describe("⛔ A FAILED LOAD DRAWS NOTHING — never an empty axis, never a flat 
   });
 });
 
-describe("ZERO DATA SAYS SO — it does not draw an empty chart", () => {
+describe("ZERO DATA SAYS SO, it does not draw an empty chart", () => {
   it("[Donut] a zero total renders the empty message, not a 0%% ring", () => {
     render(
       <Donut
@@ -86,7 +86,7 @@ describe("ZERO DATA SAYS SO — it does not draw an empty chart", () => {
   });
 });
 
-describe("⛔ A ROADMAP CHART RENDERS ITS HONEST STATE — never a plausible drawing", () => {
+describe("⛔ A ROADMAP CHART RENDERS ITS HONEST STATE, never a plausible drawing", () => {
   it("says it is not available and why, and draws no figure", () => {
     // A greyed-out sample is still a picture. "Fleet risk" and "Site-Link Throughput" are the two known
     // violations, and both would have shipped as pictures with nothing behind them.
@@ -114,7 +114,7 @@ describe("⛔ A ROADMAP CHART RENDERS ITS HONEST STATE — never a plausible dra
 describe("THE NUMBERS ARE TEXT, NOT ONLY GEOMETRY", () => {
   it("[Donut] every slice's value and label is readable", () => {
     // An SVG arc is unreadable to a screen reader, unqueryable by the tier, and ambiguous to anyone who
-    // cannot distinguish the colours — three failures with one cause.
+    // cannot distinguish the colours, three failures with one cause.
     render(
       <Donut
         label="Gateway liveness"
@@ -148,7 +148,7 @@ describe("THE NUMBERS ARE TEXT, NOT ONLY GEOMETRY", () => {
     expect(screen.getByText(/a to b: no fresh handshake/)).toBeTruthy();
   });
 
-  // S14.5 — the tone widened from a boolean to three states, so the MIDDLE one gets its own assertion.
+  // S14.5, the tone widened from a boolean to three states, so the MIDDLE one gets its own assertion.
   // A two-state type under a three-entry legend forces `degraded` to collapse into a neighbour, and the
   // comfortable collapse (degraded → linked) is the direction that hides a fault.
   it("[NodeLink] a DEGRADED link is stated in words too, and is not collapsed into healthy", () => {
@@ -172,7 +172,7 @@ describe("THE NUMBERS ARE TEXT, NOT ONLY GEOMETRY", () => {
 
   // The diagram is operable by KEYBOARD or it is not operable.
   //
-  // ⛔ REWRITTEN, not patched — the premise changed and the old title asserted the implementation.
+  // ⛔ REWRITTEN, not patched, the premise changed and the old title asserted the implementation.
   //
   // It read "not a click target on an SVG shape", because selection lived on <button> rows beneath the
   // diagram. Those rows were never in the design (the handoff's are an `sc-for extraSites`), so selection
@@ -212,10 +212,10 @@ describe("THE NUMBERS ARE TEXT, NOT ONLY GEOMETRY", () => {
   // ⛔ THE PRESSED STATE NEEDS BOTH HALVES, AND THE MUTATION PROVED IT.
   //
   // The test above asserts `aria-pressed="false"` on an UNSELECTED node. Hard-coding the attribute to
-  // `false` — deleting the selection state entirely from the announcement — LEFT IT GREEN, because false is
+  // `false`, deleting the selection state entirely from the announcement, LEFT IT GREEN, because false is
   // what it expected. A test that only ever observes one value of a two-valued thing cannot tell the
   // variable from the constant. This asserts the other half.
-  it("[NodeLink] the SELECTED node announces aria-pressed=true — the half the mutation walked through", () => {
+  it("[NodeLink] the SELECTED node announces aria-pressed=true, the half the mutation walked through", () => {
     render(
       <NodeLink
         label="Topology"
@@ -263,7 +263,7 @@ describe("THE NUMBERS ARE TEXT, NOT ONLY GEOMETRY", () => {
     expect(picked).toEqual([null]);
   });
 
-  // Without onSelect the primitive must stay exactly as inert as it was before S14.5 — no buttons appear on
+  // Without onSelect the primitive must stay exactly as inert as it was before S14.5, no buttons appear on
   // a screen that never asked for selection.
   it("[NodeLink] renders NO buttons when onSelect is omitted", () => {
     render(
@@ -280,11 +280,11 @@ describe("THE NUMBERS ARE TEXT, NOT ONLY GEOMETRY", () => {
   });
 });
 
-describe("⛔ A GAP IS DRAWN AS A GAP — 'no data' must never render as zero", () => {
+describe("⛔ A GAP IS DRAWN AS A GAP, 'no data' must never render as zero", () => {
   it("a gap bin is labelled 'no data', distinctly from a zero-count bin", () => {
     // AccessEvent.decision carries `gap` as a first-class enum value precisely because the agent can know it
     // did not observe a window. Drawing that as a zero-height bar would make "no denials" and "we did not
-    // see" identical — the reassuring-empty defect with an axis on it.
+    // see" identical, the reassuring-empty defect with an axis on it.
     render(
       <Histogram
         label="Verdicts"

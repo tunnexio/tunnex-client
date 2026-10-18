@@ -24,7 +24,7 @@ func TestIsWfpNotFound(t *testing.T) {
 			t.Errorf("isWfpNotFound(wrapped %#x) = false, want true", c)
 		}
 	}
-	// A DIFFERENT WFP status (e.g. FWP_E_IN_USE 0x8032000B — sublayer still referenced) must NOT
+	// A DIFFERENT WFP status (e.g. FWP_E_IN_USE 0x8032000B, sublayer still referenced) must NOT
 	// be swallowed, nor a generic error, nor nil.
 	for _, err := range []error{syscall.Errno(0x8032000B), errors.New("boom"), nil} {
 		if isWfpNotFound(err) {

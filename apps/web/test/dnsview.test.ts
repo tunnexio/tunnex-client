@@ -52,7 +52,7 @@ describe("⛔ THE ORG-WIDE VIEW EXISTS TO SHOW AN ORG-WIDE INVARIANT", () => {
 describe("⛔ A PARTIAL LOAD IS NEVER RENDERED AS A COMPLETE ONE", () => {
   it("a failed site is NAMED and the conflict verdict is marked incomplete", () => {
     // The defect this closes: a failed fetch shortens the list, and a short list on THIS view reads as
-    // "no conflict" — on the one screen whose purpose is to show conflicts.
+    // "no conflict", on the one screen whose purpose is to show conflicts.
     const v = mergeOrgForwards([
       { site: site("a", "eu-lan"), res: ok([fwd("*.corp", "10.1.0.53")]) },
       { site: site("b", "ap-lan"), res: fail("503") },
@@ -74,7 +74,7 @@ describe("⛔ A PARTIAL LOAD IS NEVER RENDERED AS A COMPLETE ONE", () => {
     expect(v.conflictsAreComplete).toBe(false);
   });
 
-  it("a genuinely empty org IS complete — absence of zones is a real answer", () => {
+  it("a genuinely empty org IS complete, absence of zones is a real answer", () => {
     const v = mergeOrgForwards([{ site: site("a", "eu-lan"), res: ok([]) }]);
     expect(v.rows).toEqual([]);
     expect(v.failedSites).toEqual([]);

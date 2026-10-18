@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { projectTransportStatus, SingleFlightStatusReader } from "../src/main/statusreader";
+import { HelperAccessStatusReader, projectTransportStatus, SingleFlightStatusReader } from "../src/main/statusreader";
 
 function deferred<T>(): {
   promise: Promise<T>;
@@ -94,4 +94,30 @@ test("a failed transport clears posture synthesis before status readback", async
 
   assert.equal(synthetic, null, "cleanup-required transport truth must supersede the posture overlay");
   assert.deepEqual(await reader.read(), { state: "failed" });
+});
+
+
+test("trust refusal backs off, logs once, and recovers", async () => {
+  let now = 0, calls = 0, warnings = 0;
+  let trusted = false;
+  const reader = new HelperAccessStatusReader(async () => {
+    calls++;
+    if (!trusted) throw new Error("caller_untrusted: caller not trusted");
+    return { state: "down" };
+  }, () => now, () => { warnings++; });
+  assert.deepEqual(await reader.read(), { state: "failed", helper_error: "caller_untrusted" });
+  await reader.read();
+  assert.equal(calls, 1);
+  now = 30_000;
+  await reader.read();
+  assert.equal(calls, 2);
+  assert.equal(warnings, 1);
+  trusted = true;
+  now = 60_000;
+  assert.deepEqual(await reader.read(), { state: "down" });
+});
+
+test("unexpected helper failures still reject", async () => {
+  const reader = new HelperAccessStatusReader(async () => { throw new Error("socket timeout"); });
+  await assert.rejects(reader.read(), /socket timeout/);
 });

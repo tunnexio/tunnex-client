@@ -7,12 +7,12 @@ import (
 )
 
 // Windows NRPT (Name Resolution Policy Table) is the platform's domain-scoped split-DNS mechanism: a rule
-// binds a namespace (".corp.local" — leading dot = the zone and its subdomains) to a resolver, so ONLY
+// binds a namespace (".corp.local", leading dot = the zone and its subdomains) to a resolver, so ONLY
 // those names go to the site's internal DNS over the tunnel, everything else to the system default. This
 // is the Windows form of the macOS /etc/resolver files (S8.4b, triggered by S8.5's device-routes slice).
 //
 // MECHANISM: the documented PowerShell *-DnsClientNrptRule cmdlets (RULED S8.5 Slice 4), NOT the raw
-// HKLM\...\DnsPolicyConfig registry schema. Rationale in docs/S8.5-decisions.md — consistent with the
+// HKLM\...\DnsPolicyConfig registry schema. Rationale in docs/S8.5-decisions.md, consistent with the
 // helper's proven Windows surface (posture shells PowerShell), documented over version-fragile registry,
 // native -Comment owned-marker, and co-exists with GPO-managed NRPT on the SAME documented layer.
 //
@@ -21,7 +21,7 @@ import (
 // resolver_windows.go and the WALK proves it on iron (Windows-only, un-testable locally).
 
 // nrptMarker is the ownership tag written as the -Comment of every rule we create. Reconcile only ever
-// removes rules carrying this marker — a rule authored by a human or GPO is NEVER touched (shared-territory
+// removes rules carrying this marker, a rule authored by a human or GPO is NEVER touched (shared-territory
 // law, the Windows form of the macOS "# tunnex-managed" file marker + the DOCKER-USER "tunnex-site-fwd").
 const nrptMarker = "tunnex-managed"
 
@@ -31,19 +31,19 @@ type cmdRunner func(script string) (string, error)
 
 // nrptRule is one parsed row of Get-DnsClientNrptRule output (flattened to one namespace per row).
 type nrptRule struct {
-	name      string // the rule's GUID identifier (.Name) — what Remove-DnsClientNrptRule -Name takes
+	name      string // the rule's GUID identifier (.Name), what Remove-DnsClientNrptRule -Name takes
 	namespace string // e.g. ".corp.local"
 	comment   string // ours == nrptMarker; anything else (incl. empty) is FOREIGN
 }
 
 // nrptGetScript enumerates every NRPT rule as tab-separated `name<TAB>namespace<TAB>comment` lines, one
 // line PER namespace (a rule may carry several) so a multi-namespace foreign/GPO rule is fully seen. No
-// user input — a constant.
+// user input, a constant.
 const nrptGetScript = `Get-DnsClientNrptRule | ForEach-Object { $r=$_; foreach ($ns in $r.Namespace) { "$($r.Name)` + "`t" + `$ns` + "`t" + `$($r.Comment)" } }`
 
 // psQuote wraps s as a PowerShell SINGLE-QUOTED literal, doubling any embedded quote. Single quotes
 // suppress ALL interpolation ($, backtick, subexpressions), so this is injection-proof: a namespace or
-// name is DATA, never code, even though safeResolverDomain does not (and should not — it's the CP's shape
+// name is DATA, never code, even though safeResolverDomain does not (and should not, it's the CP's shape
 // one-truth) forbid shell metacharacters like ; $ ` & |. The privileged SYSTEM service must never let a
 // zone name become a command.
 func psQuote(s string) string {
@@ -99,13 +99,13 @@ func nrptNamespace(domain string) (string, error) {
 // reconcileNRPT makes the OWNED NRPT rules exactly match desired: refuse if any desired namespace collides
 // with a FOREIGN (GPO/human) rule, else remove every owned rule and add the desired set fresh. Add-
 // DnsClientNrptRule has no upsert (each call creates a rule), so remove-all-owned-then-add-desired is the
-// idempotent full-sweep — no duplicate accumulation, and an update (same namespace, new resolver) is a
+// idempotent full-sweep, no duplicate accumulation, and an update (same namespace, new resolver) is a
 // remove+add. FOREIGN rules are never removed (owned-marker discipline). VALIDATE-FIRST: a bad namespace
 // or resolver fails the whole call with ZERO commands issued (all-or-nothing; the caller keeps its last
 // good state). The brief per-namespace resolve gap during remove→add is the accepted DNS-down≠tunnel-down
 // window (the macOS overwrite-window precedent).
 func reconcileNRPT(run cmdRunner, desired []ResolverForward) error {
-	// Validate + normalize FIRST — before touching NRPT at all (all-or-nothing).
+	// Validate + normalize FIRST, before touching NRPT at all (all-or-nothing).
 	want := make(map[string]netip.Addr, len(desired))
 	for _, d := range desired {
 		ns, err := nrptNamespace(d.Domain)
@@ -135,14 +135,14 @@ func reconcileNRPT(run cmdRunner, desired []ResolverForward) error {
 	}
 
 	// FOREIGN-REFUSE: a desired namespace already held by a foreign/GPO rule → refuse, LOGGED, with NOTHING
-	// applied — never fight the GPO, never clobber a rule we don't own. Checked before any remove/add.
+	// applied, never fight the GPO, never clobber a rule we don't own. Checked before any remove/add.
 	for ns := range want {
 		if foreign[ns] {
 			return &ProtocolError{Code: "nrpt_domain_conflict", Msg: fmt.Sprintf("a foreign NRPT rule already exists for %q", ns)}
 		}
 	}
 
-	// Remove every OWNED rule (full-sweep by construction) — foreign rules are untouched.
+	// Remove every OWNED rule (full-sweep by construction), foreign rules are untouched.
 	for _, r := range owned {
 		if _, err := run(nrptRemoveScript(r.name)); err != nil {
 			return &ProtocolError{Code: "nrpt_remove_failed", Msg: err.Error()}

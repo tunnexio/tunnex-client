@@ -19,7 +19,7 @@ import (
 const resolverDir = "/etc/resolver"
 
 // resolverMarker is the OWNERSHIP line written as the first line of every file we
-// create. Reconcile only ever reads/writes/deletes files carrying this marker — a
+// create. Reconcile only ever reads/writes/deletes files carrying this marker, a
 // resolver file a human (or another tool) placed is NEVER touched. Same discipline
 // as the DOCKER-USER `tunnex-site-fwd` comment (WF-4): own-your-writes, sweep only
 // your own.
@@ -33,7 +33,7 @@ func setResolvers(desired []ResolverForward) error {
 // reconcileResolvers makes the OWNED resolver files in dir exactly match desired:
 // write/update each desired domain, delete owned files whose domain is not desired,
 // leave foreign files alone. Full-sweep, idempotent. Validates every entry BEFORE
-// writing anything — a bad domain or resolver IP fails the whole call with nothing
+// writing anything, a bad domain or resolver IP fails the whole call with nothing
 // half-applied (the caller keeps its last good state).
 func reconcileResolvers(dir string, desired []ResolverForward) error {
 	// Validate + normalize first; build the desired map keyed by safe filename.
@@ -57,7 +57,7 @@ func reconcileResolvers(dir string, desired []ResolverForward) error {
 	}
 
 	// A desired domain whose file exists but is NOT owned is a FOREIGN file (a human's
-	// or another tool's scoped resolver). Refuse — never clobber what we don't own —
+	// or another tool's scoped resolver). Refuse, never clobber what we don't own ,
 	// with nothing applied, rather than silently overwrite it.
 	for dom := range want {
 		if _, mine := owned[dom]; mine {
@@ -80,10 +80,10 @@ func reconcileResolvers(dir string, desired []ResolverForward) error {
 
 	// Write/update the desired set. On a mid-apply write failure, roll back the files this apply newly
 	// CREATED (existed==false) so a partial apply strands no NEW owned file. An OVERWRITE of an
-	// already-owned file is NOT rolled back — the accepted, ledgered window (S8.4 fold R5): a failed
+	// already-owned file is NOT rolled back, the accepted, ledgered window (S8.4 fold R5): a failed
 	// mid-apply may leave an already-owned domain pointing at its NEW resolver until the next reconcile
 	// tick (client re-applies the full set) or a restart (startup CleanStale) heals it. Bounded + honest;
-	// not full all-or-nothing, and deliberately so — chasing atomic overwrite-rollback was the over-clever
+	// not full all-or-nothing, and deliberately so, chasing atomic overwrite-rollback was the over-clever
 	// path the fold reduction backed out of.
 	type writeRec struct {
 		path    string
@@ -183,4 +183,4 @@ func writeResolverFile(path string, ip netip.Addr) error {
 }
 
 // safeResolverDomain + sortedKeys moved to resolver.go (untagged) so the Windows NRPT path shares the same
-// path-safety floor and key-sort — one floor, both platforms.
+// path-safety floor and key-sort, one floor, both platforms.
