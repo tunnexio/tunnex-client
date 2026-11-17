@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@types/node": "24.19.0",
-    "electron": "44.4.5",
+    "electron": "44.9.1",
     "electron-builder": "26.15.3",
     "electron-builder-squirrel-windows": "26.15.3",
     "ts-node": "10.9.2",
