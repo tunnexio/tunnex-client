@@ -4,6 +4,12 @@ import type { ReleaseCheck } from "./releaseview";
 export type NoticeKind = "access_revoked" | "device_revoked" | "update_available";
 export interface ClientNotice { id: string; kind: NoticeKind; title: string; body: string; created_at: string; }
 export interface StoredNotice extends ClientNotice { scope: string; read: boolean; }
+/** LS-CLIENT-1: Local Sharing words, not "App access" (a separate feature); people as Name (email). */
+export function sharedAccessNotice(share: {name: string; publisher_name?: string; publisher_email?: string}): {title: string; body: string} {
+  const name = share.publisher_name?.trim() ?? "", email = share.publisher_email?.trim() ?? "";
+  const person = name && email && name.toLowerCase() !== email.toLowerCase() ? `${name} (${email})` : email || name || "the person who shared it";
+  return {title: "Shared app no longer available", body: `You no longer have access to ${share.name}. Ask ${person} or your administrator if you still need it.`};
+}
 export function notificationScope(server: string, token: string): string {
   return createHash("sha256").update(JSON.stringify([server, token])).digest("hex");
 }

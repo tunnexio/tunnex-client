@@ -1,4 +1,6 @@
-// Renderer projections contain resource metadata only; identities remain in main.
+// Renderer projections are explicit allowlists. Display names and emails the server
+// already shows this caller cross IPC for "Name (email)"; tokens, credentials,
+// connector material and reviewer targets stay in main.
 export interface BeamTarget {
   address: "127.0.0.1" | "::1";
   port: number;

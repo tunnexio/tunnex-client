@@ -619,7 +619,8 @@ function BeamPublisherPanel() {
             7200,
             14400,
             28800,
-            Math.min(3600, extensionRoom),
+            // Whole minutes only, so two options never read the same.
+            Math.min(3600, Math.floor(extensionRoom / 60) * 60),
           ]),
         )
           .filter((value) => value >= 60 && value <= extensionRoom)
