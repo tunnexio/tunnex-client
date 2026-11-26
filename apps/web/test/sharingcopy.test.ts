@@ -63,6 +63,14 @@ describe("Local Sharing wording (LS-CLIENT-1)", () => {
     expect(audienceLabel(audience[0])).toBe("Alice (alice@example.com)");
     expect(audienceLabel(audience[2])).toBe("Developers group");
   });
+  it("adds a group's member count only when the server sends a number", () => {
+    const group = (member_count: unknown) => ({ subject_kind: "group", subject_id: devs, name: "Developers", member_count } as unknown as BeamAudience);
+    expect(audienceLabel(group(3))).toBe("Developers group · 3 members");
+    expect(audienceLabel(group(1))).toBe("Developers group · 1 member");
+    expect(audienceLabel(group(0))).toBe("Developers group · 0 members");
+    for (const missing of [undefined, null, "3", Number.NaN, -1, 2.5])
+      expect(audienceLabel(group(missing))).toBe("Developers group");
+  });
   it("summarizes reviewers without counting the publisher's automatic grant", () => {
     const share = (ids: Array<["user" | "group", string]>) => ({
       publisher_id: me,

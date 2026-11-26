@@ -124,7 +124,10 @@ test("Beam API pins bearer to captured CP, transforms explicit audience and reje
             { id, name: "Publisher", email: "me@example.com" },
             { id: other, name: "Alice", email: "alice@example.com" },
           ],
-          groups: [{ id, name: "Design" }],
+          groups: [
+            { id, name: "Design", member_count: 4 },
+            { id: other, name: "Ops", member_count: "4" },
+          ],
         }),
       );
     return new Response(
@@ -147,7 +150,9 @@ test("Beam API pins bearer to captured CP, transforms explicit audience and reje
     // is never offered as a reviewer; people carry their email for Name (email).
     assert.deepEqual(view.policy.audience, [
       { subject_kind: "user", subject_id: other, name: "Alice", email: "alice@example.com" },
-      { subject_kind: "group", subject_id: id, name: "Design" },
+      // member_count crosses only as a non-negative integer; anything else is dropped.
+      { subject_kind: "group", subject_id: id, name: "Design", member_count: 4 },
+      { subject_kind: "group", subject_id: other, name: "Ops" },
     ]);
     assert.equal(JSON.stringify(view).includes("tnx_secret"), false);
     assert.ok(
