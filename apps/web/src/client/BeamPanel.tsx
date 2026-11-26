@@ -4,6 +4,19 @@ import { BeamSharedPanel } from "./BeamSharedPanel";
 import { Modal } from "../components/ui";
 import { Icon } from "../components/Icon";
 import "./client-sharing.css";
+import {
+  audienceLabel,
+  createBlockReason,
+  extendBlockReason,
+  formatDuration,
+  formatRemaining,
+  hostPort,
+  plural,
+  publishBlockReason,
+  reviewerSummary,
+  shareStatus,
+  shareStatusHint,
+} from "./sharingcopy";
 import type {
   BeamAction,
   BeamCreate,
@@ -15,22 +28,17 @@ import type {
 
 const button = "client-button";
 const input = "client-field";
-export function beamStatus(share: BeamShare, now = Date.now()): string {
-  if (Date.parse(share.expires_at) <= now) return "Expired";
-  if (!["active", "starting"].includes(share.state))
-    return share.state[0].toUpperCase() + share.state.slice(1);
-  return (
-    {
-      live: "Live",
-      starting: "Connecting",
-      reconnecting: "Reconnecting",
-      offline: "Offline",
-      app_unavailable: "App unavailable",
-    } as const
-  )[share.local_status ?? "offline"];
-}
+/** Kept for callers of the earlier name; see shareStatus for the wording. */
+export const beamStatus = (share: BeamShare, now = Date.now()): string => shareStatus(share, now);
 export function beamError(error: unknown): string {
   const text = String(error);
+  // Exact server codes first, so a code is never mistaken for a broader pattern.
+  if (/\bbeam_quota_reached\b/.test(text))
+    return "You've reached your organization's limit of active shares. Stop a share to create another.";
+  if (/\bbeam_publisher_denied\b|\bbeam_publishing_denied\b/.test(text))
+    return "Your account can open apps shared with you but can't share its own. Ask an administrator for publishing access.";
+  if (/\bbeam_unavailable\b/.test(text))
+    return "Local Sharing is turned off or its setup isn't finished on your server. Ask an administrator.";
   if (/shared_access_unavailable/i.test(text))
     return "This app is no longer available to your account. Refresh shared apps.";
   if (/organization.*required|organization selection/i.test(text))
@@ -55,7 +63,6 @@ export function BeamPanel() {
   const [tab, setTab] = useState<"mine" | "shared">("mine");
   return <div className="client-sharing">
     <header className="client-sharing-heading">
-      <span className="client-sharing-eyebrow"><Icon name="app-window-share" size={14} /> PRIVATE APP ACCESS</span>
       <h1>Local Sharing</h1>
       <p>Your local apps. A private link away.</p>
       <span className="client-sharing-vpn-note"><Icon name="check-circle" size={13} /> Works independently of your VPN</span>
@@ -95,6 +102,8 @@ function BeamPublisherPanel() {
   const [offset, setOffset] = useState(0);
   const refreshSequence = useRef(0);
   const [extending, setExtending] = useState<string | null>(null);
+  const [stopping, setStopping] = useState<BeamShare | null>(null);
+  const [scan, setScan] = useState("");
   const [extensionSeconds, setExtensionSeconds] = useState(3600);
   const key = useRef<string | null>(null);
   const checkEpoch = useRef(0);
@@ -139,14 +148,16 @@ function BeamPublisherPanel() {
     checkEpoch.current++;
     setCheck(null);
     key.current = null;
+    setScan("");
   }, [address, port, protocol, ca, apiPort, apiPrefix]);
-  const run = async (effect: () => Promise<unknown>, message?: string) => {
+  const run = async <T,>(effect: () => Promise<T>, message?: string | ((result: T) => string | undefined)) => {
     setBusy(true);
     setError("");
     setNotice("");
     try {
-      await effect();
-      if (message) setNotice(message);
+      const result = await effect();
+      const text = typeof message === "function" ? message(result) : message;
+      if (text) setNotice(text);
       await refresh();
     } catch (e) {
       setError(beamError(e));
@@ -173,11 +184,15 @@ function BeamPublisherPanel() {
   const suggestPorts = async () => {
     if (!bridge) return;
     const epoch = ++checkEpoch.current;
-    setBusy(true); setError(""); setSuggestedPorts([]);
+    setBusy(true); setError(""); setSuggestedPorts([]); setScan("");
     try {
       const ports = [3000, 3001, 5173, 8000, 8080, 4200];
       const results = await Promise.all(ports.map(async port => ({port,ready:(await bridge.checkLocal({address:"127.0.0.1",port,protocol:"http"})).ready})));
-      if (mounted.current && epoch === checkEpoch.current) {setSuggestedPorts(results.filter(result=>result.ready).map(result=>result.port));setNotice(results.some(result=>result.ready) ? "Select a responding port below." : "No HTTP apps responded on the six common ports. Enter your app port manually.");}
+      if (mounted.current && epoch === checkEpoch.current) {
+        const found = results.filter(result=>result.ready).map(result=>result.port);
+        setSuggestedPorts(found);
+        setScan(found.length ? `Apps answered on ${plural(found.length, "port")}. Choose one.` : `No app answered on ports ${ports.join(", ")}. Enter your app's port.`);
+      }
     } catch (error) {setError(beamError(error));} finally {setBusy(false);}
   };
   const selectedGrants = () =>
@@ -196,11 +211,14 @@ function BeamPublisherPanel() {
         grants: selectedGrants(),
         idempotency_key: key.current,
       };
-      await bridge.create(draft);
+      const created = await bridge.create(draft);
       key.current = null;
       setCreating(false);
       setName("");
-    }, "Share created. Availability follows the connector status below.");
+      return created;
+    }, (created) => created?.local_status === "live"
+      ? "Share is live. Reviewers can open it after signing in."
+      : "Share created. It shows Live in a few seconds; reviewers can open it after signing in.");
   };
   const action = (
     share: BeamShare,
@@ -208,13 +226,6 @@ function BeamPublisherPanel() {
     extra: Partial<BeamAction> = {},
   ) => {
     if (!bridge) return;
-    if (
-      verb === "stop" &&
-      !window.confirm(
-        "Stop this share permanently? Open reviewer sessions will end. Create a new share to publish again.",
-      )
-    )
-      return;
     void run(
       () =>
         bridge.action({
@@ -223,9 +234,13 @@ function BeamPublisherPanel() {
           action: verb,
           ...extra,
         }),
-      verb === "pause"
-        ? "Share paused. Reviewers cannot open the app."
-        : undefined,
+      ({
+        pause: "Share paused. Reviewers can't open it until you resume it.",
+        resume: "Share resumed. It shows Live again in a few seconds.",
+        stop: "Share stopped. Create a new share to publish this app again.",
+        extend: extra.expires_at ? `Share extended. It now ends at ${new Date(extra.expires_at).toLocaleTimeString()}.` : undefined,
+        grants: undefined,
+      } as const)[verb],
     );
   };
   const saveAccess = async () => {
@@ -248,7 +263,8 @@ function BeamPublisherPanel() {
         grants: proposed,
       });
       setEditing(null);
-    });
+      return "Reviewers updated.";
+    }, (message) => message);
   };
   const confirmRemoval = async () => {
     if (!bridge || !removal) return;
@@ -264,18 +280,21 @@ function BeamPublisherPanel() {
         confirm_reviewer_removal: true,
       });
       setEditing(null);
-    }, "Reviewer access updated.");
+    }, "Reviewers updated.");
   };
-  const liveShares = view?.shares.filter(share => share.state === "active" && share.local_status === "live" && Date.parse(share.expires_at) > now + clockOffset) ?? [];
-  const canCreate =
-    !!view?.policy.enabled &&
-    view.policy.domain_ready &&
-    view.policy.can_publish;
+  // Every share that has not ended: paused and offline shares need Resume and Reconnect.
+  const visibleShares = view?.shares.filter(share => ["starting", "active", "paused"].includes(share.state) && Date.parse(share.expires_at) > now + clockOffset) ?? [];
+  const blockReason = view ? publishBlockReason(view.policy, view.quota) : null;
+  const canCreate = !!view && !blockReason;
+  const audience = view?.policy.audience ?? [];
+  const chosenReviewers = grants.filter(value => audience.some(subject => `${subject.subject_kind}:${subject.subject_id}` === value)).length;
+  const keptSelections = editing ? grants.filter(value => value !== `user:${editing.publisher_id}` && !audience.some(subject => `${subject.subject_kind}:${subject.subject_id}` === value)).length : 0;
+  const createReason = editing ? null : createBlockReason({name, port, apiPort, apiPrefix, address, check, reviewers: chosenReviewers, available: audience.length});
   const openCreate = () => {
     setCreating(true);
     setEditing(null);
     setGrants([]);
-    setDuration(view?.policy.default_duration_seconds ?? 7200);
+    setDuration(Math.min(view?.policy.default_duration_seconds ?? 7200, view?.policy.max_duration_seconds ?? 86400));
     key.current = null;
   };
   return (
@@ -305,16 +324,16 @@ function BeamPublisherPanel() {
       )}
       {bridge && !view && !error && (
         <p role="status" className="client-empty">
-          Loading your sharing policy…
+          Loading your shares…
         </p>
       )}
-      {view && !canCreate && (
+      {view && blockReason && (
         <p
+          id="beam-publish-reason"
           role="status"
           className="client-sharing-feedback client-sharing-feedback-warning"
         >
-          {view.policy.reason ||
-            "Your administrator needs to enable Local Sharing and allow publishing for your account."}
+          {blockReason}
         </p>
       )}
       {bridge && !creating && !editing && <div className="client-sharing-toolbar">
@@ -335,11 +354,12 @@ function BeamPublisherPanel() {
           className="client-button-primary"
           onClick={openCreate}
           disabled={busy || !canCreate}
+          aria-describedby={blockReason ? "beam-publish-reason" : undefined}
         >
           New share
         </button>
       </div>}
-      {view?.quota && !creating && !editing && <p className="client-sharing-inventory-context">{view.quota.active_shares} / {view.quota.max_shares} active shares</p>}
+      {view?.quota && !creating && !editing && <p className="client-sharing-inventory-context">{view.quota.active_shares} of {view.quota.max_shares} active shares</p>}
       {(creating || editing) && (
         <section className="client-section client-sharing-editor" aria-label={editing ? "Manage reviewer access" : "Share a local app"}>
           <header className="client-section-header">
@@ -354,6 +374,7 @@ function BeamPublisherPanel() {
             <div className="client-sharing-fact-wide"><dt>Shared address</dt><dd className="client-sharing-technical">{editing.hostname}</dd></div>
             <div><dt>Local app</dt><dd className="client-sharing-technical">{editing.target.address}:{editing.target.port}</dd></div>
             <div><dt>Link ends</dt><dd>{new Date(editing.expires_at).toLocaleString()}</dd></div>
+            <div className="client-sharing-fact-wide"><dt>Status</dt><dd>{shareStatus(editing, now + clockOffset)}</dd></div>
           </dl>}
           {!editing && (
             <fieldset className="client-sharing-form-group">
@@ -374,7 +395,7 @@ function BeamPublisherPanel() {
               </label>
               <div className="client-sharing-field-pair">
                 <label className="client-sharing-label">
-                  Loopback address
+                  Local address
                   <select
                     className={input + " mt-1"}
                     value={address}
@@ -382,8 +403,8 @@ function BeamPublisherPanel() {
                       setAddress(e.target.value as BeamTarget["address"])
                     }
                   >
-                    <option>127.0.0.1</option>
-                    <option>::1</option>
+                    <option value="127.0.0.1">127.0.0.1 (IPv4)</option>
+                    <option value="::1">::1 (IPv6)</option>
                   </select>
                 </label>
                 <label className="client-sharing-label">
@@ -402,6 +423,7 @@ function BeamPublisherPanel() {
               <div className="client-sharing-inline-actions">
                 <button className={button} disabled={busy} onClick={()=>void suggestPorts()}>Find local apps</button>
                 {suggestedPorts.map(value=><button key={value} className={button} disabled={busy} onClick={()=>{setPort(String(value));setAddress("127.0.0.1");setProtocol("http");}}>Port {value}</button>)}
+                {scan && <span role="status" className="client-sharing-help-text">{scan}</span>}
               </div>
               <p className="client-sharing-help-text">Checks six common HTTP ports on this computer only when you click Find local apps.</p>
               {view?.policy.capabilities?.includes("path_routes_v1") && <fieldset className="client-sharing-api-fields">
@@ -458,7 +480,9 @@ function BeamPublisherPanel() {
                       "text-xs " + (check ? "text-emerald-300" : "text-warn")
                     }
                   >
-                    {check ? "App responded" : "App unavailable"}
+                    {check
+                      ? `Your app responded on ${hostPort(address, port)}.`
+                      : `Nothing answered on ${hostPort(address, port)}. Start your app or check the port and protocol.`}
                   </span>
                 )}
               </div>
@@ -467,7 +491,7 @@ function BeamPublisherPanel() {
           <fieldset className="client-sharing-form-group">
             <legend>Who can review?</legend>
             <div className="client-sharing-audience">
-              {view?.policy.audience.map((subject) => {
+              {audience.map((subject) => {
                 const value = `${subject.subject_kind}:${subject.subject_id}`;
                 return (
                   <label key={value} className="client-sharing-reviewer">
@@ -475,19 +499,21 @@ function BeamPublisherPanel() {
                       setGrants((current) => e.target.checked ? [...current, value] : current.filter((v) => v !== value));
                       key.current = null;
                     }} />
-                    <span>{subject.name}</span>
-                    <span className="client-sharing-reviewer-kind">{subject.subject_kind}</span>
+                    <span>{audienceLabel(subject)}</span>
                   </label>
                 );
               })}
             </div>
-            {!view?.policy.audience.length && <p className="client-sharing-help-text text-warn">No permitted reviewers. Ask your administrator to configure the reviewer audience.</p>}
+            {!audience.length && <p className="client-sharing-help-text text-warn">No reviewers are available. Ask an administrator to add reviewers to the Local Sharing policy.</p>}
+            {keptSelections > 0 && <p className="client-sharing-help-text">{plural(keptSelections, "other selection")} outside the current reviewer list {keptSelections === 1 ? "is" : "are"} kept.</p>}
+            <p className="client-sharing-help-text">You can always open your own shares.</p>
           </fieldset>
           {!editing && <fieldset className="client-sharing-form-group">
             <legend>Availability</legend>
               <label className="client-sharing-label">
                 Link lifetime
                 <select
+                  aria-label="Link lifetime"
                   className={input + " mt-1"}
                   value={duration}
                   onChange={(e) => {
@@ -504,6 +530,7 @@ function BeamPublisherPanel() {
                       14400,
                       28800,
                       86400,
+                      view?.policy.max_duration_seconds ?? 86400,
                       duration,
                     ]),
                   )
@@ -514,9 +541,7 @@ function BeamPublisherPanel() {
                     )
                     .map((seconds) => (
                       <option key={seconds} value={seconds}>
-                        {seconds < 3600
-                          ? `${seconds / 60} minutes`
-                          : `${seconds / 3600} hours`}
+                        {formatDuration(seconds)}
                       </option>
                     ))}
                 </select>
@@ -529,13 +554,11 @@ function BeamPublisherPanel() {
           </p>
           </div>
           <footer className="client-sharing-editor-footer">
+            {createReason && <p id="beam-create-reason" className="client-sharing-help-text client-sharing-reason">{createReason}</p>}
             <button
               className="client-button-primary"
-              disabled={
-                busy ||
-                (!editing && !grants.length) ||
-                (!editing && (!name.trim() || check !== true))
-              }
+              disabled={busy || !!createReason}
+              aria-describedby={createReason ? "beam-create-reason" : undefined}
               onClick={() => {
                 if (editing) {
                   void saveAccess();
@@ -558,13 +581,13 @@ function BeamPublisherPanel() {
         </section>
       )}
       {!creating && !editing && <>
-      {view && !liveShares.length && (
+      {view && !visibleShares.length && (
         <div className="client-empty client-sharing-empty">
           <div className="client-sharing-welcome-icon"><Icon name="app-window-share" size={26} strokeWidth={1.4} /></div>
           <p className="client-sharing-empty-title">
             {query || offset
-              ? "No live shares match this page or search."
-              : "No live shares right now."}
+              ? "No shares match this page or search."
+              : "No active shares right now."}
           </p>
           <p className="client-sharing-help-text">
             {query || offset
@@ -574,18 +597,16 @@ function BeamPublisherPanel() {
         </div>
       )}
       <div className="client-sharing-list">
-      {liveShares.map((share) => {
+      {visibleShares.map((share) => {
         const terminal =
           ["stopped", "expired", "revoked"].includes(share.state) ||
           Date.parse(share.expires_at) <= now + clockOffset;
-        const remaining = Math.max(
-          0,
-          Math.ceil((Date.parse(share.expires_at) - now - clockOffset) / 60000),
-        );
-        const status = beamStatus(share, now + clockOffset);
+        const status = shareStatus(share, now + clockOffset);
+        const hint = shareStatusHint(status);
+        const maxLifetime = view?.policy.max_duration_seconds ?? 86400;
         const extensionRoom = Math.floor(
           (Date.parse(share.created_at) +
-            (view?.policy.max_duration_seconds ?? 86400) * 1000 -
+            maxLifetime * 1000 -
             Date.parse(share.expires_at)) /
             1000,
         );
@@ -603,6 +624,8 @@ function BeamPublisherPanel() {
         )
           .filter((value) => value >= 60 && value <= extensionRoom)
           .sort((a, b) => a - b);
+        const extendReason = extendBlockReason(extensionRoom, maxLifetime);
+        const reasonId = `beam-extend-reason-${share.id}`;
         return (
           <article
             key={share.id}
@@ -628,9 +651,10 @@ function BeamPublisherPanel() {
               {share.hostname}
             </p>
             <p className="client-sharing-row-context">
-              {share.target.protocol} · {share.target.address}:
-              {share.target.port} · {share.grants.length} audience rule
-              {share.grants.length === 1 ? "" : "s"}
+              {reviewerSummary(share, audience)}
+            </p>
+            <p className="client-sharing-row-context client-sharing-technical">
+              Local app {share.target.protocol}://{hostPort(share.target.address, share.target.port)}
             </p>
             <p
               className="client-sharing-row-context"
@@ -638,21 +662,21 @@ function BeamPublisherPanel() {
             >
               {terminal
                 ? `Ended · ${new Date(share.expires_at).toLocaleString()}`
-                : `Expires in ${remaining} min · ${new Date(share.expires_at).toLocaleTimeString()}`}
+                : `Expires in ${formatRemaining(Date.parse(share.expires_at) - now - clockOffset)} · ${new Date(share.expires_at).toLocaleTimeString()}`}
             </p>
             <div className="client-sharing-row-actions">
               <button
                 className={button + " client-sharing-quiet-action"}
                 disabled={busy || terminal}
                 onClick={() =>
-                  void run(() => bridge!.copyLink(share.id), "Link copied.")
+                  void run(() => bridge!.copyLink(share.id), "Link copied. Reviewers still need access and sign-in.")
                 }
               >
                 Copy link
               </button>
               <button
                 className={button + " client-sharing-open"}
-                disabled={busy || terminal}
+                disabled={busy || terminal || status !== "Live"}
                 onClick={() => void run(() => bridge!.openLink(share.id))}
               >
                 Open
@@ -671,7 +695,7 @@ function BeamPublisherPanel() {
                   >
                     {share.state === "paused" ? "Resume" : "Pause"}
                   </button>
-                  {share.state === "active" &&
+                  {["active", "starting"].includes(share.state) &&
                     share.local_status === "offline" && (
                       <button
                         className={button + " client-sharing-quiet-action"}
@@ -698,7 +722,8 @@ function BeamPublisherPanel() {
                   </button>
                   <button
                     className={button + " client-sharing-quiet-action"}
-                    disabled={busy || extensionRoom < 60}
+                    disabled={busy || !!extendReason}
+                    aria-describedby={extendReason ? reasonId : undefined}
                     onClick={() => {
                       setExtending(share.id);
                       setExtensionSeconds(
@@ -713,7 +738,7 @@ function BeamPublisherPanel() {
                   <button
                     className={button + " client-sharing-quiet-action client-sharing-danger"}
                     disabled={busy}
-                    onClick={() => action(share, "stop")}
+                    onClick={() => setStopping(share)}
                   >
                     Stop
                   </button>
@@ -734,7 +759,7 @@ function BeamPublisherPanel() {
                   >
                     {extensionOptions.map((seconds) => (
                       <option key={seconds} value={seconds}>
-                        {seconds / 60} minutes
+                        {formatDuration(seconds)}
                       </option>
                     ))}
                   </select>
@@ -758,15 +783,14 @@ function BeamPublisherPanel() {
                 </button>
               </div>
             )}
-            {share.local_status === "app_unavailable" && (
-              <p className="client-sharing-help-text text-warn">
-                Start your app on the same address and port. Your link and
-                expiry stay the same.
+            {hint && (
+              <p className={"client-sharing-help-text" + (status === "App not responding" || status === "Offline" ? " text-warn" : "")}>
+                {hint}
               </p>
             )}
-            {terminal && (
-              <p className="client-sharing-help-text">
-                Create a new share to publish this app again.
+            {extendReason && !terminal && (
+              <p id={reasonId} className="client-sharing-help-text">
+                {extendReason}
               </p>
             )}
           </article>
@@ -814,7 +838,7 @@ function BeamPublisherPanel() {
           For Vite or another development server, allow the exact sharing hostname
           in its allowed-host configuration and configure its public WebSocket
           URL if needed. Local Sharing preserves WebSocket subprotocols and streams SSE;
-          WebSocket compression is unavailable in v1.
+          WebSocket compression isn’t supported yet.
         </p>
         <p>
           Uploads and HTTP responses are limited to 16 MiB. WebSocket frames are
@@ -824,9 +848,9 @@ function BeamPublisherPanel() {
         </p>
         <p>
           Keep your app and Tunnex running. Closing the desktop window keeps
-          active shares in the tray. Quit ends sharing. After a full restart,
-          choose Reconnect for an eligible share; terminal links require a new
-          share.
+          active shares in the tray. Quit ends sharing and stops your shares.
+          If Tunnex loses its connection, choose Reconnect on the share. An
+          ended share needs a new share.
         </p>
         </div>
       </details>
@@ -857,14 +881,41 @@ function BeamPublisherPanel() {
           }
         >
           <p className="text-sm text-ink-secondary">
-            Remove {removal.impact.removed_grant_count} audience rule(s) from{" "}
-            {removal.share.name}?
+            {`This removes ${plural(removal.impact.removed_grant_count, "reviewer selection")} from ${removal.share.name}.`}
           </p>
           <p className="mt-3 text-sm text-ink-secondary">
-            {removal.impact.affected_reviewer_count} reviewer(s) and{" "}
-            {removal.impact.affected_reviewer_session_count} signed-in
-            session(s) will lose access. Open sessions that lose permission will
-            end.
+            {`${plural(removal.impact.affected_reviewer_count, "person", "people")} will lose access, and ${plural(removal.impact.affected_reviewer_session_count, "open session")} will end.`}
+          </p>
+        </Modal>
+      )}
+      {stopping && (
+        <Modal
+          title="Stop this share"
+          danger
+          onDismiss={() => {
+            if (!busy) setStopping(null);
+          }}
+          actions={
+            <div className="client-sharing-confirmation-actions">
+              <button className={button} disabled={busy} onClick={() => setStopping(null)}>
+                Keep sharing
+              </button>
+              <button
+                className={button + " border-danger/50"}
+                disabled={busy}
+                onClick={() => {
+                  const share = stopping;
+                  setStopping(null);
+                  action(share, "stop");
+                }}
+              >
+                Confirm stop
+              </button>
+            </div>
+          }
+        >
+          <p className="text-sm text-ink-secondary">
+            {`Stop ${stopping.name} permanently? Reviewers lose access right away. To share the app again, create a new share.`}
           </p>
         </Modal>
       )}

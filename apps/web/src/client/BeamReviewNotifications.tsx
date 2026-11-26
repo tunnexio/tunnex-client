@@ -3,6 +3,7 @@ import { Icon } from "../components/Icon";
 import { desktop, type ClientNotice } from "../lib/desktop";
 import type { BeamSharedView } from "../lib/beamtypes";
 import { beamError } from "./BeamPanel";
+import { personLabel } from "./sharingcopy";
 import "./client-sharing.css";
 
 export function BeamReviewNotifications({includeReviews = true}: {includeReviews?:boolean}) {
@@ -99,10 +100,11 @@ export function BeamReviewNotifications({includeReviews = true}: {includeReviews
       <div><h3>{notice.title}</h3><p>{notice.body}</p></div>
       <button className="client-button client-notifications-action" disabled={opening !== null} aria-label={notice.kind === "update_available" ? "Download update" : `Mark ${notice.title} as read`} onClick={()=>void readNotice(notice)}>{opening === notice.id ? "Opening…" : notice.kind === "update_available" ? "Download" : "Mark as read"}</button>
     </article>)}
+    {shares.length > 0 && <h3 className="client-notifications-section">Sharing updates</h3>}
     {shares.map(share => <article key={share.id} className="client-notifications-item client-notifications-review">
       <div><h3>{share.name}</h3>
-        <p>Shared for review</p>
-        {share.publisher_name && <p>Shared by {share.publisher_name}</p>}
+        <p>Ready to open</p>
+        {(share.publisher_name || share.publisher_email) && <p>Shared by {personLabel({name: share.publisher_name, email: share.publisher_email})}</p>}
       </div>
       <button className="client-button client-notifications-action" aria-label={`Open ${share.name} for review`} disabled={opening !== null} onClick={() => void open(share.id)}>{opening === share.id ? "Opening…" : "Open"}</button>
     </article>)}
