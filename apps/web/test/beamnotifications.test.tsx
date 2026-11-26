@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { BeamReviewNotifications } from "../src/client/BeamReviewNotifications";
 import type { BeamSharedShare } from "../src/lib/beamtypes";
 import type { ClientNotice } from "../src/lib/desktop";
-const app: BeamSharedShare = {id:"review-app",name:"Checkout redesign",publisher_name:"Designer",hostname:"p-preview.example.net",url:"https://p-preview.example.net/",state:"active",connectivity:"online",can_open:true,expires_at:"2099-01-01T00:00:00Z"};
+const app: BeamSharedShare = {id:"review-app",name:"Checkout redesign",publisher_name:"Designer",publisher_email:"designer@example.com",hostname:"p-preview.example.net",url:"https://p-preview.example.net/",state:"active",connectivity:"online",can_open:true,expires_at:"2099-01-01T00:00:00Z"};
 function install(shares: BeamSharedShare[] = [app]) {
   const result = {shares,server_time:new Date().toISOString(),page:{offset:0,limit:20,has_next:false}};
   const beam = {notifications:vi.fn().mockResolvedValue(result),openSharedLink:vi.fn().mockImplementation(async()=>{beam.notifications.mockResolvedValue({...result,shares:[]});}),onChanged:vi.fn().mockReturnValue(()=>{})};
@@ -15,7 +15,9 @@ describe("Home review notifications",()=>{
     const beam = install(); const first = render(<BeamReviewNotifications />);
     fireEvent.click(await screen.findByRole("button",{name:"Notifications, 1 unread"}));
     await screen.findByRole("heading",{name:"Checkout redesign"});
-    expect(screen.getByText("Shared by Designer")).toBeTruthy();
+    expect(screen.getByText("Shared by Designer (designer@example.com)")).toBeTruthy();
+    expect(screen.getByText("Ready to open")).toBeTruthy();
+    expect(screen.getByRole("heading",{name:"Sharing updates"})).toBeTruthy();
     fireEvent.click(screen.getByRole("button",{name:"Open Checkout redesign for review"}));
     await waitFor(()=>expect(screen.queryByRole("region",{name:"Notifications"})).toBeNull());
     expect(beam.openSharedLink).toHaveBeenCalledWith(app.id);

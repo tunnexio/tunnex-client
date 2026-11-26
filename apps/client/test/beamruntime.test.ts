@@ -13,6 +13,7 @@ import {
 import { BeamApi, requireBeamClientVersion } from "../src/main/beamapi";
 import type { BeamShare } from "../src/main/beamtypes";
 const id = "12345678-1234-4234-8234-123456789abc";
+const other = "87654321-4321-4321-8321-cba987654321";
 const share: BeamShare = {
   id,
   publisher_id: id,
@@ -119,7 +120,10 @@ test("Beam API pins bearer to captured CP, transforms explicit audience and reje
     if (url.endsWith("/audience"))
       return new Response(
         JSON.stringify({
-          users: [{ id, name: "Alice" }],
+          users: [
+            { id, name: "Publisher", email: "me@example.com" },
+            { id: other, name: "Alice", email: "alice@example.com" },
+          ],
           groups: [{ id, name: "Design" }],
         }),
       );
@@ -139,7 +143,12 @@ test("Beam API pins bearer to captured CP, transforms explicit audience and reje
       },
     });
     const view = await api.view();
-    assert.equal(view.policy.audience.length, 2);
+    // LS-CLIENT-1: the server grants the publisher automatically, so the caller
+    // is never offered as a reviewer; people carry their email for Name (email).
+    assert.deepEqual(view.policy.audience, [
+      { subject_kind: "user", subject_id: other, name: "Alice", email: "alice@example.com" },
+      { subject_kind: "group", subject_id: id, name: "Design" },
+    ]);
     assert.equal(JSON.stringify(view).includes("tnx_secret"), false);
     assert.ok(
       requests.every((r) =>
@@ -597,7 +606,7 @@ test("inventory requests use bounded server paging/search and own detail preserv
     assert.deepEqual(page.quota, { active_shares: 3, max_shares: 5 });
     assert.ok(
       seen.some((url) =>
-        url.endsWith("/shares?limit=20&offset=40&q=checkout%20%26%20cart&scope=active&state=active&connectivity=online"),
+        url.endsWith("/shares?limit=20&offset=40&q=checkout%20%26%20cart&scope=active"),
       ),
     );
     await assert.rejects(api.view({ offset: -1 }), /inventory_invalid/);
@@ -622,7 +631,7 @@ test("reviewer inventory is grant-scoped, redacted and rechecks access before br
   const original = globalThis.fetch;
   const seen: string[] = [];
   let granted = true;
-  const row = {...share, publisher_id:"another-publisher", publisher_name:"Designer", connectivity:"online", can_open:true, target:{...share.target,ca_pem:"PRIVATE-CA"}, grants:[{subject_kind:"user",subject_id:"PRIVATE-ID"}], connector_token:"PRIVATE-TOKEN"};
+  const row = {...share, publisher_id:"another-publisher", publisher_name:"Designer", publisher_email:"designer@example.com", connectivity:"online", can_open:true, target:{...share.target,ca_pem:"PRIVATE-CA"}, grants:[{subject_kind:"user",subject_id:"PRIVATE-ID"}], connector_token:"PRIVATE-TOKEN"};
   globalThis.fetch = async input => {
     const url=String(input); seen.push(url);
     if (url.includes("/shared?")) return new Response(JSON.stringify({items:[row],offset:0,limit:20,server_time:new Date().toISOString()}));
@@ -633,6 +642,7 @@ test("reviewer inventory is grant-scoped, redacted and rechecks access before br
     const view = await runtime.shared({query:"design & docs"});
     assert.equal(view.shares.length,1);
     assert.equal(view.shares[0].publisher_name,"Designer");
+    assert.equal(view.shares[0].publisher_email,"designer@example.com");
     assert.ok(seen[0].endsWith("/shared?limit=20&offset=0&q=design%20%26%20docs&scope=active&state=active&connectivity=online"));
     assert.doesNotMatch(JSON.stringify(view),/PRIVATE|target|grants|connector_token/);
     assert.equal(await runtime.sharedURL(id),"https://sample.beam.example/");
@@ -717,4 +727,58 @@ test("access notices require a confirmed withdrawal, never offline, paused, stop
     assert.notEqual(alerts[0].episode,alerts[1].episode);
     mode="live";await runtime.notifications();clock=Date.parse(share.expires_at)+1;mode="denied";await runtime.notifications();assert.equal(alerts.length,2);
   } finally {globalThis.fetch=original;await runtime.retire();}
+});
+
+// LS-CLIENT-1: My shares lists every non-ended share (starting, active, paused), so
+// Resume and Reconnect stay reachable; Shared with me and the bell stay live-only.
+test("publisher inventory asks for every non-ended share while reviewer inventory stays live-only", async () => {
+  const original = globalThis.fetch;
+  const seen: string[] = [];
+  globalThis.fetch = async (url) => {
+    const route = String(url); seen.push(route);
+    if (route.endsWith("/policy")) return new Response(JSON.stringify({enabled:true,domain_ready:true,can_publish:true,max_duration_seconds:7200}));
+    if (route.endsWith("/audience")) return new Response(JSON.stringify({users:[],groups:[]}));
+    if (route.includes("/shared?")) return new Response(JSON.stringify({items:[],offset:0,limit:20,server_time:new Date().toISOString()}));
+    return new Response(JSON.stringify({items:[{...share,state:"paused"}],limit:20,offset:0,server_time:new Date().toISOString()}));
+  };
+  const runtime = new BeamRuntime(async()=>({server:"https://cp.example",token:"test-token",orgId:id,userId:id,expiresAt:share.expires_at,assertCurrent:()=>{}}));
+  try {
+    const view = await runtime.view({offset:0,query:""});
+    assert.equal(view.shares[0].state,"paused");
+    assert.ok(seen.some(url=>url.endsWith("/shares?limit=20&offset=0&q=&scope=active")));
+    assert.ok(!seen.some(url=>url.includes("/shares?") && /state=|connectivity=/.test(url)));
+    await runtime.shared({});
+    await runtime.notifications();
+    for (const url of seen.filter(url=>url.includes("/shared?")))
+      assert.ok(url.endsWith("&scope=active&state=active&connectivity=online"));
+  } finally {globalThis.fetch=original;await runtime.retire();}
+});
+
+// LS-CLIENT-1: a reviewer without publishing rights, or an organization where Local
+// Sharing is off or unfinished, gets the policy view instead of a failed page.
+test("audience refusal resolves the view only when the policy already denies publishing", async () => {
+  const original = globalThis.fetch;
+  let policy: Record<string, unknown> = {enabled:true,domain_ready:true,can_publish:false,max_duration_seconds:3600};
+  let audience = {status:403, code:"beam_publisher_denied"};
+  globalThis.fetch = async (url) => {
+    const route = String(url);
+    if (route.endsWith("/policy")) return new Response(JSON.stringify(policy));
+    if (route.endsWith("/audience")) return new Response(JSON.stringify({error:{code:audience.code}}),{status:audience.status});
+    return new Response(JSON.stringify({items:[],limit:20,offset:0,server_time:new Date().toISOString()}));
+  };
+  const api = new BeamApi({server:"https://cp.example",token:"test-token",orgId:id,userId:id,expiresAt:share.expires_at,assertCurrent:()=>{}});
+  try {
+    const denied = await api.view({offset:0,query:""});
+    assert.equal(denied.policy.can_publish,false);
+    assert.deepEqual(denied.policy.audience,[]);
+    policy = {enabled:false,domain_ready:false,can_publish:false,max_duration_seconds:3600};
+    audience = {status:503, code:"beam_unavailable"};
+    const off = await api.view({offset:0,query:""});
+    assert.equal(off.policy.enabled,false);
+    assert.deepEqual(off.policy.audience,[]);
+    // A publisher must still see a real failure: reviewer choices are required to share.
+    policy = {enabled:true,domain_ready:true,can_publish:true,max_duration_seconds:3600};
+    audience = {status:500, code:"internal_error"};
+    await assert.rejects(api.view({offset:0,query:""}),/internal_error/);
+  } finally {globalThis.fetch=original;}
 });
