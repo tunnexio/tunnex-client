@@ -55,6 +55,16 @@ runtime directory and mode-0600 file. Explicit destination symlinks are refused.
 Build artifacts use a private unique temporary directory rather than fixed
 `/tmp` names; that directory is retained, not automatically cleaned.
 
+Superseded 2026-11-26: the daemon log moved to `/Library/Logs/Tunnex/helper.log`
+(root:wheel 0755 dir, 0600 file). With the log inside `/var/run/tunnex`, launchd
+created that directory as 0744 at boot (before the helper ran) because it creates
+a missing `StandardErrorPath` parent itself, and `/var/run` is cleared on every
+macOS boot. The unprivileged app could then not traverse to the 0666 socket and
+every status call failed with `connect EACCES` after each reboot. The helper now
+also creates the runtime directory itself and, on every start, refuses a symlink
+or a directory not owned by root and sets its mode to exactly 0755. The helper
+truncates its own log past 5 MiB because launchd never rotates it.
+
 All four focused tests, shell/Node syntax and macOS `plutil` validation of the
 real preview passed. Tests are wired into local gates and the CI client matrix;
 remote exact-SHA CI has not run. Both independent reviewers closed the P1 with

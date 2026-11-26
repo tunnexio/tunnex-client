@@ -5,12 +5,11 @@ package helper
 import (
 	"net"
 	"os"
-	"path/filepath"
 )
 
 // DefaultSocketPath is the unix-domain socket the helper listens on (matches the
 // TS helperSocketPath in apps/client).
-func DefaultSocketPath() string { return "/var/run/tunnex/helper.sock" }
+func DefaultSocketPath() string { return RuntimeDir + "/helper.sock" }
 
 // NewListener creates the helper's local IPC endpoint. The helper runs as ROOT
 // (a LaunchDaemon), but the desktop app connecting to it is UNPRIVILEGED, so the
@@ -21,8 +20,12 @@ func DefaultSocketPath() string { return "/var/run/tunnex/helper.sock" }
 // Authenticated Users connect; the caller-path check authorizes). Any local user
 // can open the socket but is rejected unless their process is a trusted Tunnex
 // binary; the connection cap bounds the flood surface. A stale socket is removed.
+//
+// The runtime dir is repaired to exactly root-owned 0755 on every start (see
+// ensureRuntimeDir): a dir that already exists with a stricter mode would leave the
+// 0666 socket unreachable for the app (connect EACCES).
 func NewListener(socketPath string) (net.Listener, error) {
-	if err := os.MkdirAll(filepath.Dir(socketPath), 0o755); err != nil {
+	if err := ensureSocketDir(socketPath); err != nil {
 		return nil, err
 	}
 	_ = os.Remove(socketPath) // clear a stale socket

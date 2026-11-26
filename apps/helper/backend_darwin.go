@@ -27,12 +27,12 @@ const pfAnchor = "tunnex"
 // pfTokenPath persists the `pfctl -E` enable-reference token so that a FRESH helper
 // process (after a crash / kill -9 lost the in-memory copy) can release the exact
 // reference on startup instead of force-disabling pf for the whole system. Root-only.
-const pfTokenPath = "/var/run/tunnex/pf.token"
+const pfTokenPath = RuntimeDir + "/pf.token"
 
 // dnsBackupPath persists each network service's PRIOR DNS setting while a full tunnel
 // has hijacked the system resolver, so Down (or a crashed-then-restarted helper's
 // CleanStale) can restore it. Same crash-safe pattern as pfTokenPath. Root-only.
-const dnsBackupPath = "/var/run/tunnex/dns.json"
+const dnsBackupPath = RuntimeDir + "/dns.json"
 
 // darwinBackend implements Backend on macOS with wireguard-go (userspace WG over a
 // utun) + a pf kill-switch + ifconfig/route for addressing. Ordering invariant:
@@ -650,8 +650,11 @@ func (b *darwinBackend) armPF(endpoint, ifname string) error {
 		// Persist the token so a crashed-then-restarted helper can release THIS exact
 		// enable-reference (CleanStale) instead of leaking it or force-disabling pf.
 		if b.pfToken != "" {
-			_ = os.MkdirAll("/var/run/tunnex", 0o755)
-			_ = os.WriteFile(pfTokenPath, []byte(b.pfToken), 0o600)
+			// Only write into a verified root-owned runtime dir (never through a
+			// planted symlink or a dir another user owns).
+			if EnsureRuntimeDir() == nil {
+				_ = os.WriteFile(pfTokenPath, []byte(b.pfToken), 0o600)
+			}
 		}
 	}
 	return nil
@@ -739,8 +742,7 @@ func applyDNS(servers []string) {
 	for _, svc := range svcs {
 		backup[svc] = currentDNS(svc) // nil = was automatic/DHCP
 	}
-	if data, err := json.Marshal(backup); err == nil {
-		_ = os.MkdirAll("/var/run/tunnex", 0o755)
+	if data, err := json.Marshal(backup); err == nil && EnsureRuntimeDir() == nil {
 		_ = os.WriteFile(dnsBackupPath, data, 0o600)
 	}
 	for _, svc := range svcs {

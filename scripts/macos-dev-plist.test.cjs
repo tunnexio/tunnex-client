@@ -7,7 +7,8 @@ test('trust is exactly driver, packaged app, and resolved development runtime', 
   const text = renderPlist('/dev/repo/Electron.app/Contents/MacOS/Electron');
   assert.match(text, /<string>\/usr\/local\/tunnex:\/Applications\/Tunnex.app\/Contents\/MacOS:\/dev\/repo\/Electron.app\/Contents\/MacOS<\/string>/);
   assert.ok(text.includes(`<key>StandardErrorPath</key><string>${runtimeLog}</string>`));
-  assert.equal(runtimeLog, '/var/run/tunnex/helper.log');
+  assert.equal(runtimeLog, '/Library/Logs/Tunnex/helper.log');
+  assert.ok(!text.includes('/var/run/tunnex/helper.log'));
 });
 test('XML special characters cannot inject plist fields', () => {
   const text = renderPlist('/dev/a & <b> "c"/Electron');
@@ -22,5 +23,6 @@ test('installer consumes generated plist and never authorizes from rejected logs
   const script = fs.readFileSync(`${__dirname}/macos-dev-install.sh`, 'utf8');
   assert.doesNotMatch(script, /rejected_dir|REJDIR|caller exe|LOG=\/tmp\//);
   assert.ok(script.includes('sudo cp "$BUILD_DIR/helper.plist" "$PLIST"'));
-  assert.ok(script.includes('chmod 600 /var/run/tunnex/helper.log'));
+  assert.ok(script.includes('chmod 600 /Library/Logs/Tunnex/helper.log'));
+  assert.ok(!script.includes('/var/run/tunnex/helper.log'));
 });

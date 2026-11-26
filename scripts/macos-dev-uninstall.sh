@@ -30,6 +30,7 @@ sudo rm -rf "$DIR"
 sudo rm -f "$SOCK"
 sudo rm -f /var/run/tunnex/pf.token       # persisted kill-switch enable-ref (recovery)
 sudo rmdir /var/run/tunnex 2>/dev/null || true
+sudo rm -rf /Library/Logs/Tunnex           # daemon log
 
 echo ">> RESIDUE CHECK (all should be empty / not-found):"
 echo -n "  daemon:  "; sudo launchctl print system/io.tunnex.helper 2>&1 | head -1

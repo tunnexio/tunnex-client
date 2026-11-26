@@ -3,7 +3,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { createRequire } = require('node:module');
 
-const runtimeLog = '/var/run/tunnex/helper.log';
+// Daemon log lives outside the socket's runtime dir: launchd creates a missing
+// StandardErrorPath parent as 0744, which made /var/run/tunnex untraversable for the app.
+const runtimeLog = '/Library/Logs/Tunnex/helper.log';
 function renderPlist(electronExecutable) {
   if (!path.posix.isAbsolute(electronExecutable) || /[:\r\n\0]/.test(electronExecutable)) {
     throw new Error('invalid Electron executable path');

@@ -18,7 +18,12 @@ const HELPER_DEST = `${INSTALL_DIR}/tunnex-helper`;
 const SOCKET = "/var/run/tunnex/helper.sock";
 // Root daemon log lives in a ROOT-OWNED dir, never world-writable /tmp (a predictable
 // /tmp path for a root O_CREAT|O_APPEND is a symlink-clobber vector, review #8).
-const HELPER_LOG = "/var/run/tunnex/helper.log";
+// It must also stay OUT of the socket's runtime dir (/var/run/tunnex): launchd creates
+// a missing StandardErrorPath parent as 0744 before the helper starts, and since
+// /var/run is cleared on every boot that made the socket unreachable (EACCES) after
+// each reboot. The helper caps this file's size itself (launchd never rotates it).
+const HELPER_LOG_DIR = "/Library/Logs/Tunnex";
+const HELPER_LOG = `${HELPER_LOG_DIR}/helper.log`;
 
 // helperInstalled is the cheap presence check (the daemon plist exists). Connect uses
 // it to decide whether to run the one-time install before dialing the helper socket.
@@ -121,7 +126,18 @@ function installScript(staged: string, trustDir: string): string {
   return [
     "#!/bin/sh",
     "set -e",
-    `mkdir -p ${shq(INSTALL_DIR)} ${shq("/var/run/tunnex")}`,
+    `mkdir -p ${shq(INSTALL_DIR)}`,
+    // Log dir: refuse to follow a pre-planted symlink, then pin root:wheel 0755 and a
+    // root-only 0600 log. The socket's runtime dir is created and mode-repaired by the
+    // helper itself on every start, so the installer no longer touches /var/run/tunnex.
+    `if [ -L ${shq(HELPER_LOG_DIR)} ]; then rm -f ${shq(HELPER_LOG_DIR)}; fi`,
+    `mkdir -p ${shq(HELPER_LOG_DIR)}`,
+    `chown root:wheel ${shq(HELPER_LOG_DIR)}`,
+    `chmod 755 ${shq(HELPER_LOG_DIR)}`,
+    `if [ -L ${shq(HELPER_LOG)} ]; then rm -f ${shq(HELPER_LOG)}; fi`,
+    `touch ${shq(HELPER_LOG)}`,
+    `chown root:wheel ${shq(HELPER_LOG)}`,
+    `chmod 600 ${shq(HELPER_LOG)}`,
     `cp ${shq(staged)} ${shq(HELPER_DEST)}`,
     `chown root:wheel ${shq(HELPER_DEST)}`,
     `chmod 755 ${shq(HELPER_DEST)}`,

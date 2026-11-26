@@ -14,8 +14,23 @@ DIR=/usr/local/tunnex
 DEST="$DIR/tunnex-helper"
 PLIST=/Library/LaunchDaemons/io.tunnex.helper.plist
 SOCK=/var/run/tunnex/helper.sock
+# Daemon log: kept OUT of the socket's runtime dir. launchd creates a missing
+# StandardErrorPath parent as 0744 before the helper starts; with the log in
+# /var/run/tunnex (cleared every boot) that left the socket unreachable for the app
+# after each reboot. The helper creates and mode-repairs /var/run/tunnex itself and
+# caps this log's size (launchd never rotates it).
+LOG_DIR=/Library/Logs/Tunnex
+LOG="$LOG_DIR/helper.log"
 
-mkdir -p "$DIR" /var/run/tunnex
+mkdir -p "$DIR"
+if [ -L "$LOG_DIR" ]; then rm -f "$LOG_DIR"; fi
+mkdir -p "$LOG_DIR"
+chown root:wheel "$LOG_DIR"
+chmod 755 "$LOG_DIR"
+if [ -L "$LOG" ]; then rm -f "$LOG"; fi
+touch "$LOG"
+chown root:wheel "$LOG"
+chmod 600 "$LOG"
 cp "$HELPER_SRC" "$DEST"
 chown root:wheel "$DEST"
 chmod 755 "$DEST"
@@ -43,7 +58,7 @@ cat > "$PLIST" <<PL
   </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
-  <key>StandardErrorPath</key><string>/var/run/tunnex/helper.log</string>
+  <key>StandardErrorPath</key><string>$LOG</string>
 </dict></plist>
 PL
 chown root:wheel "$PLIST"

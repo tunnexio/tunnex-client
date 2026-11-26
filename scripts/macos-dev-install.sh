@@ -7,7 +7,7 @@ set -euo pipefail
 DIR=/usr/local/tunnex
 PLIST=/Library/LaunchDaemons/io.tunnex.helper.plist
 SOCK=/var/run/tunnex/helper.sock
-LOG=/var/run/tunnex/helper.log
+LOG=/Library/Logs/Tunnex/helper.log
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 HELPER_SRC="$REPO/apps/helper"
 
@@ -32,15 +32,15 @@ echo ">> [2/6] install to $DIR (sudo)"
 # Reject symlink targets before privileged writes; never follow a legacy /tmp log.
 sudo /bin/sh -c '
   set -e
-  for p in /usr/local/tunnex /usr/local/tunnex/tunnex-helper /usr/local/tunnex/tunnelctl /var/run/tunnex /var/run/tunnex/helper.log /Library/LaunchDaemons/io.tunnex.helper.plist; do
+  for p in /usr/local/tunnex /usr/local/tunnex/tunnex-helper /usr/local/tunnex/tunnelctl /Library/Logs/Tunnex /Library/Logs/Tunnex/helper.log /Library/LaunchDaemons/io.tunnex.helper.plist; do
     if [ -L "$p" ]; then echo "Refusing symlink: $p" >&2; exit 1; fi
   done
-  mkdir -p /usr/local/tunnex /var/run/tunnex
-  chown root:wheel /usr/local/tunnex /var/run/tunnex
-  chmod 755 /usr/local/tunnex /var/run/tunnex
-  touch /var/run/tunnex/helper.log
-  chown root:wheel /var/run/tunnex/helper.log
-  chmod 600 /var/run/tunnex/helper.log
+  mkdir -p /usr/local/tunnex /Library/Logs/Tunnex
+  chown root:wheel /usr/local/tunnex /Library/Logs/Tunnex
+  chmod 755 /usr/local/tunnex /Library/Logs/Tunnex
+  touch /Library/Logs/Tunnex/helper.log
+  chown root:wheel /Library/Logs/Tunnex/helper.log
+  chmod 600 /Library/Logs/Tunnex/helper.log
 '
 sudo cp "$BUILD_DIR/tunnex-helper" "$BUILD_DIR/tunnelctl" "$DIR/"
 sudo chown root:wheel "$DIR/tunnex-helper" "$DIR/tunnelctl"

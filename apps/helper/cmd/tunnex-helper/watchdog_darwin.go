@@ -17,7 +17,8 @@ const (
 	daemonLabel  = "io.tunnex.helper"
 	daemonPlist  = "/Library/LaunchDaemons/io.tunnex.helper.plist"
 	installDest  = "/usr/local/tunnex"
-	runtimeDir   = "/var/run/tunnex"
+	runtimeDir   = helper.RuntimeDir
+	helperLogDir = "/Library/Logs/Tunnex" // launchd StandardErrorPath dir (see helperinstall.ts)
 	pfConfPath   = "/etc/pf.conf"
 	pfConfBackup = "/etc/pf.conf.tunnex-bak"
 	pfAnchorLine = `anchor "tunnex"`
@@ -91,6 +92,7 @@ func selfUninstall(app string, sup *helper.Supervisor) {
 	_ = os.Remove(daemonPlist)
 	_ = os.RemoveAll(installDest)
 	_ = os.RemoveAll(runtimeDir)
+	_ = os.RemoveAll(helperLogDir)
 	// 4. Unload self by LABEL (no plist file needed), this terminates the process.
 	_ = exec.Command("launchctl", "bootout", "system/"+daemonLabel).Run()
 	os.Exit(0)
