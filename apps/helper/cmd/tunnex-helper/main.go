@@ -7,6 +7,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -43,6 +44,7 @@ func main() {
 		runService() // service_windows.go, wraps serveHelper in the SCM dispatcher
 		return
 	}
+	startStderrLogCap()
 	if err := serveHelper(nil); err != nil {
 		log.Fatalf("tunnex-helper: %v", err)
 	}
@@ -134,4 +136,41 @@ func serveHelper(stop <-chan struct{}) error {
 		return fmt.Errorf("serve: %w", err)
 	}
 	return nil
+}
+
+// maxStderrLog bounds the launchd StandardErrorPath file. It lives in /Library/Logs
+// (persistent, unlike /var/run which macOS clears each boot) and launchd never
+// rotates it, so the helper caps it itself.
+const maxStderrLog = 5 << 20 // 5 MiB
+
+// startStderrLogCap truncates the helper's stderr log in place when it grows past
+// maxStderrLog, at startup and then hourly. In place (not rename) because launchd
+// holds the fd: a renamed file would keep growing. No-op when stderr is not a
+// regular file (console, Windows service).
+func startStderrLogCap() {
+	capStderrLog(os.Stderr, maxStderrLog)
+	go func() {
+		t := time.NewTicker(time.Hour)
+		defer t.Stop()
+		for range t.C {
+			capStderrLog(os.Stderr, maxStderrLog)
+		}
+	}()
+}
+
+// capStderrLog truncates f to zero when it is a regular file larger than limit.
+// Reports whether it truncated.
+func capStderrLog(f *os.File, limit int64) bool {
+	fi, err := f.Stat()
+	if err != nil || !fi.Mode().IsRegular() || fi.Size() <= limit {
+		return false
+	}
+	if err := f.Truncate(0); err != nil {
+		return false
+	}
+	// launchd opens the log O_APPEND, so writes already land at the new end; the
+	// seek covers a non-append fd so it doesn't leave a sparse gap.
+	_, _ = f.Seek(0, io.SeekStart)
+	log.Printf("tunnex-helper: log exceeded %d bytes, truncated", limit)
+	return true
 }

@@ -36,8 +36,43 @@ test("installScript shell-quotes an apostrophe path safely (no root injection)",
 
 test("installScript logs to a root-owned dir, not world-writable /tmp", () => {
   const s = installScript("/tmp/staged/tunnex-helper", "/Applications/Tunnex.app/Contents/MacOS");
-  assert.match(s, /StandardErrorPath<\/key><string>\/var\/run\/tunnex\/helper\.log/);
+  assert.match(s, /StandardErrorPath<\/key><string>\/Library\/Logs\/Tunnex\/helper\.log<\/string>/);
   assert.doesNotMatch(s, /\/tmp\/tunnex-helper\.log/);
+  // The log dir and file are pinned root-owned before launchd opens the log.
+  assert.match(s, /^chown root:wheel '\/Library\/Logs\/Tunnex'$/m);
+  assert.match(s, /^chmod 755 '\/Library\/Logs\/Tunnex'$/m);
+  assert.match(s, /^chmod 600 '\/Library\/Logs\/Tunnex\/helper\.log'$/m);
+  assert.match(s, /^if \[ -L '\/Library\/Logs\/Tunnex' \]; then rm -f '\/Library\/Logs\/Tunnex'; fi$/m);
+});
+
+// Reboot regression: a StandardErrorPath inside /var/run/tunnex makes launchd create
+// that dir as 0744 at boot (before the helper runs), so the app can't reach the 0666
+// socket (connect EACCES). Nothing launchd opens may live in the socket's runtime dir,
+// and the installer leaves that dir to the helper, which repairs its mode each start.
+test("installScript keeps launchd's log out of the socket runtime dir", () => {
+  const s = installScript("/tmp/staged/tunnex-helper", "/Applications/Tunnex.app/Contents/MacOS");
+  assert.doesNotMatch(s, /\/var\/run\/tunnex\/helper\.log/);
+  const stderr = s.match(/<key>StandardErrorPath<\/key><string>([^<]*)<\/string>/);
+  assert.ok(stderr);
+  assert.ok(!stderr[1].startsWith("/var/run/"));
+  assert.doesNotMatch(s, /StandardOutPath/);
+  assert.doesNotMatch(s, /mkdir[^\n]*\/var\/run\/tunnex/);
+  // The socket itself is unchanged.
+  assert.match(s, /<key>TUNNEX_HELPER_SOCKET<\/key><string>\/var\/run\/tunnex\/helper\.sock<\/string>/);
+});
+
+// The .pkg postinstall is the primary install path and writes its own copy of the
+// plist; it must match the in-app installer on the log location.
+test("pkg postinstall keeps launchd's log out of the socket runtime dir", () => {
+  const post = fs.readFileSync(path.join(__dirname, "..", "build", "pkg-scripts", "postinstall"), "utf8");
+  assert.match(post, /^LOG_DIR=\/Library\/Logs\/Tunnex$/m);
+  assert.match(post, /^LOG="\$LOG_DIR\/helper\.log"$/m);
+  assert.match(post, /<key>StandardErrorPath<\/key><string>\$LOG<\/string>/);
+  assert.match(post, /^chmod 755 "\$LOG_DIR"$/m);
+  assert.match(post, /^chmod 600 "\$LOG"$/m);
+  assert.doesNotMatch(post, /\/var\/run\/tunnex\/helper\.log/);
+  assert.doesNotMatch(post, /mkdir[^\n]*\/var\/run\/tunnex/);
+  assert.doesNotMatch(post, /StandardOutPath/);
 });
 
 test("a matching trusted caller skips the repair prompt after reopen", () => {
