@@ -1,10 +1,11 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { app, BrowserWindow, shell, protocol, ipcMain, dialog, nativeImage } from "electron";
+import { app, BrowserWindow, shell, protocol, ipcMain, dialog, nativeImage, Notification } from "electron";
 import { resolveBundlePath, looksLikeAsset, contained } from "./bundle";
 import { contentTypeFor } from "./mime";
 import { cspFor } from "./csp";
 import { Config } from "./config";
+import { noticeOnWindowHidden } from "./sharingtraynotice";
 import { buildCredentialStore, buildEnrollmentAnchorStore, buildTunnelConfigStore } from "./store";
 import { registerIpc } from "./ipc";
 import { gracefulQuit } from "./quitguard";
@@ -68,7 +69,16 @@ function createWindow(config: Config): BrowserWindow {
     },
   });
   mainWindow = win;
-  win.on("close",event=>{if(!appQuitting&&beamActive()>0){event.preventDefault();win.hide();}});
+  win.on("close",event=>{
+    if(!appQuitting&&beamActive()>0){
+      event.preventDefault();win.hide();
+      noticeOnWindowHidden(beamActive(),{shown:()=>config.hasShownBeamTrayNotice(),markShown:()=>config.markBeamTrayNoticeShown()},notice=>{
+        if(!Notification.isSupported())return false;
+        new Notification(notice).show();
+        return true;
+      });
+    }
+  });
   win.on("closed", () => {
     if (mainWindow === win) mainWindow = null; // drop the ref so nothing sends to a destroyed webContents
   });

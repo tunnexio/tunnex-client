@@ -28,8 +28,13 @@ export function personLabel(person: { name?: string | null; email?: string | nul
 
 export const groupLabel = (name: string) => (/\bgroup$/i.test(name.trim()) ? name.trim() : `${name.trim()} group`);
 
-export const audienceLabel = (subject: BeamAudience) =>
-  subject.subject_kind === "group" ? groupLabel(subject.name) : personLabel(subject, subject.name);
+export function audienceLabel(subject: BeamAudience): string {
+  if (subject.subject_kind !== "group") return personLabel(subject, subject.name);
+  const count = subject.member_count;
+  return typeof count === "number" && Number.isSafeInteger(count) && count >= 0
+    ? `${groupLabel(subject.name)} · ${plural(count, "member")}`
+    : groupLabel(subject.name);
+}
 
 /**
  * Who can open a share, in words. The server always grants the publisher, so that grant is

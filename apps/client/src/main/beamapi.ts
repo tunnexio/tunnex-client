@@ -160,7 +160,7 @@ export class BeamApi {
       this.request<BeamPolicy>("/policy"),
       this.request<{
         users: Array<{ id: string; name: string; email?: string }>;
-        groups: Array<{ id: string; name: string }>;
+        groups: Array<{ id: string; name: string; member_count?: unknown }>;
       }>("/audience").then(
         (value) => ({ ok: true as const, value }),
         (error: unknown) => ({ ok: false as const, error }),
@@ -208,6 +208,10 @@ export class BeamApi {
             subject_kind: "group" as const,
             subject_id: group.id,
             name: group.name,
+            // Optional platform field; only a non-negative integer crosses IPC.
+            ...(Number.isSafeInteger(group.member_count) && (group.member_count as number) >= 0
+              ? { member_count: group.member_count as number }
+              : {}),
           })),
         ],
       },

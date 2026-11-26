@@ -13,6 +13,8 @@ interface ConfigShape {
   managedOrganizationSelections: Record<string, string>;
   beamOpenedShares: string[];
   notifications: StoredNotice[];
+  // Local setting: the one-time "still sharing in the tray" notice was shown.
+  beamTrayNoticeShown: boolean;
 }
 
 // Config owns the server URL (a MAIN-process concern, it's where auth + the
@@ -29,7 +31,7 @@ export class Config {
   constructor(store?: Store<ConfigShape>) {
     this.store = store ?? new Store<ConfigShape>({
       name: "tunnex",
-      defaults: { serverUrl: "", importedProfileId: "", managedOrganizationSelections: {}, beamOpenedShares: [], notifications: [] },
+      defaults: { serverUrl: "", importedProfileId: "", managedOrganizationSelections: {}, beamOpenedShares: [], notifications: [], beamTrayNoticeShown: false },
     });
   }
 
@@ -40,6 +42,8 @@ export class Config {
   hasOpenedBeamShare(key: string): boolean {
     return this.store.get("beamOpenedShares", []).includes(key);
   }
+  hasShownBeamTrayNotice(): boolean {return this.store.get("beamTrayNoticeShown", false) === true;}
+  markBeamTrayNoticeShown(): void {this.store.set("beamTrayNoticeShown", true);}
   getNotifications(): StoredNotice[] {return this.store.get("notifications", []);}
   setNotifications(entries: StoredNotice[]): void {this.store.set("notifications", entries);}
 

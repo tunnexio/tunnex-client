@@ -14,6 +14,8 @@ export interface BeamAudience {
   name: string;
   // Users only: shown as "Name (email)". The publisher is never listed.
   email?: string;
+  // Groups only, when the server reports it: "Developers group · 3 members".
+  member_count?: number;
 }
 export interface BeamPolicy {
   capabilities?: string[];
