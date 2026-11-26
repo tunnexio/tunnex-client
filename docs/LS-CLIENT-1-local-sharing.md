@@ -55,7 +55,7 @@ of the copy people see.
 | 2 | "2 audience rules" | The card shows **Reviewers: Alice, Developers group**, with up to three names and then "+N more". The publisher's own automatic grant is not counted. Selections that are not in the current reviewer list are counted in "+N more". With no reviewers it says "Only you can open it. Choose Access to add reviewers." |
 | 3 | "Share created. Availability follows the connector status below." | Create resolves before the connection is live (the runtime returns `starting`), so claiming "live" would be false. The message is "Share is live. Reviewers can open it after signing in." when the returned share is already live. Otherwise it is "Share created. It shows Live in a few seconds; reviewers can open it after signing in." Each status now has a plain label and a one-line hint (see "My shares"). |
 | 4 | "Who can review?" names only, with user/group tags; the publisher listed as a reviewer | Users are shown as **Name (email)**. The web console's `personLabel` rules apply: the email is not repeated when it equals the name, and the name is shown alone when the server sends no email. Groups are shown as **Developers group** (the word "group" is not added twice). The user/group tag is removed. **The publisher is hidden** rather than marked "(you)", because the server always grants the publisher and the checkbox did nothing. Main filters the caller out of the audience by `context.userId`. In the Access editor, the publisher's own grant stays in the saved set without a checkbox. Dropping it would remove the publisher's access and trigger a confusing "remove 1" confirmation. |
-| 4a | Group member counts | **Platform follow-up**: `/audience` returns only `{id,name}` for groups. The client shows "Developers group" until the platform adds a `member_count`. |
+| 4a | Group member counts | `/audience` currently returns only `{id,name}` for groups. The client shows "Developers group · N members" once the platform's optional `member_count` arrives (see "Added after the first review"). |
 | 5 | Create share disabled with no reason | A visible reason line, linked with `aria-describedby`, shows the first thing still missing: name the app, enter a valid port, enter a valid API path/port, check the app ("Check the app first", or "Your app didn't respond…" after a failed check), choose at least one reviewer. When no reviewers exist it says to ask an administrator. |
 | 6 | Extend disabled with no reason | When the remaining room is under a minute, the card shows "Already at your organization's maximum lifetime of 1 hour." as visible text linked to the button. A tooltip is not used because disabled buttons do not reliably show one. |
 | 7 | "PRIVATE APP ACCESS" eyebrow | Removed. It repeated the "Local Sharing" heading and suggested the separate App Access feature. The page keeps "Your local apps. A private link away." and "Works independently of your VPN". |
@@ -198,15 +198,30 @@ alert instead of the policy message.
 
 ## Deferred, with reasons
 
-- **Group member counts**: needs a platform field (`member_count` on `/audience`
-  groups). This is a platform follow-up.
-- **Offline or paused apps in Shared with me**: kept live-only for the security
-  reason given above. Showing these would need a separate grant-scoped request
-  that the revoked-access detection does not use. It belongs in a later story
-  together with the platform.
-- **A tray notice the first time the window is closed with active shares**: the
-  in-app sentence already states the behaviour. A native notification is a new
-  surface, outside this story's polish scope.
+Founder rule: anything deferred is fixed on this branch unless it is a security
+decision. Only one item remains deferred.
+
+- **Offline or paused apps in Shared with me** (security decision, kept): the list
+  stays live-only. Showing these would need a separate grant-scoped request that
+  the revoked-access detection does not use.
+
+## Added after the first review
+
+- **Group member counts.** The platform is adding an optional integer
+  `member_count` to group entries of the reviewer-choices response (the exact
+  name is still to be confirmed). The client handles it defensively:
+  - Main forwards it only as a non-negative integer and drops any other value.
+  - The picker shows "Developers group · 3 members" (or "· 1 member") when it is
+    present, and "Developers group" otherwise.
+  - Until the platform ships the field, every group shows the plain label.
+- **One-time keep-sharing notice.** The first time the window is closed while
+  shares are active, the app shows a non-blocking system notification (the same
+  Electron `Notification` the app uses for tunnel events): "Local Sharing is still
+  on. Tunnex is still sharing N apps. Quit Tunnex to stop sharing."
+  - "Shown" is saved in the local settings store (`beamTrayNoticeShown`, per OS
+    user profile). It is saved only after the notification actually showed, so an
+    unsupported notification centre does not use it up.
+  - Hiding the window never depends on the notification or on settings storage.
 
 ## Security
 
