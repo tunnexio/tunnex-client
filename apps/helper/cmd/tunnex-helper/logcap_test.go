@@ -3,10 +3,16 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
 func TestCapStderrLogTruncatesOnlyPastLimit(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		// The cap exists for the launchd StandardErrorPath file. The Windows service has
+		// no stderr log file, and Windows refuses to truncate an append-only handle.
+		t.Skip("stderr log cap applies to launchd/systemd log files, not the Windows service")
+	}
 	p := filepath.Join(t.TempDir(), "helper.log")
 	f, err := os.OpenFile(p, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
 	if err != nil {
