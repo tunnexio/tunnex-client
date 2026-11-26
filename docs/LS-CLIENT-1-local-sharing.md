@@ -40,6 +40,10 @@ of the copy people see.
   limits the list to live shares.
 - Quota (`active_shares`/`max_shares`) counts the publisher's whole non-terminal
   inventory, whatever the list filters are.
+- `publisher_email` ships in platform commit a06626ce, which is **after the
+  v0.1.50 tag**. Against control plane v0.1.50 the client still shows the name
+  alone ("Shared by Control Plane Admin"). "Name (email)" appears once the control
+  plane runs a build that includes that commit (the next control plane release).
 - There are no generated Local Sharing API types in this repository. The
   hand-written `beamtypes.ts` (main and renderer copies) are the contract.
 
@@ -173,6 +177,11 @@ alert instead of the policy message.
 - Share items appear under a **Sharing updates** label, using web console wording:
   "Ready to open" and "Shared by Name (email)".
 
+- When review access is withdrawn, the notice used to say "App access revoked",
+  which is the name of the separate App Access feature. It now reads
+  "Shared app no longer available" with "Ask Name (email) or your administrator
+  if you still need it." (`sharedAccessNotice`).
+
 ### Help panel ("App compatibility and sharing help")
 
 - The paragraph about restarting was wrong: Quit stops shares on the server, so
@@ -214,7 +223,9 @@ alert instead of the policy message.
 
 ## Release
 
-User-visible client change, so it needs a desktop release. Following the
-release-batching rule, this branch does **not** bump the version. Before tagging
+User-visible client change, so it needs a desktop release. In this repo the
+version bump usually lands inside the feature PR (#18, #21). This branch does
+**not** bump, to avoid colliding with open PR #24 and to follow the
+release-batching rule. A one-commit bump can be added on request. Before tagging
 `v0.1.14`, bump both `package.json` and `apps/client/package.json` together
 (`scripts/release-version.cjs` enforces equality). The helper is not touched.
