@@ -119,7 +119,7 @@ describe("Beam desktop review workflow", () => {
     fireEvent.click(screen.getByRole("button",{name:"New share"}));
     fireEvent.click(screen.getByRole("button",{name:"Find local apps"}));
     await screen.findByRole("button",{name:"Port 5173"});
-    expect(screen.getByText("Apps answered on 1 port. Choose one.")).toBeTruthy();
+    expect(screen.getByText("Apps answered on 6 ports. Choose one.")).toBeTruthy();
     expect(beam.checkLocal).toHaveBeenCalledTimes(6);
     for (const [target] of beam.checkLocal.mock.calls) expect(target).toMatchObject({address:"127.0.0.1",protocol:"http"});
     fireEvent.click(screen.getByRole("button",{name:"Port 5173"}));

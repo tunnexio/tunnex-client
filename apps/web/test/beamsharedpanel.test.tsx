@@ -22,7 +22,7 @@ describe("Desktop shared apps",()=>{
     await waitFor(()=>expect(beam.shared).toHaveBeenLastCalledWith({offset:0,query:"cart"}));
   });
   it("counts down in plain words and explains when apps appear",async()=>{
-    install([{...app,expires_at:new Date(Date.now()+3_900_000).toISOString()}]);show();await screen.findByText(app.name);
+    install([{...app,expires_at:new Date(Date.now()+3_870_000).toISOString()}]);show();await screen.findByText(app.name);
     expect(screen.getByText(/^Expires in 1 hour 5 minutes$/)).toBeTruthy();
     expect(screen.queryByText(/ min$/)).toBeNull();
   });
