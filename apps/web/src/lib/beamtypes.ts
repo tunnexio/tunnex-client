@@ -1,4 +1,6 @@
-// Renderer projections contain resource metadata only; identities remain in main.
+// Renderer projections are explicit allowlists. Display names and emails the server
+// already shows this caller cross IPC for "Name (email)"; tokens, credentials,
+// connector material and reviewer targets stay in main.
 export interface BeamTarget {
   address: "127.0.0.1" | "::1";
   port: number;
@@ -10,6 +12,10 @@ export interface BeamAudience {
   subject_kind: "user" | "group";
   subject_id: string;
   name: string;
+  // Users only: shown as "Name (email)". The publisher is never listed.
+  email?: string;
+  // Groups only, when the server reports it: "Developers group · 3 members".
+  member_count?: number;
 }
 export interface BeamPolicy {
   capabilities?: string[];
@@ -91,6 +97,7 @@ export interface BeamSharedShare {
   hostname: string;
   url: string;
   publisher_name?: string;
+  publisher_email?: string;
   state: BeamShare["state"];
   connectivity: string;
   can_open: boolean;

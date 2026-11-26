@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { NotificationInbox, notificationScope, type StoredNotice } from "../src/main/notificationinbox";
+import { NotificationInbox, notificationScope, sharedAccessNotice, type StoredNotice } from "../src/main/notificationinbox";
 
 test("notice inbox persists read state, deduplicates events and scopes security alerts",()=>{
   let saved:StoredNotice[] = [], scope:string|null = notificationScope("https://cp.example","first-token");
@@ -37,4 +37,13 @@ test("inbox persistence failure cannot interrupt revocation and records are boun
   for(let i=0;i<110;i++) inbox.record("device_revoked",String(i),"Device revoked","Contact administrator.");
   assert.equal(inbox.list().length,100);
   assert.throws(()=>inbox.markRead("../../credential.bin"),/notification_invalid/);
+});
+
+// LS-CLIENT-1: a withdrawn Local Sharing review is not the separate App Access feature,
+// and the person to ask is named as Name (email) when the server provided it.
+test("withdrawn shared-app notice uses Local Sharing words and names the publisher",()=>{
+  assert.deepEqual(sharedAccessNotice({name:"Checkout",publisher_name:"Pat",publisher_email:"pat@example.com"}),
+    {title:"Shared app no longer available",body:"You no longer have access to Checkout. Ask Pat (pat@example.com) or your administrator if you still need it."});
+  assert.equal(sharedAccessNotice({name:"Checkout"}).body,"You no longer have access to Checkout. Ask the person who shared it or your administrator if you still need it.");
+  assert.doesNotMatch(JSON.stringify(sharedAccessNotice({name:"Checkout",publisher_name:"Pat"})),/App access/);
 });

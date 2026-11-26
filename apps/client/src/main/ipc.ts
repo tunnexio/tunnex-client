@@ -59,7 +59,7 @@ import {
 import { HelperAccessStatusReader, projectTransportStatus, SingleFlightStatusReader } from "./statusreader";
 import { isCanonicalUuid } from "./uuid";
 import { BeamRuntime } from "./beamruntime";
-import { notificationScope, type NotificationInbox } from "./notificationinbox";
+import { notificationScope, sharedAccessNotice, type NotificationInbox } from "./notificationinbox";
 import type { BeamAction, BeamCreate, BeamGrantsPreview } from "./beamtypes";
 
 // ClientTunnelStatus is what main forwards: the helper's TunnelStatus plus the
@@ -169,7 +169,8 @@ export function registerIpc(
     assertCurrent();
     return {server:credential.server,token:credential.token,expiresAt:credential.expiresAt,userId:lease.userId,orgId,assertCurrent};
   }, undefined, {has: key => config.hasOpenedBeamShare(key), mark: key => config.markBeamShareOpened(key)}, (context,share,episode)=>{
-    notices.record("access_revoked",`${share.id}:${episode}`,"App access revoked",`You no longer have access to ${share.name}. Contact the publisher or your administrator.`,notificationScope(context.server,context.token));
+    const notice = sharedAccessNotice(share);
+    notices.record("access_revoked",`${share.id}:${episode}`,notice.title,notice.body,notificationScope(context.server,context.token));
   });
   const beamHandle = (channel:string, handler:(...args:unknown[])=>unknown) => ipcMain.handle(channel,(event,...args:unknown[])=>{
     if (!event.senderFrame?.url.startsWith("app://")) throw new Error("beam_sender_denied");

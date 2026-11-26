@@ -3,6 +3,7 @@ import { desktop } from "../lib/desktop";
 import type { BeamSharedView } from "../lib/beamtypes";
 import { beamError } from "./BeamPanel";
 import { Icon } from "../components/Icon";
+import { formatRemaining, personLabel } from "./sharingcopy";
 import "./client-sharing.css";
 
 const button = "client-button";
@@ -59,15 +60,18 @@ export function BeamSharedPanel() {
       </div>
       <p className="client-sharing-help-text">Apps open in your browser. Sign in there if needed; access is checked again when you open the link.</p>
       {!view && !error && <p role="status" className="client-empty">Loading shared apps…</p>}
-      {view && !shares.length && <p role="status" className="client-empty client-sharing-empty">{query || offset ? "No live shared apps match this page or search." : "No live apps are currently shared with you."}</p>}
+      {view && !shares.length && <div role="status" className="client-empty client-sharing-empty">
+        <p className="client-sharing-empty-title">{query || offset ? "No shared apps match this page or search." : "No apps are shared with you right now."}</p>
+        <p className="client-sharing-help-text">{query || offset ? "Clear the search or return to the previous page." : "Apps appear here while the person who shared them is online. If you expected one, ask them to check the share."}</p>
+      </div>}
       <div className="client-sharing-list">
       {shares.map(share=><article key={share.id} className="client-sharing-row client-sharing-shared-row">
         <div className="client-sharing-row-heading"><h3>{share.name}</h3><span className="client-status client-sharing-live client-sharing-live-ready">Live</span></div>
         <p className="client-sharing-hostname">{share.hostname}</p>
         <div className="client-sharing-shared-footer">
           <div>
-            {share.publisher_name && <p className="client-sharing-row-context">Shared by {share.publisher_name}</p>}
-            <p className="client-sharing-row-context" title={share.expires_at}>Expires in {Math.max(0,Math.ceil((Date.parse(share.expires_at)-now-clockOffset)/60000))} min</p>
+            {(share.publisher_name || share.publisher_email) && <p className="client-sharing-row-context">Shared by {personLabel({name: share.publisher_name, email: share.publisher_email})}</p>}
+            <p className="client-sharing-row-context" title={share.expires_at}>Expires in {formatRemaining(Date.parse(share.expires_at)-now-clockOffset)}</p>
           </div>
           <button className={button+" client-sharing-open"} aria-label={`Open ${share.name} in browser`} disabled={opening !== null} onClick={()=>void open(share.id)}>{opening===share.id ? "Opening…" : "Open"}</button>
         </div>

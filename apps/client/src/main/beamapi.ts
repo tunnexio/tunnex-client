@@ -153,14 +153,18 @@ export class BeamApi {
     )
       throw Error("beam_inventory_invalid");
     const route = input
-      ? `/shares?limit=20&offset=${offset}&q=${encodeURIComponent(query)}&scope=active&state=active&connectivity=online`
+      ? // Every non-ended share (starting, active, paused): Resume and Reconnect must stay reachable.
+        `/shares?limit=20&offset=${offset}&q=${encodeURIComponent(query)}&scope=active`
       : "/shares";
-    const [policy, audience, shares] = await Promise.all([
+    const [policy, audienceResult, shares] = await Promise.all([
       this.request<BeamPolicy>("/policy"),
       this.request<{
         users: Array<{ id: string; name: string; email?: string }>;
-        groups: Array<{ id: string; name: string }>;
-      }>("/audience"),
+        groups: Array<{ id: string; name: string; member_count?: unknown }>;
+      }>("/audience").then(
+        (value) => ({ ok: true as const, value }),
+        (error: unknown) => ({ ok: false as const, error }),
+      ),
       this.request<{
         items: BeamShare[];
         server_time: string;
@@ -173,20 +177,41 @@ export class BeamApi {
       throw new Error("beam_protocol_unsupported");
     if (policy.min_client_version !== undefined)
       requireBeamClientVersion(policy.min_client_version);
+    // The server refuses reviewer choices to non-publishers and while Local Sharing is
+    // off or unfinished. That refusal is the policy, not a failure: show the policy.
+    // A publisher still needs reviewer choices, so for them it stays an error.
+    if (!audienceResult.ok) {
+      if (policy.can_publish && policy.enabled && policy.domain_ready)
+        throw audienceResult.error;
+      this.context.assertCurrent();
+    }
+    const audience = audienceResult.ok
+      ? audienceResult.value
+      : { users: [], groups: [] };
     return {
       policy: {
         ...policy,
         default_duration_seconds: Math.min(7200, policy.max_duration_seconds),
         audience: [
-          ...(audience.users ?? []).map((user) => ({
-            subject_kind: "user" as const,
-            subject_id: user.id,
-            name: user.name || user.email || user.id,
-          })),
+          // The server always grants the publisher, so they are not a reviewer choice.
+          ...(audience.users ?? [])
+            .filter((user) => user.id !== this.context.userId)
+            .map((user) => ({
+              subject_kind: "user" as const,
+              subject_id: user.id,
+              name: user.name || user.email || user.id,
+              ...(typeof user.email === "string" && user.email
+                ? { email: user.email }
+                : {}),
+            })),
           ...(audience.groups ?? []).map((group) => ({
             subject_kind: "group" as const,
             subject_id: group.id,
             name: group.name,
+            // Optional platform field; only a non-negative integer crosses IPC.
+            ...(Number.isSafeInteger(group.member_count) && (group.member_count as number) >= 0
+              ? { member_count: group.member_count as number }
+              : {}),
           })),
         ],
       },
@@ -271,6 +296,8 @@ export class BeamApi {
 
 function reviewerProjection(share: BeamSharedShare): BeamSharedShare {
   return {id: share.id, name: share.name, hostname: share.hostname, url: share.url,
-    publisher_name: share.publisher_name, state: share.state, connectivity: share.connectivity,
+    publisher_name: share.publisher_name,
+    ...(typeof share.publisher_email === "string" && share.publisher_email ? {publisher_email: share.publisher_email} : {}),
+    state: share.state, connectivity: share.connectivity,
     can_open: share.can_open, expires_at: share.expires_at};
 }
